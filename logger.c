@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,7 +16,6 @@ char *colorful(const char *str, const Color color) {
   if (!PRETTY_LOGGER) {
     return strdup(str);
   }
-
   char* buff = malloc(strlen(str) + 16);
   sprintf(buff, "%s;%dm%s%s", "\x1b[30", color, str, "\x1b[0m");
 

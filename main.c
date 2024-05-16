@@ -2,11 +2,13 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
+#include <netinet/in.h>
 #include <unistd.h>
-#include "logger.c"
 #include <stdbool.h>
+
+#include "logger.c"
+#include "request.c"
+#include "request_parser.c"
 
 #define PORT 8080
 #define BUFFER_SIZE (5 * 1024)
@@ -39,38 +41,38 @@ int main() {
     die("Unable to bind port");
   }
 
-  int listen_status = listen(socketd, 3);
+  int listen_status = listen(socketd, SOMAXCONN);
   if (listen_status < 0) {
     perror("listen");
     close(socketd);
     die("Unable to listen on port");
   }
 
+  // TODO: make event loop work with concurrent clients
   while (true) {
     int request_socket = accept(socketd, NULL, NULL);
     if (request_socket < 0) {
       perror("accept");
-      close(socketd);
-      die("Unable to accept request");
+      continue;
     }
 
     char buffer[BUFFER_SIZE] = {0};
-    int valread = read(request_socket, buffer, BUFFER_SIZE);
+    size_t read_size = read(request_socket, buffer, BUFFER_SIZE);
+    RequestParser parser = init_parser(buffer);
+    print_request(&parser);
+    printf("Read size: %ld\n", read_size);
 
-    info("Received HTTP request");
-
-    const char *http_response = "HTTP/1.1 200 OK\r\n"
+    const char *http_response = "HTTP/1.0 200 OK\r\n"
                               "Content-Type: text/html\r\n"
                               "Content-Length: 20\r\n"
-                              "Connection: Closed\r\n"
+                              "Connection: close\r\n"
                               "\r\n"
                               "<h1>Hello World</h1>";
 
     send(request_socket, http_response, strlen(http_response), 0);
+    shutdown(request_socket, SHUT_RDWR);
     close(request_socket);
-    printf("Received: %s\n", buffer);
   }
-
 
   info("Closing socket...");
   close(socketd);
