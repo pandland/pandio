@@ -4,7 +4,7 @@
 
 ## pre-fork architecture
 
-- Master process spawns N workers (using `fork`).
+- Master process inits listener socket and spawns N workers (using `fork`).
 - Each worker has own event loop and uses `epoll` + `fcntl` for non-blocking I/O operations.
 - With these techniques I achieved a decent level of concurrency.
 
