@@ -26,7 +26,7 @@ void die(const char *reason) {
   char *prefix = colorful(" CRITICAL ", RED);
   printf("%s %s\n", prefix, reason);
   free(prefix);
-  exit(1);
+  exit(EXIT_FAILURE);
 }
 
 void warn(const char *reason) {

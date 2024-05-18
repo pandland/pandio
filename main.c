@@ -1,80 +1,78 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
-#include <netinet/in.h>
-#include <unistd.h>
 #include <stdbool.h>
 
+#include "socket.c"
+#include "events.c"
 #include "logger.c"
-#include "request.c"
-#include "request_parser.c"
 
 #define PORT 8080
-#define BUFFER_SIZE (5 * 1024)
+#define WORKERS 4
+#define MAX_EVENTS 128
 
-int main() {
-  info("Starting HTTP server....");
+#define BUFFER_SIZE 1024
 
-  int socketd = socket(AF_INET, SOCK_STREAM, 0);
-  if (socketd <= 0) {
-    die("Socket creation failed");
-  }
-
-  struct sockaddr_in address;
-  address.sin_family = AF_INET;
-  address.sin_addr.s_addr = INADDR_ANY;
-  address.sin_port = htons(PORT);
-
-  int opt = 1;
-  if (setsockopt(socketd, SOL_SOCKET,
-                   SO_REUSEADDR, &opt,
-                   sizeof(opt))) {
-        perror("setsockopt");
+void handle_connection(int fd) {
+    char buffer[BUFFER_SIZE];
+    int bytes_read = recv(fd, buffer, BUFFER_SIZE, 0);
+    if (bytes_read == -1) {
+        perror("read");
         exit(EXIT_FAILURE);
     }
 
-  int bind_status = bind(socketd, (struct sockaddr *)&address, sizeof(address));
-  if (bind_status < 0) {
-    perror("bind");
-    close(socketd);
-    die("Unable to bind port");
-  }
-
-  int listen_status = listen(socketd, SOMAXCONN);
-  if (listen_status < 0) {
-    perror("listen");
-    close(socketd);
-    die("Unable to listen on port");
-  }
-
-  // TODO: make event loop work with concurrent clients
-  while (true) {
-    int request_socket = accept(socketd, NULL, NULL);
-    if (request_socket < 0) {
-      perror("accept");
-      continue;
+    if (bytes_read == 0) {
+        close(fd);
+        return;
     }
 
-    char buffer[BUFFER_SIZE] = {0};
-    size_t read_size = read(request_socket, buffer, BUFFER_SIZE);
-    RequestParser parser = init_parser(buffer);
-    print_request(&parser);
-    printf("Read size: %ld\n", read_size);
+    buffer[bytes_read] = '\0';
+    //printf("Received: %s\n", buffer);
 
-    const char *http_response = "HTTP/1.0 200 OK\r\n"
-                              "Content-Type: text/html\r\n"
-                              "Content-Length: 20\r\n"
-                              "Connection: close\r\n"
-                              "\r\n"
-                              "<h1>Hello World</h1>";
+    const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n\r\n<h1>Hello world!</h1>\n";
+    send(fd, response, strlen(response), 0);
+    close(fd);
+}
 
-    send(request_socket, http_response, strlen(http_response), 0);
-    shutdown(request_socket, SHUT_RDWR);
-    close(request_socket);
-  }
+void worker(int listener_fd) {
+    int epoll_fd = init_epoll();
+    add_to_epoll(epoll_fd, listener_fd);
+    struct epoll_event events[MAX_EVENTS];
 
-  info("Closing socket...");
-  close(socketd);
-  return 0;
+    while(true) {
+        int events_count = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+        if (events_count == -1) {
+            perror("epoll_wait");
+            exit(EXIT_FAILURE);
+        }
+
+        for (int i = 0; i < events_count; i++) {
+            if (events[i].data.fd == listener_fd) {
+                int client_fd = accept_peer(listener_fd);
+                if (client_fd == -1) {
+                    continue;
+                }
+                add_to_epoll(epoll_fd, client_fd);
+            } else {
+                handle_connection(events[i].data.fd);
+            }
+        }
+    }
+}
+
+int main() {
+    int listener_fd = init_listener(PORT);
+
+    for (int i = 0; i < WORKERS; i++) {
+        int pid = fork();
+        if (pid == 0) {
+            info("Worker started");
+            worker(listener_fd);
+            exit(EXIT_SUCCESS);
+        }
+    }
+
+    info("HTTP server started");
+    printf("Listening on port %d\n", PORT);
+
+    while(true) {
+        // waiting for signals etc...
+    }
 }
