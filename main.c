@@ -4,8 +4,8 @@
 #include "events.c"
 #include "logger.c"
 
-#define PORT 8080
-#define WORKERS 4
+#define DEFAULT_PORT 8080
+#define DEFAULT_WORKERS 4
 #define MAX_EVENTS 128
 
 #define BUFFER_SIZE 1024
@@ -57,10 +57,20 @@ void worker(int listener_fd) {
     }
 }
 
-int main() {
-    int listener_fd = init_listener(PORT);
+int getenv_int(const char *name, int default_value) {
+    char *value = getenv(name);
+    if (value == NULL) {
+        return default_value;
+    }
+    return atoi(value);
+}
 
-    for (int i = 0; i < WORKERS; i++) {
+int main() {
+    int port = getenv_int("PORT", DEFAULT_PORT);
+    int workers = getenv_int("WORKERS", DEFAULT_WORKERS);
+    int listener_fd = init_listener(port);
+
+    for (int i = 0; i < workers; i++) {
         int pid = fork();
         if (pid == 0) {
             info("Worker started");
@@ -70,7 +80,7 @@ int main() {
     }
 
     info("HTTP server started");
-    printf("Listening on port %d\n", PORT);
+    printf("Listening on port %d\n", port);
 
     while(true) {
         // waiting for signals etc...

@@ -2,7 +2,7 @@
 
 # HTTP Server in C
 
-## pre-fork architecture
+## pre-fork model
 
 - Master process inits listener socket and spawns N workers (using `fork`).
 - Each worker has own event loop and uses `epoll` + `fcntl` for non-blocking I/O operations.
@@ -12,6 +12,12 @@
 - [x] Non-blocking architecture for handling connections
 - [ ] Parse HTTP requests
 - [ ] Handling keep-alive requests and timeouts
+
+## Building and running
+
+```sh
+chmod +x build.sh && ./build.sh --run
+```
 
 ## Benchmark
 
