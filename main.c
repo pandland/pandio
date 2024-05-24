@@ -6,8 +6,8 @@
 
 #define DEFAULT_PORT 8080
 #define DEFAULT_WORKERS 4
-#define MAX_EVENTS 128
 
+#define MAX_EVENTS 128
 #define BUFFER_SIZE 1024
 
 void handle_connection(int fd) {
