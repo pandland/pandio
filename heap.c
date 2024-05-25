@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#define to_int(void_x) *(int*)(void_x)
+
 struct heap_node {
   struct heap_node *left;
   struct heap_node *right;
@@ -9,8 +11,8 @@ struct heap_node {
   void *data;
 };
 
-// if comparator returns value > 0 - it will swap parent and child
-typedef int (*heap_comparator_t)(struct heap_node *parent, struct heap_node *child);
+// if comparator returns value > 0 - it will swap a with b
+typedef int (*heap_comparator_t)(struct heap_node *a, struct heap_node *b);
 
 struct heap {
   struct heap_node *root;
@@ -97,7 +99,68 @@ void heap_insert(struct heap *h, struct heap_node *new_node) {
   }
 }
 
-#define to_int(void_x) *(int*)(void_x)
+struct heap_node *heap_pop(struct heap *h) {
+  if (h->root == NULL) {
+    return NULL;
+  }
+
+  struct heap_node *root = h->root;
+  struct heap_node *node = h->root;
+
+  if (h->size == 1) {
+    h->root = NULL;
+    h->size--;
+    return node;
+  }
+
+  unsigned n = h->size;
+  unsigned path = 0;
+  unsigned k = 0;
+
+  while(n >= 2) {
+    path = (path << 1) | (n & 1);
+    k++;
+    n >>= 1; // same as n /= 2
+  }
+
+  while (k > 0) {
+    if (path & 1) {
+      node = node->right;
+    } else {
+      node = node->left;
+    }
+
+    k--;
+    path >>= 1;
+  }
+
+  swap_heap_nodes(h->root, node);
+  
+  // unlink popped node
+  if (node->parent->left == node) {
+    node->parent->left = NULL;
+  } else {
+    node->parent->right = NULL;
+  }
+
+  h->size--;
+
+  // TODO: compare root->left and root->right because currently it will always choose root->left if root is larger
+  while (true) {
+    //bool isLeft = h->compare_fn(root->right, root->left) > 0;
+    if (root->left && h->compare_fn(root, root->left) > 0) {
+      root = swap_heap_nodes(root, root->left);
+    }
+    else if (root->right && h->compare_fn(root, root->right) > 0) {
+      root = swap_heap_nodes(root, root->right);
+    } else {
+      break;
+    }
+  }
+
+  return node;
+}
+
 
 void print_heap_until(struct heap_node *node, int space) {
     if (node == NULL) {
@@ -127,11 +190,9 @@ int test_compare(struct heap_node *parent, struct heap_node *child) {
   int parent_value = to_int(parent->data);
   int child_value = to_int(child->data);
   if (parent_value > child_value) {
-    printf("Swapping %d with %d\n", parent_value, child_value);
     return 1;
   }
 
-  printf("%d vs %d\n", parent_value, child_value);
   return 0;
 }
 
@@ -140,18 +201,23 @@ int main() {
   struct heap h = init_heap(test_compare);
   printf("Creating heap nodes...\n");
 
-  struct heap_node nodes[100];
+  struct heap_node nodes[1000];
 
   for (int i = 0; i < 16; ++i) {
     int *val = malloc(sizeof(int));
-    *val = 200 - i;
+    *val = 1024 - i;
     nodes[i] = create_heap_node(val);
     heap_insert(&h, &(nodes[i]));
   }
 
-  int min = 2;
-  struct heap_node node = create_heap_node(&min);
-  heap_insert(&h, &node);
+  //int min = -1000;
+  //struct heap_node node = create_heap_node(&min);
+  //heap_insert(&h, &node);
+
+  heap_pop(&h);
+  print_heap(&h);
+  struct heap_node *popped_node = heap_pop(&h);
+  printf("Popped item: %d\n", to_int(popped_node->data));
 
   printf("Printing heap nodes. Heap size: %ld\n", h.size);
   print_heap(&h);
