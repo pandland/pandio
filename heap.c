@@ -20,6 +20,8 @@ struct heap {
   heap_comparator_t compare_fn;
 };
 
+void print_heap(struct heap*);
+
 struct heap init_heap(heap_comparator_t compare_fn) {
   struct heap h;
   h.root = NULL;
@@ -145,14 +147,18 @@ struct heap_node *heap_pop(struct heap *h) {
 
   h->size--;
 
-  // TODO: compare root->left and root->right because currently it will always choose root->left if root is larger
   while (true) {
-    //bool isLeft = h->compare_fn(root->right, root->left) > 0;
-    if (root->left && h->compare_fn(root, root->left) > 0) {
-      root = swap_heap_nodes(root, root->left);
+    // if comparator > 0 we have to swap parent with smallest child
+    bool swap_left = true;
+    if (root->left && root->right) {
+      swap_left = h->compare_fn(root->left, root->right) <= 0;
+    }
+
+    if (root->left && h->compare_fn(root, root->left) > 0 && swap_left) {
+      root = swap_heap_nodes(root->left, root);
     }
     else if (root->right && h->compare_fn(root, root->right) > 0) {
-      root = swap_heap_nodes(root, root->right);
+      root = swap_heap_nodes(root->right, root);
     } else {
       break;
     }
@@ -203,18 +209,19 @@ int main() {
 
   struct heap_node nodes[1000];
 
-  for (int i = 0; i < 16; ++i) {
+  for (int i = 0; i < 5; ++i) {
     int *val = malloc(sizeof(int));
     *val = 1024 - i;
     nodes[i] = create_heap_node(val);
     heap_insert(&h, &(nodes[i]));
   }
 
-  //int min = -1000;
-  //struct heap_node node = create_heap_node(&min);
-  //heap_insert(&h, &node);
+  int min = -1000;
+  struct heap_node node = create_heap_node(&min);
+  heap_insert(&h, &node);
 
-  heap_pop(&h);
+  //heap_pop(&h);
+  //heap_pop(&h);
   print_heap(&h);
   struct heap_node *popped_node = heap_pop(&h);
   printf("Popped item: %d\n", to_int(popped_node->data));
