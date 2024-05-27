@@ -196,10 +196,10 @@ int test_compare(struct heap_node *parent, struct heap_node *child) {
   int parent_value = to_int(parent->data);
   int child_value = to_int(child->data);
   if (parent_value > child_value) {
-    return 1;
+    return 0;
   }
 
-  return 0;
+  return 1;
 }
 
 int main() {
