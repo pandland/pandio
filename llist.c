@@ -36,6 +36,59 @@ void llist_add(struct llist *l, struct lnode *node) {
   l->tail = node;
 }
 
+struct lnode *llist_remove_last(struct llist *l) {
+  if (l->head == NULL || l->tail == NULL) {
+    return NULL;
+  }
+
+  struct lnode *it = l->head;
+  struct lnode *node = NULL;
+
+  if (l->head == l->tail) {
+    node = l->tail;
+    l->head = NULL;
+    l->tail = NULL;
+    return node;
+  }
+
+  while (it->next != l->tail) {
+    it = it->next;
+  }
+
+  node = l->tail;
+  it->next = NULL;
+  l->tail = it;
+
+  return node;
+}
+
+struct lnode *llist_remove(struct llist *l, struct lnode *node) {
+  if (l->head == NULL) {
+    return NULL;
+  }
+  
+  if (node == l->head && node == l->tail) {
+    l->head = NULL;
+    l->tail = NULL;
+
+    return node;
+  }
+
+  // O(n) removal
+  if (node->next == NULL) {
+    return llist_remove_last(l);
+  }
+
+  // O(1) removal
+  void *old = node->data;
+  struct lnode *deleted = node->next;
+  node->data = deleted->data;
+  node->next = deleted->next;
+
+  deleted->data = old;
+  return deleted;
+}
+
 typedef bool llist_find_t(void* data, void *search);
 
 struct lnode *llist_find(struct llist *l, void *search, llist_find_t find_fn) {
@@ -68,7 +121,6 @@ void llist_iter(struct llist *l, llist_cb cb) {
     cb(node->data);
     node = node->next;
   }
-  printf("(end)\n");
 }
 
 #define to_int(void_x) *(int*)(void_x)
@@ -110,10 +162,17 @@ int main() {
 
   struct lnode n5 = create_node(&val);
   llist_add(&list, &n5);
+
+  llist_iter(&list, print_value);
+  printf("(end)\n");
+
+  struct lnode *deleted = llist_remove(&list, &n2);
+  printf("Deleted item value: %d\n", to_int(deleted->data));
   
   llist_iter(&list, print_value);
+  printf("(end)\n");
 
-  int x = 1;
+  int x = 2;
   struct lnode *found = llist_find(&list, &x, find);
   if (found != NULL) {
     printf("Found item: %d\n", to_int(found->data));
