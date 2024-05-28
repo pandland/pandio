@@ -5,6 +5,7 @@
 struct llist {
   struct lnode *head;
   struct lnode *tail;
+  size_t size;
 };
 
 struct lnode {
@@ -17,6 +18,9 @@ struct llist init_llist() {
 
   l.head = NULL;
   l.tail = NULL;
+  l.size = 0;
+
+  return l;
 }
 
 bool llist_empty(struct llist *l) {
@@ -25,15 +29,14 @@ bool llist_empty(struct llist *l) {
 
 void llist_add(struct llist *l, struct lnode *node) {
   node->next = NULL;
-  
   if (llist_empty(l)) {
     l->head = node;
-    l->tail = node;
-    return;
+  } else {
+    l->tail->next = node;
   }
 
-  l->tail->next = node;
   l->tail = node;
+  l->size++;
 }
 
 struct lnode *llist_remove_last(struct llist *l) {
@@ -48,6 +51,7 @@ struct lnode *llist_remove_last(struct llist *l) {
     node = l->tail;
     l->head = NULL;
     l->tail = NULL;
+    l->size = 0;
     return node;
   }
 
@@ -58,6 +62,7 @@ struct lnode *llist_remove_last(struct llist *l) {
   node = l->tail;
   it->next = NULL;
   l->tail = it;
+  l->size--;
 
   return node;
 }
@@ -70,7 +75,7 @@ struct lnode *llist_remove(struct llist *l, struct lnode *node) {
   if (node == l->head && node == l->tail) {
     l->head = NULL;
     l->tail = NULL;
-
+    l->size = 0;
     return node;
   }
 
@@ -86,6 +91,7 @@ struct lnode *llist_remove(struct llist *l, struct lnode *node) {
   node->next = deleted->next;
 
   deleted->data = old;
+  l->size--;
   return deleted;
 }
 
@@ -129,6 +135,12 @@ void print_value(void *data) {
   printf("%d -> ", to_int(data));
 }
 
+void llist_print(struct llist *l) {
+  printf("Size: %ld >>> ", l->size);
+  llist_iter(l, print_value);
+  printf("(end)\n");
+}
+
 bool find(void *data, void *search) {
   return to_int(data) == to_int(search);
 }
@@ -136,14 +148,6 @@ bool find(void *data, void *search) {
 int main() {
   struct llist list = init_llist();
   
-  /*
-  for (int i = 0; i < 20; ++i) {
-    int *val = malloc(sizeof(int));
-    *val = i;
-    struct lnode node = create_node(val);
-    llist_add(&list, &node);
-  }
-  */
   int v1 = 1;
   struct lnode n1 = create_node(&v1);
   llist_add(&list, &n1);
@@ -163,16 +167,15 @@ int main() {
   struct lnode n5 = create_node(&val);
   llist_add(&list, &n5);
 
-  llist_iter(&list, print_value);
-  printf("(end)\n");
+  llist_print(&list);
 
   struct lnode *deleted = llist_remove(&list, &n2);
   printf("Deleted item value: %d\n", to_int(deleted->data));
-  
-  llist_iter(&list, print_value);
-  printf("(end)\n");
+  llist_print(&list);
+  llist_remove_last(&list);
+  llist_print(&list);
 
-  int x = 2;
+  int x = 3;
   struct lnode *found = llist_find(&list, &x, find);
   if (found != NULL) {
     printf("Found item: %d\n", to_int(found->data));
