@@ -6,18 +6,18 @@
 
 #define MAX_BUCKETS_SIZE 64
 
-struct htable_item {
-  char *key;
-  void *data;
+struct htable_entry {
+  const char  *key;
+  const void *data;
 };
 
 struct htable {
-  struct llist *buckets;
+  struct llist **buckets;
   size_t size;
 };
 
-// djb2 hash algoritim
-int hash(struct htable *h, const char *key) {
+// djb2 hash algoritim - object to change
+int htable_hash(struct htable *h, const char *key) {
   unsigned long hash = 5381;
   int c;
 
@@ -35,39 +35,67 @@ struct htable htable_init() {
   return h;
 }
 
-void htable_insert(char *key, void *data) {
+struct htable_entry htable_entry_init(const char *key, const void *data) {
+  struct htable_entry entry;
+  entry.key = key;
+  entry.data = data;
 
+  return entry;
 }
 
-void *htable_get(char *key) {
+struct htable_entry *htable_entry_malloc(const char *key, const void *data) {
+  struct htable_entry *entry = malloc(sizeof(struct htable_entry));
+  entry->key = key;
+  entry->data = data;
 
+  return entry;
+}
+
+void htable_insert(struct htable *h, const char *key, const void *data) {
+  int idx = htable_hash(h, key);
+  struct htable_entry *entry = htable_entry_malloc(key, data);
+  struct llist *bucket = h->buckets[idx];
+
+  if (!bucket) {
+    struct llist *new_bucket = llist_malloc();
+    h->buckets[idx] = new_bucket;
+    bucket = h->buckets[idx];
+  }
+
+  struct lnode *node = lnode_malloc(entry);
+  llist_add(bucket, node);
+}
+
+bool filter_bucket(void *entry_ptr, void *key_ptr) {
+  struct htable_entry *entry =  (struct htable_entry *)entry_ptr;
+  char *key = (char *)key_ptr;
+
+  return strcmp(entry->key, key) == 0;
+}
+
+const void *htable_get(struct htable *h, char *key) {
+  int idx = htable_hash(h, key);
+  struct llist *bucket = h->buckets[idx];
+
+  if (!bucket) {
+    return NULL;
+  }
+
+  struct lnode *node = llist_find(bucket, key, filter_bucket);
+  return ((struct htable_entry *)node->data)->data;
 }
 
 void htable_destroy_buckets() {}
 
+// TODO: fix memory leaks
 int main() {
   struct htable h = htable_init();
-  const char* ct = "Content-Type";
-  printf("Index for %s: %d\n", ct, hash(&h, ct));
-
-  const char *hello = "Hello World";
-  printf("Index for %s: %d\n", hello, hash(&h, hello));
-
-  const char *hello2 = "Hello";
-  printf("Index for %s: %d\n", hello2, hash(&h, hello2));
-  const char *hello3 = "Hello World2";
-  printf("Index for %s: %d\n", hello3, hash(&h, hello3));
-
-  const char *auth = "Authorization";
-  printf("Index for %s: %d\n", auth, hash(&h, auth));
-
-  const char *conn = "Connection";
-  printf("Index for %s: %d\n", conn, hash(&h, conn));
-
-  const char *cache = "X-Cache";
-  printf("Index for %s: %d\n", cache, hash(&h, cache));
-
-  const char *cl = "Content-Length";
-  printf("Index for %s: %d\n", cl, hash(&h, cl));
-  return 0;
+  htable_insert(&h, "Content-Type", "json");
+  htable_insert(&h, "Content-Length", "299");
+  const void *result = htable_get(&h, "Content-Length");
+  if (!result) {
+    printf("Item not found\n");
+  } else {
+    printf("%s\n", (char *)result);
+  }
 }

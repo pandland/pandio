@@ -13,12 +13,21 @@ struct lnode {
   void *data;
 };
 
-struct llist init_llist() {
+struct llist llist_init() {
   struct llist l;
 
   l.head = NULL;
   l.tail = NULL;
   l.size = 0;
+
+  return l;
+}
+
+struct llist *llist_malloc() {
+  struct llist *l = malloc(sizeof(struct llist));
+  l->head = NULL;
+  l->tail = NULL;
+  l->size = 0;
 
   return l;
 }
@@ -110,10 +119,18 @@ struct lnode *llist_find(struct llist *l, void *search, llist_find_t find_fn) {
   return NULL;
 }
 
-struct lnode create_node(void *data) {
+struct lnode lnode_create(void *data) {
   struct lnode node;
   node.data = data;
   node.next = NULL;
+
+  return node;
+}
+
+struct lnode *lnode_malloc(void *data) {
+  struct lnode *node = malloc(sizeof(struct lnode));
+  node->data = data;
+  node->next = NULL;
 
   return node;
 }
