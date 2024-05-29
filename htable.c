@@ -82,6 +82,9 @@ const void *htable_get(struct htable *h, char *key) {
   }
 
   struct lnode *node = llist_find(bucket, key, filter_bucket);
+  if (!node) {
+    return NULL;
+  }
   return ((struct htable_entry *)node->data)->data;
 }
 
@@ -91,7 +94,8 @@ void htable_destroy_buckets() {}
 int main() {
   struct htable h = htable_init();
   htable_insert(&h, "Content-Type", "json");
-  htable_insert(&h, "Content-Length", "299");
+  //htable_insert(&h, "Content-Length", "299");
+  //htable_insert(&h, "Authorization", "Bearer ey2173713723jdsfj832.w942urw9f.231323");
   const void *result = htable_get(&h, "Content-Length");
   if (!result) {
     printf("Item not found\n");
