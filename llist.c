@@ -157,7 +157,3 @@ void llist_print(struct llist *l) {
   llist_iter(l, print_value);
   printf("(end)\n");
 }
-
-bool find(void *data, void *search) {
-  return to_int(data) == to_int(search);
-}

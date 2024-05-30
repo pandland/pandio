@@ -90,11 +90,29 @@ const void *htable_get(struct htable *h, char *key) {
 
 void htable_destroy_buckets() {}
 
+void htable_entry_print(void *entry_ptr) {
+  struct htable_entry *entry = (struct htable_entry*)entry_ptr;
+
+  printf("  \"%s\": (%p)\n", entry->key, entry->data);
+}
+
+void htable_print(struct htable *h) {
+  printf("{\n");
+  for (int i = 0; i < h->size; ++i) {
+    struct llist *bucket = h->buckets[i];
+    if (!bucket) {
+      continue;
+    }
+    llist_iter(bucket, htable_entry_print);
+  }
+  printf("}\n");
+}
+
 // TODO: fix memory leaks
 int main() {
   struct htable h = htable_init();
-  htable_insert(&h, "Content-Type", "json");
-  //htable_insert(&h, "Content-Length", "299");
+  //htable_insert(&h, "Content-Type", "json");
+  htable_insert(&h, "Content-Length", "299");
   //htable_insert(&h, "Authorization", "Bearer ey2173713723jdsfj832.w942urw9f.231323");
   const void *result = htable_get(&h, "Content-Length");
   if (!result) {
@@ -102,4 +120,5 @@ int main() {
   } else {
     printf("%s\n", (char *)result);
   }
+  htable_print(&h);
 }
