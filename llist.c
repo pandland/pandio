@@ -13,7 +13,7 @@ struct lnode {
   void *data;
 };
 
-struct llist llist_init() {
+static struct llist llist_init() {
   struct llist l;
 
   l.head = NULL;
@@ -23,7 +23,7 @@ struct llist llist_init() {
   return l;
 }
 
-struct llist *llist_malloc() {
+static struct llist *llist_malloc() {
   struct llist *l = malloc(sizeof(struct llist));
   l->head = NULL;
   l->tail = NULL;
@@ -32,12 +32,29 @@ struct llist *llist_malloc() {
   return l;
 }
 
-bool llist_empty(struct llist *l) {
+static struct lnode lnode_create(void *data) {
+  struct lnode node;
+  node.data = data;
+  node.next = NULL;
+
+  return node;
+}
+
+static struct lnode *lnode_malloc(void *data) {
+  struct lnode *node = malloc(sizeof(struct lnode));
+  node->data = data;
+  node->next = NULL;
+
+  return node;
+}
+
+static bool llist_empty(struct llist *l) {
   return l->head == NULL;
 }
 
-void llist_add(struct llist *l, struct lnode *node) {
-  node->next = NULL;
+static struct lnode *llist_add(struct llist *l, void *data) {
+  struct lnode *node = lnode_malloc(data);
+
   if (llist_empty(l)) {
     l->head = node;
   } else {
@@ -46,9 +63,11 @@ void llist_add(struct llist *l, struct lnode *node) {
 
   l->tail = node;
   l->size++;
+
+  return node;
 }
 
-struct lnode *llist_remove_last(struct llist *l) {
+static void *llist_remove_last(struct llist *l) {
   if (l->head == NULL || l->tail == NULL) {
     return NULL;
   }
@@ -73,10 +92,13 @@ struct lnode *llist_remove_last(struct llist *l) {
   l->tail = it;
   l->size--;
 
-  return node;
+  void *data = node->data;
+  free(node);
+
+  return data;
 }
 
-struct lnode *llist_remove(struct llist *l, struct lnode *node) {
+static void *llist_remove(struct llist *l, struct lnode *node) {
   if (l->head == NULL) {
     return NULL;
   }
@@ -85,7 +107,10 @@ struct lnode *llist_remove(struct llist *l, struct lnode *node) {
     l->head = NULL;
     l->tail = NULL;
     l->size = 0;
-    return node;
+    void *data = node->data;
+    free(node);
+
+    return data;
   }
 
   // O(n) removal
@@ -94,19 +119,19 @@ struct lnode *llist_remove(struct llist *l, struct lnode *node) {
   }
 
   // O(1) removal
-  void *old = node->data;
+  void *data = node->data;
   struct lnode *deleted = node->next;
   node->data = deleted->data;
   node->next = deleted->next;
 
-  deleted->data = old;
+  free(deleted);
   l->size--;
-  return deleted;
+  return data;
 }
 
 typedef bool llist_find_t(void* data, void *search);
 
-struct lnode *llist_find(struct llist *l, void *search, llist_find_t find_fn) {
+static struct lnode *llist_find(struct llist *l, void *search, llist_find_t find_fn) {
   struct lnode *node = l->head;
   while (node != NULL) {
     if (find_fn(node->data, search)) {
@@ -119,26 +144,39 @@ struct lnode *llist_find(struct llist *l, void *search, llist_find_t find_fn) {
   return NULL;
 }
 
-struct lnode lnode_create(void *data) {
-  struct lnode node;
-  node.data = data;
-  node.next = NULL;
+static void *llist_find_data(struct llist *l, void *search, llist_find_t find_fn) {
+  struct lnode *node = llist_find(l, search, find_fn);
+  if (node != NULL) {
+    return node->data;
+  } 
 
-  return node;
+  return NULL;
 }
 
-struct lnode *lnode_malloc(void *data) {
-  struct lnode *node = malloc(sizeof(struct lnode));
-  node->data = data;
-  node->next = NULL;
+typedef void free_callback_t(void*, void*);
 
-  return node;
+// destroy nodes
+static void llist_destroy(struct llist *l, free_callback_t callback, void *ctx) {
+  struct lnode *current = l->head;
+  while (current != NULL) {
+    struct lnode *next = current->next;
+    if (callback != NULL)
+      callback(current->data, ctx);
+
+    free(current);
+    current = next;
+  }
+}
+
+static void llist_free(struct llist *l, free_callback_t callback, void *ctx) {
+  llist_destroy(l, callback, ctx);
+  free(l);
 }
 
 // printing purpose only:
 typedef void llist_cb(void*);
 
-void llist_iter(struct llist *l, llist_cb cb) {
+void llist_foreach(struct llist *l, llist_cb cb) {
   struct lnode *node = l->head;
   while (node != NULL) {
     cb(node->data);
@@ -154,6 +192,6 @@ void print_value(void *data) {
 
 void llist_print(struct llist *l) {
   printf("Size: %ld >>> ", l->size);
-  llist_iter(l, print_value);
+  llist_foreach(l, print_value);
   printf("(end)\n");
 }
