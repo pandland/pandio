@@ -17,7 +17,6 @@
 
 ```sh
 make
-
 ./build/server
 ```
 

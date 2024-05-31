@@ -15,4 +15,4 @@ $(BUILD_DIR)/%.o:$(SRC_DIR)/%.c
 	$(CC) -c $< -o $@
 
 clean:
-	@rm -rf ./build
+	@rm -rf $(BUILD_DIR)
