@@ -16,7 +16,9 @@
 ## Building and running
 
 ```sh
-chmod +x build.sh && ./build.sh --run
+make
+
+./build/server
 ```
 
 ## Benchmark

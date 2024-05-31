@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <stdbool.h>
 
 #define to_int(void_x) *(int*)(void_x)
@@ -188,44 +187,4 @@ void print_heap(struct heap *h) {
   }
 
   print_heap_until(h->root, 0);
-}
-
-/* ========= TESTING HEAP DS ========== */
-
-int test_compare(struct heap_node *parent, struct heap_node *child) {
-  int parent_value = to_int(parent->data);
-  int child_value = to_int(child->data);
-  if (parent_value > child_value) {
-    return 0;
-  }
-
-  return 1;
-}
-
-int main() {
-  printf("Init heap...\n");
-  struct heap h = init_heap(test_compare);
-  printf("Creating heap nodes...\n");
-
-  struct heap_node nodes[1000];
-
-  for (int i = 0; i < 5; ++i) {
-    int *val = malloc(sizeof(int));
-    *val = 1024 - i;
-    nodes[i] = create_heap_node(val);
-    heap_insert(&h, &(nodes[i]));
-  }
-
-  int min = -1000;
-  struct heap_node node = create_heap_node(&min);
-  heap_insert(&h, &node);
-
-  //heap_pop(&h);
-  //heap_pop(&h);
-  print_heap(&h);
-  struct heap_node *popped_node = heap_pop(&h);
-  printf("Popped item: %d\n", to_int(popped_node->data));
-
-  printf("Printing heap nodes. Heap size: %ld\n", h.size);
-  print_heap(&h);
 }

@@ -1,8 +1,6 @@
-#include <stdio.h>
 #include <string.h>
-
-#include "def.c"
-#include "llist.c"
+#include "def.h"
+#include "llist.h"
 
 #define HTABLE_CAPACITY 64
 
@@ -127,19 +125,3 @@ void htable_print(struct htable *h) {
   printf("}\n");
 }
 
-int main() {
-  struct htable *h = htable_alloc();
-  htable_insert(h, "Content-Type", "json");
-  htable_insert(h, "Content-Length", "299");
-  htable_insert(h, "Authorization", "Bearer ey2173713723jdsfj832.w942urw9f.231323");
-
-  char *key = "Content-Length";
-  const char *result = htable_get(h, key);
-  if (!result) {
-    printf("Item not found\n");
-  } else {
-    printf("\"%s\": \"%s\" \n", key, result);
-  }
-  htable_print(h);
-  htable_free(h);
-}

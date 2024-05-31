@@ -1,6 +1,4 @@
-#include <sys/epoll.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include "events.h"
 
 int init_epoll() {
   int epoll_fd = epoll_create1(0);

@@ -1,4 +1,4 @@
-#include "def.c"
+#include "def.h"
 
 typedef bool llist_find_t(void *data, void *search);
 

@@ -1,16 +1,4 @@
-#pragma once
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define PRETTY_LOGGER 1
-
-enum {
-  RED = 41,
-  GREEN = 42,
-  YELLOW = 43,
-} typedef Color;
+#include "logger.h"
 
 char *colorful(const char *str, const Color color) {
   if (!PRETTY_LOGGER) {

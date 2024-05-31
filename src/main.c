@@ -1,8 +1,8 @@
 #include <stdbool.h>
 
-#include "socket.c"
-#include "events.c"
-#include "logger.c"
+#include "socket.h"
+#include "events.h"
+#include "logger.h"
 
 #define DEFAULT_PORT 8080
 #define DEFAULT_WORKERS 4

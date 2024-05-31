@@ -1,9 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <errno.h>
+#include "socket.h"
 
 void make_nonblocking(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);
