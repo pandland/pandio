@@ -1,6 +1,9 @@
-#include <stdio.h>
+#include <criterion/criterion.h>
 
-int main() {
-  printf("Hello World\n");
-  return 0;
+Test(misc, failing) {
+    cr_assert(0);
+}
+
+Test(misc, passing) {
+    cr_assert(1);
 }

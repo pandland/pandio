@@ -16,8 +16,7 @@
 ## Building and running
 
 ```sh
-make
-./build/server
+make && ./build/server
 ```
 
 ## Benchmark
