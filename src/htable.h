@@ -1,5 +1,7 @@
+#pragma once
+
 #include <string.h>
-#include "def.h"
+#include "common.h"
 #include "llist.h"
 
 #define HTABLE_CAPACITY 64

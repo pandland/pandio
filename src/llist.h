@@ -1,4 +1,6 @@
-#include "def.h"
+#pragma once
+
+#include "common.h"
 
 typedef bool llist_find_t(void *data, void *search);
 
