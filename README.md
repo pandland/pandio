@@ -19,6 +19,23 @@
 make && ./build/server
 ```
 
+### Running tests
+
+Project uses [Criterion](https://github.com/Snaipe/Criterion) for unit testing:
+
+```sh
+# Make sure you have installed criterion on your system
+
+# Ubuntu
+apt-get install libcriterion-dev
+# Arch Linux (AUR)
+pacaur -S criterion
+
+# Running tests:
+make test
+```
+
+
 ## Benchmark
 
 > ⚠️ There is no HTTP request parsing yet.
