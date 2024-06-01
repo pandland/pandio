@@ -14,6 +14,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: prepare
-      run: apt-get install libcriterion-dev
+      run: sudo apt-get update -y && sudo apt-get install -y libcriterion-dev 
     - name: run test
       run: make test
