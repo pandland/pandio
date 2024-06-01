@@ -32,3 +32,4 @@ $(TEST_DIR)/build/%.o:$(TEST_DIR)/%.c
 
 clean:
 	@rm -rf $(BUILD_DIR)
+	@rm -rf $(TEST_BUILD_DIR)

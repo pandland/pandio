@@ -19,7 +19,7 @@ struct htable {
 };
 
 // djb2 hash algorithm - object to change
-int htable_hash(struct htable *h, char *key) {
+static int htable_hash(struct htable *h, char *key) {
     unsigned long hash = 5381;
     int c;
 
@@ -53,7 +53,7 @@ static struct htable_entry *htable_create_entry(char *key, char *value) {
     return entry;
 }
 
-void htable_insert(struct htable *h, char *key, char *value) {
+static void htable_insert(struct htable *h, char *key, char *value) {
     int idx = htable_hash(h, key);
     struct htable_entry *entry = htable_create_entry(key, value);
     struct llist *bucket = h->buckets[idx];
@@ -71,14 +71,14 @@ static struct htable_entry *htable_get_entry(struct llist_node *node) {
   return container_of(node, struct htable_entry, lnode);
 }
 
-bool htable_filter_bucket(void *entry_ptr, void *key_ptr) {
+static bool htable_filter_bucket(void *entry_ptr, void *key_ptr) {
     struct htable_entry *entry = htable_get_entry(entry_ptr);
     char *key = (char *)key_ptr;
 
     return strcmp(entry->key, key) == 0;
 }
 
-const void *htable_get(struct htable *h, char *key) {
+static const void *htable_get(struct htable *h, char *key) {
     int idx = htable_hash(h, key);
     struct llist *bucket = h->buckets[idx];
 
@@ -95,7 +95,7 @@ const void *htable_get(struct htable *h, char *key) {
     return entry->value;
 }
 
-void htable_free(struct htable *h) {
+static void htable_free(struct htable *h) {
     for (size_t i = 0; i < h->capacity; ++i) {
         struct llist *bucket = h->buckets[i];
         if (bucket) {
@@ -110,13 +110,13 @@ void htable_free(struct htable *h) {
     free(h);
 }
 
-void htable_entry_print(void *node) {
+static void htable_entry_print(void *node) {
   struct htable_entry *entry = htable_get_entry(node);
 
   printf("  \"%s\": (%p),\n", entry->key, entry->value);
 }
 
-void htable_print(struct htable *h) {
+static void htable_print(struct htable *h) {
   printf("{\n");
   for (int i = 0; i < h->capacity; ++i) {
     struct llist *bucket = h->buckets[i];

@@ -30,7 +30,7 @@ static struct llist llist_create() {
     return l;
 }
 
-void llist_init_node(struct llist_node *node) {
+static void llist_init_node(struct llist_node *node) {
     node->next = NULL;
 }
 
@@ -38,7 +38,7 @@ static bool llist_empty(struct llist *l) {
     return l->head == NULL;
 }
 
-void llist_add(struct llist *l, struct llist_node *node) {
+static void llist_add(struct llist *l, struct llist_node *node) {
     if (llist_empty(l)) {
         l->head = node;
     } else {
@@ -111,7 +111,7 @@ static struct llist_node *llist_find(struct llist *l, void *search, llist_find_t
 
 typedef void llist_cb(void *);
 
-void llist_foreach(struct llist *l, llist_cb cb) {
+static void llist_foreach(struct llist *l, llist_cb cb) {
     struct llist_node *node = l->head;
     while (node != NULL) {
         cb(node);
@@ -122,6 +122,6 @@ void llist_foreach(struct llist *l, llist_cb cb) {
 #define llist_loop(list) \
   for (struct llist_node *node = list->head; node != NULL; node = node->next)
 
-void llist_free(struct llist *l) {
+static void llist_free(struct llist *l) {
   free(l);
 }
