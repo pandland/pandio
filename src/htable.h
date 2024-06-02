@@ -127,4 +127,3 @@ static void htable_print(struct htable *h) {
   }
   printf("}\n");
 }
-

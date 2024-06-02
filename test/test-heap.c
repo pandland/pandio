@@ -1,0 +1,82 @@
+#include <criterion/criterion.h>
+#include <stdio.h>
+
+#include "../src/heap.h"
+
+struct ttimer {
+  int timeout;
+  struct heap_node hnode;
+} typedef ttimer_t;
+
+int heap_comparator(struct heap_node *a, struct heap_node *b) {
+  ttimer_t *parent = container_of(a, ttimer_t, hnode);
+  ttimer_t *child = container_of(b, ttimer_t, hnode);
+  //printf("%d vs %d\n", parent->timeout, child->timeout);
+  if (parent->timeout > child->timeout) {
+    return 0;
+  }
+
+  return 1;
+}
+
+ttimer_t init_timer(int timeout) {
+  ttimer_t timer;
+  timer.timeout = timeout;
+  heap_init_node(&timer.hnode);
+
+  return timer;
+}
+
+void print_heap_until(struct heap_node *node, int space) {
+    if (node == NULL) {
+      return;
+    }
+    int count = 20;
+    space += count;
+    print_heap_until(node->right, space);
+    printf("\n");
+    for (int i = count; i < space; i++)
+        printf(" ");
+    ttimer_t *timer = container_of(node, ttimer_t, hnode);
+    printf("%d\n", timer->timeout);
+    print_heap_until(node->left, space);
+}
+
+void print_heap(struct heap *h) {
+  if (h->root == NULL) {
+    return;
+  }
+  print_heap_until(h->root, 0);
+}
+
+Test(heap, insert) {
+  struct heap h = heap_init(heap_comparator);
+  
+  ttimer_t timer1 = init_timer(200);
+  ttimer_t timer2 = init_timer(10);
+  ttimer_t timer3 = init_timer(60);
+  ttimer_t timer4 = init_timer(5);
+  ttimer_t timer5 = init_timer(2);
+  ttimer_t timer6 = init_timer(40);
+
+  heap_insert(&h, &timer1.hnode);
+  heap_insert(&h, &timer2.hnode);
+  heap_insert(&h, &timer3.hnode);
+  heap_insert(&h, &timer4.hnode);
+  heap_insert(&h, &timer5.hnode);
+  heap_insert(&h, &timer6.hnode);
+  //print_heap(&h);
+  //printf("============================================================\n");
+  struct heap_node *min_node = heap_pop(&h);
+  ttimer_t *min_timer = container_of(min_node, ttimer_t, hnode);
+
+  cr_expect(min_timer->timeout == 2, "Expected 2, got %d", min_timer->timeout);
+  //printf("============================================================\n");
+  //print_heap(&h);
+  min_node = heap_pop(&h);
+  min_timer = container_of(min_node, ttimer_t, hnode);
+  cr_expect(min_timer->timeout == 5, "Expected 5, got %d", min_timer->timeout);
+
+  //printf("============================================================\n");
+  //print_heap(&h);
+}
