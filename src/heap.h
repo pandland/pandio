@@ -165,13 +165,13 @@ static void heap_insert(struct heap *h, struct heap_node *newnode) {
   heapify_up(h, newnode);
 }
 
-static struct heap_node *heap_pop(struct heap *h) {
+static struct heap_node *heap_remove(struct heap *h, struct heap_node *rnode) {
   if (h->root == NULL) {
       return NULL;
   }
 
   struct heap_node *node = h->root;
-  struct heap_node *root = h->root;
+  struct heap_node *root = rnode;
 
   unsigned n = h->size;
   unsigned mask = 0;
@@ -196,7 +196,11 @@ static struct heap_node *heap_pop(struct heap *h) {
   }
 
   // Swap the root with the last node
-  swap_arbitrary_nodes(h, node, root);
+  if (node->parent == rnode) {
+    swap_nodes(h, root, node);
+  } else {
+    swap_arbitrary_nodes(h, node, root);
+  }
 
   // After the swap, the last node is now the new root and needs to be detached
   if (root->parent->left == root) {
@@ -207,6 +211,7 @@ static struct heap_node *heap_pop(struct heap *h) {
 
   h->size--;
 
+  struct heap_node *last = node;
   node = root;
   root = h->root;
 
@@ -227,5 +232,11 @@ static struct heap_node *heap_pop(struct heap *h) {
     }
   }
 
+  heapify_up(h, last);
+
   return node;
 }
+
+static struct heap_node *heap_pop(struct heap *h) {
+  return heap_remove(h, h->root);
+} 

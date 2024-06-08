@@ -1,4 +1,5 @@
 #include <criterion/criterion.h>
+#include <unistd.h>
 #include <stdio.h>
 
 #include "../src/heap.h"
@@ -49,7 +50,7 @@ void print_heap(struct heap *h) {
   print_heap_until(h->root, 0);
 }
 
-Test(heap, insert) {
+Test(heap, remove) {
   struct heap h = heap_init(heap_comparator);
   
   ttimer_t timer1 = init_timer(200);
@@ -69,14 +70,19 @@ Test(heap, insert) {
   //printf("============================================================\n");
   struct heap_node *min_node = heap_pop(&h);
   ttimer_t *min_timer = container_of(min_node, ttimer_t, hnode);
-
   cr_expect(min_timer->timeout == 2, "Expected 2, got %d", min_timer->timeout);
   //printf("============================================================\n");
   //print_heap(&h);
   min_node = heap_pop(&h);
   min_timer = container_of(min_node, ttimer_t, hnode);
   cr_expect(min_timer->timeout == 5, "Expected 5, got %d", min_timer->timeout);
-
   //printf("============================================================\n");
   //print_heap(&h);
+  //heap_remove(&h, &timer6.hnode);
+  struct heap_node *mid_node = heap_remove(&h, &timer3.hnode);
+  ttimer_t *mid_timer = container_of(mid_node, ttimer_t, hnode);
+  cr_expect(mid_timer->timeout == 60, "Expected 60, got %d", mid_timer->timeout);
+
+  printf("============================================================\n");
+  print_heap(&h);
 }
