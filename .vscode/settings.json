@@ -1,5 +1,8 @@
 {
   "files.associations": {
-    "*.h": "c"
+    "*.css": "css",
+    "*.h": "c",
+    "cstdlib": "c",
+    "complex": "c"
   }
 }

@@ -1,18 +1,22 @@
 #pragma once
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-#define PRETTY_LOGGER 1
+#ifndef PRETTY_LOG
+#define PRETTY_LOG 1
+#endif
 
-enum {
-  RED = 41,
-  GREEN = 42,
-  YELLOW = 43,
-} typedef Color;
+#define RESET_COLOR  "\x1b[0m"
+#define RED_COLOR    "\x1b[31m"
+#define YELLOW_COLOR "\x1b[33m"
+#define GREEN_COLOR  "\x1b[32m"
 
-char *colorful(const char*, const Color);
-void die(const char*);
-void warn(const char*);
-void info(const char*);
+#if PRETTY_LOG
+    #define log_info(fmt, ...)  printf(GREEN_COLOR "[INFO] " RESET_COLOR fmt "\n", ##__VA_ARGS__)
+    #define log_warn(fmt, ...)  printf(YELLOW_COLOR "[WARN] " RESET_COLOR fmt "\n", ##__VA_ARGS__)
+    #define log_err(fmt, ...)  fprintf(stderr, RED_COLOR "[ERROR] " RESET_COLOR  fmt "\n", ##__VA_ARGS__)
+#else
+    #define log_info(fmt, ...)  printf("[INFO] " fmt "\n", ##__VA_ARGS__)
+    #define log_warn(fmt, ...)  printf("[WARN] " fmt "\n", ##__VA_ARGS__)
+    #define log_err(fmt, ...) fprintf(stderr, "[ERROR] " fmt "\n", ##__VA_ARGS__)
+#endif

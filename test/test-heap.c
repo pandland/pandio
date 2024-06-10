@@ -59,6 +59,12 @@ Test(heap, remove) {
   ttimer_t timer4 = init_timer(5);
   ttimer_t timer5 = init_timer(2);
   ttimer_t timer6 = init_timer(40);
+  ttimer_t timer7 = init_timer(2200);
+  ttimer_t timer8 = init_timer(33);
+  ttimer_t timer9 = init_timer(6);
+  ttimer_t timer10 = init_timer(232);
+  ttimer_t timer11 = init_timer(241);
+  ttimer_t timer12 = init_timer(133);
 
   heap_insert(&h, &timer1.hnode);
   heap_insert(&h, &timer2.hnode);
@@ -66,6 +72,13 @@ Test(heap, remove) {
   heap_insert(&h, &timer4.hnode);
   heap_insert(&h, &timer5.hnode);
   heap_insert(&h, &timer6.hnode);
+  heap_insert(&h, &timer7.hnode);
+  heap_insert(&h, &timer8.hnode);
+  heap_insert(&h, &timer9.hnode);
+  heap_insert(&h, &timer10.hnode);
+  heap_insert(&h, &timer11.hnode);
+  heap_insert(&h, &timer12.hnode);
+
   //print_heap(&h);
   //printf("============================================================\n");
   struct heap_node *min_node = heap_pop(&h);
@@ -79,9 +92,9 @@ Test(heap, remove) {
   //printf("============================================================\n");
   //print_heap(&h);
   //heap_remove(&h, &timer6.hnode);
-  struct heap_node *mid_node = heap_remove(&h, &timer3.hnode);
+  struct heap_node *mid_node = heap_remove(&h, &timer8.hnode);
   ttimer_t *mid_timer = container_of(mid_node, ttimer_t, hnode);
-  cr_expect(mid_timer->timeout == 60, "Expected 60, got %d", mid_timer->timeout);
+  cr_expect(mid_timer->timeout == timer8.timeout, "Expected %d, got %d", timer8.timeout, mid_timer->timeout);
 
   printf("============================================================\n");
   print_heap(&h);

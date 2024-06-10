@@ -1,8 +1,9 @@
 #include <stdbool.h>
+#include <stdlib.h>
 
-#include "socket.h"
-#include "events.h"
 #include "logger.h"
+#include "ev.h"
+#include "tcp.h"
 
 #define DEFAULT_PORT 8080
 #define DEFAULT_WORKERS 4
@@ -10,51 +11,11 @@
 #define MAX_EVENTS 128
 #define BUFFER_SIZE 1024
 
-void handle_connection(int fd) {
-    char buffer[BUFFER_SIZE];
-    int bytes_read = recv(fd, buffer, BUFFER_SIZE, 0);
-    if (bytes_read == -1) {
-        perror("read");
-        exit(EXIT_FAILURE);
-    }
-
-    if (bytes_read == 0) {
-        close(fd);
-        return;
-    }
-
-    buffer[bytes_read] = '\0';
-    //printf("Received: %s\n", buffer);
-
-    const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n\r\n<h1>Hello world!</h1>\n";
-    send(fd, response, strlen(response), 0);
-    close(fd);
-}
-
-void worker(int listener_fd) {
-    int epoll_fd = init_epoll();
-    add_to_epoll(epoll_fd, listener_fd);
-    struct epoll_event events[MAX_EVENTS];
-
-    while(true) {
-        int events_count = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
-        if (events_count == -1) {
-            perror("epoll_wait");
-            exit(EXIT_FAILURE);
-        }
-
-        for (int i = 0; i < events_count; i++) {
-            if (events[i].data.fd == listener_fd) {
-                int client_fd = accept_peer(listener_fd);
-                if (client_fd == -1) {
-                    continue;
-                }
-                add_to_epoll(epoll_fd, client_fd);
-            } else {
-                handle_connection(events[i].data.fd);
-            }
-        }
-    }
+void worker(socket_t lfd) {
+    ev_loop_t loop = ev_loop_init();
+    tcp_listener_t *listener = tcp_init_listener(&loop, lfd);
+    ev_register(&loop, lfd, &listener->ev);
+    ev_loop_run(&loop);
 }
 
 int getenv_int(const char *name, int default_value) {
@@ -68,19 +29,19 @@ int getenv_int(const char *name, int default_value) {
 int main() {
     int port = getenv_int("PORT", DEFAULT_PORT);
     int workers = getenv_int("WORKERS", DEFAULT_WORKERS);
-    int listener_fd = init_listener(port);
+
+    socket_t lfd = tcp_listen(port);
 
     for (int i = 0; i < workers; i++) {
         int pid = fork();
         if (pid == 0) {
-            info("Worker started");
-            worker(listener_fd);
+            log_info("Worker #%d with pid %d started", i + 1, getpid());
+            worker(lfd);
             exit(EXIT_SUCCESS);
         }
     }
 
-    info("HTTP server started");
-    printf("Listening on port %d\n", port);
+    log_info("Listening on port %d", port);
 
     while(true) {
         // waiting for signals etc...
