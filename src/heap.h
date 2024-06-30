@@ -16,6 +16,8 @@ struct heap {
   heap_comparator_t compare_fn;
 };
 
+typedef struct heap heap_t;
+
 static struct heap heap_init(heap_comparator_t compare_fn) {
   struct heap h;
   h.root = NULL;

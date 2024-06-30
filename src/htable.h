@@ -18,6 +18,8 @@ struct htable {
     size_t capacity;
 };
 
+typedef struct htable htable_t;
+
 // djb2 hash algorithm - object to change
 static int htable_hash(struct htable *h, char *key) {
     unsigned long hash = 5381;
