@@ -4,6 +4,8 @@
 #include "http_request.h"
 #include "stdio.h"
 
+#define MAX_HEADERS 64
+
 enum HTTP_PARSER_STATE {
   METHOD,
   URL,
@@ -25,11 +27,23 @@ enum HTTP_PARSER_STATE {
   if (*(buf++) != ch) {     \
     SET_ERROR();         \
     return NULL;        \
-  }                     \
+  }
 
+#define SET_ERRNO(no) \
+  if (parser.state == ERROR) \
+    parser.err = no
+
+enum HTTP_PARSER_ERRNO {
+  UNKNOWN = 1,
+  INVALID_METHOD,
+  INVALID_PATH,
+  INVALID_VERSION,
+  INVALID_HEADER
+};
 
 typedef struct http_parser {
   enum HTTP_PARSER_STATE state;
+  enum HTTP_PARSER_ERRNO err;
   http_request_t *req;
 } http_parser_t;
 
@@ -114,27 +128,31 @@ static char *parse_version(http_parser_t *parser, char *buf) {
   return buf;
 }
 
+/* returns non-zero value on error */
 static int http_parse(http_request_t *req, char *buf) {
-  http_parser_t parser = { .state = METHOD, .req = req };
+  http_parser_t parser = { .state = METHOD, .req = req, .err = UNKNOWN };
 
   while (*buf) {
     //printf("buffer value: %s\n", buf);
     switch (parser.state) {
       case METHOD:
         buf = parse_method(&parser, buf);
+        SET_ERRNO(INVALID_METHOD);
         break;
       case URL:
         buf = parse_url(&parser, buf);
+        SET_ERRNO(INVALID_PATH);
         break;
       case VERSION:
         buf = parse_version(&parser, buf);
+        SET_ERRNO(INVALID_VERSION);
         break;
       case HEADERS_START:
         return 0;
     }
 
     if (parser.state == ERROR) {
-      return -1;
+      return parser.err;
     }
   }
 
