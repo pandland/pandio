@@ -96,6 +96,6 @@ Test(heap, remove) {
   ttimer_t *mid_timer = container_of(mid_node, ttimer_t, hnode);
   cr_expect(mid_timer->timeout == timer8.timeout, "Expected %d, got %d", timer8.timeout, mid_timer->timeout);
 
-  printf("============================================================\n");
-  print_heap(&h);
+  //printf("============================================================\n");
+  //print_heap(&h);
 }

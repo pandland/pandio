@@ -5,7 +5,7 @@
 
 Test(http_parser, parse) {
   http_request_t *req = http_request_alloc();
-  int parse_status = http_parse(req, "DELETE /index.html HTTP/1.0");
+  int parse_status = http_parse(req, "DELETE /index.html HTTP/1.1\r\n");
 
   cr_expect_eq(parse_status, 0);
   cr_expect_eq(req->method, DELETE);

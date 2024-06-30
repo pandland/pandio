@@ -9,9 +9,9 @@
 - With these techniques I achieved a decent level of concurrency.
 
 ## TO-DO
-- [x] Non-blocking architecture for handling connections
-- [ ] Parse HTTP requests
-- [ ] Handling keep-alive requests and timeouts
+- [x] Non-blocking architecture for handling connections.
+- [ ] Parse HTTP requests using finite state machine.
+- [ ] Handling keep-alive requests and timeouts.
 
 ## Building and running
 
