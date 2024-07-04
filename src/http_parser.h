@@ -3,10 +3,11 @@
 #include "ctype.h"
 #include "http_request.h"
 #include "stdio.h"
+#include "slice.h"
 
 #define MAX_HEADERS 64
 
-enum HTTP_PARSER_STATE {
+enum http_parser_state {
   METHOD,
   URL,
   VERSION,
@@ -33,7 +34,7 @@ enum HTTP_PARSER_STATE {
   if (parser.state == ERROR) \
     parser.err = no
 
-enum HTTP_PARSER_ERRNO {
+enum http_parser_errno {
   UNKNOWN = 1,
   INVALID_METHOD,
   INVALID_PATH,
@@ -42,9 +43,10 @@ enum HTTP_PARSER_ERRNO {
 };
 
 typedef struct http_parser {
-  enum HTTP_PARSER_STATE state;
-  enum HTTP_PARSER_ERRNO err;
+  enum http_parser_state state;
+  enum http_parser_errno err;
   http_request_t *req;
+  slice_t token;
 } http_parser_t;
 
 static char *parse_method(http_parser_t *parser, char *buf) {
@@ -86,6 +88,7 @@ static char *parse_method(http_parser_t *parser, char *buf) {
       break;
     default:
       SET_ERROR();
+      return NULL;
   }
 
   EXPECT_CHAR(' ');
@@ -128,6 +131,39 @@ static char *parse_version(http_parser_t *parser, char *buf) {
   return buf;
 }
 
+static char *parse_header_name(http_parser_t *parser, char *buf) {
+  if (buf == NULL) {
+    fprintf(stderr, "Error: NULL buffer\n");
+    return NULL;
+  }
+
+  char *header_start = buf;
+  size_t header_size = 0;
+
+  while (*buf) {
+    if (*buf == ':') {
+      break;
+    }
+    header_size++;
+    buf++;
+  }
+
+  parser->state = HEADER_VALUE;
+
+  parser->token.start = header_start;
+  parser->token.size = header_size;
+
+  // TODO: REMOVE THIS
+  char *header_name = slice_to_cstr(parser->token);
+  printf("Header name: %s\n", header_name);
+  free(header_name);
+
+  EXPECT_CHAR(':');
+  EXPECT_CHAR(' ');
+
+  return buf;
+}
+
 /* returns non-zero value on error */
 static int http_parse(http_request_t *req, char *buf) {
   http_parser_t parser = { .state = METHOD, .req = req, .err = UNKNOWN };
@@ -148,6 +184,13 @@ static int http_parse(http_request_t *req, char *buf) {
         SET_ERRNO(INVALID_VERSION);
         break;
       case HEADERS_START:
+        parser.state = HEADER_NAME;
+        break;
+      case HEADER_NAME:
+        buf = parse_header_name(&parser, buf);
+        SET_ERRNO(INVALID_HEADER);
+        break;
+      case HEADER_VALUE:
         return 0;
     }
 

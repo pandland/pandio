@@ -55,7 +55,8 @@ static struct htable_entry *htable_create_entry(char *key, char *value) {
     return entry;
 }
 
-static void htable_insert(struct htable *h, char *key, char *value) {
+static void htable_insert(struct htable *h, const char *_key, char *value) {
+    char *key = strdup(_key);
     int idx = htable_hash(h, key);
     struct htable_entry *entry = htable_create_entry(key, value);
     struct llist *bucket = h->buckets[idx];
@@ -103,6 +104,8 @@ static void htable_free(struct htable *h) {
         if (bucket) {
             llist_loop(bucket) {
               struct htable_entry *entry = htable_get_entry(node);
+              free(entry->key);
+              // TODO: provide some callback to decide what to do with data pointer
               free(entry);
             }
             llist_free(bucket);
