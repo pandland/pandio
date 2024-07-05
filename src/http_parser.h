@@ -194,6 +194,14 @@ static char *parse_header_value(http_parser_t *parser, char *buf) {
   EXPECT_CHAR(CR);
   EXPECT_CHAR(LF);
 
+  if (*buf == CR) {
+    EXPECT_CHAR(CR);
+    EXPECT_CHAR(LF);
+    parser->state = BODY_START;
+  } else {
+    parser->state = HEADER_NAME;
+  }
+
   return buf;
 }
 
@@ -231,8 +239,9 @@ static int http_parse(http_request_t *req, char *buf) {
         char *header_value = slice_to_cstr(parser.header_value);
 
         htable_insert(&parser.req->headers, header_name, header_value);
-        //htable_print(&parser.req->headers);
 
+        break;
+      case BODY_START:
         return 0;
     }
 
