@@ -46,7 +46,8 @@ typedef struct http_parser {
   enum http_parser_state state;
   enum http_parser_errno err;
   http_request_t *req;
-  slice_t token;
+  slice_t header_name;
+  slice_t header_value;
 } http_parser_t;
 
 static char *parse_method(http_parser_t *parser, char *buf) {
@@ -86,6 +87,15 @@ static char *parse_method(http_parser_t *parser, char *buf) {
       EXPECT_CHAR('E');
       parser->req->method = DELETE;
       break;
+    case 'O':
+      EXPECT_CHAR('O');
+      EXPECT_CHAR('P');
+      EXPECT_CHAR('T');
+      EXPECT_CHAR('I');
+      EXPECT_CHAR('O');
+      EXPECT_CHAR('N');
+      EXPECT_CHAR('S');
+      parser->req->method = OPTIONS;
     default:
       SET_ERROR();
       return NULL;
@@ -150,16 +160,39 @@ static char *parse_header_name(http_parser_t *parser, char *buf) {
 
   parser->state = HEADER_VALUE;
 
-  parser->token.start = header_start;
-  parser->token.size = header_size;
-
-  // TODO: REMOVE THIS
-  char *header_name = slice_to_cstr(parser->token);
-  printf("Header name: %s\n", header_name);
-  free(header_name);
+  parser->header_name.start = header_start;
+  parser->header_name.size = header_size;
 
   EXPECT_CHAR(':');
   EXPECT_CHAR(' ');
+
+  return buf;
+}
+
+static char *parse_header_value(http_parser_t *parser, char *buf) {
+  if (buf == NULL) {
+    fprintf(stderr, "Error: NULL buffer\n");
+    return NULL;
+  }
+
+  char *header_start = buf;
+  size_t header_size = 0;
+
+  while (*buf) {
+    if (*buf == CR) {
+      break;
+    }
+    header_size++;
+    buf++;
+  }
+
+  parser->state = HEADER_VALUE;
+
+  parser->header_value.start = header_start;
+  parser->header_value.size = header_size;
+
+  EXPECT_CHAR(CR);
+  EXPECT_CHAR(LF);
 
   return buf;
 }
@@ -191,6 +224,15 @@ static int http_parse(http_request_t *req, char *buf) {
         SET_ERRNO(INVALID_HEADER);
         break;
       case HEADER_VALUE:
+        buf = parse_header_value(&parser, buf);
+        SET_ERRNO(INVALID_HEADER);
+
+        char *header_name = slice_to_cstr(parser.header_name);
+        char *header_value = slice_to_cstr(parser.header_value);
+
+        htable_insert(&parser.req->headers, header_name, header_value);
+        //htable_print(&parser.req->headers);
+
         return 0;
     }
 

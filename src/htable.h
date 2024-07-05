@@ -21,7 +21,7 @@ struct htable {
 typedef struct htable htable_t;
 
 // djb2 hash algorithm - object to change
-static int htable_hash(struct htable *h, char *key) {
+static int htable_hash(struct htable *h, const char *key) {
     unsigned long hash = 5381;
     int c;
 
@@ -55,8 +55,8 @@ static struct htable_entry *htable_create_entry(char *key, char *value) {
     return entry;
 }
 
-static void htable_insert(struct htable *h, const char *_key, char *value) {
-    char *key = strdup(_key);
+/* moves key ownership to the hash table */
+static void htable_insert(struct htable *h, char *key, char *value) {
     int idx = htable_hash(h, key);
     struct htable_entry *entry = htable_create_entry(key, value);
     struct llist *bucket = h->buckets[idx];
@@ -70,18 +70,18 @@ static void htable_insert(struct htable *h, const char *_key, char *value) {
     llist_add(bucket, &entry->lnode);
 }
 
-static struct htable_entry *htable_get_entry(struct llist_node *node) {
+static struct htable_entry *htable_get_entry(const struct llist_node *node) {
   return container_of(node, struct htable_entry, lnode);
 }
 
-static bool htable_filter_bucket(void *entry_ptr, void *key_ptr) {
+static bool htable_filter_bucket(const void *entry_ptr, const void *key_ptr) {
     struct htable_entry *entry = htable_get_entry(entry_ptr);
     char *key = (char *)key_ptr;
 
     return strcmp(entry->key, key) == 0;
 }
 
-static const void *htable_get(struct htable *h, char *key) {
+static void *htable_get(struct htable *h, const char *key) {
     int idx = htable_hash(h, key);
     struct llist *bucket = h->buckets[idx];
 

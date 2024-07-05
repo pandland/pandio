@@ -2,7 +2,7 @@
 
 #include "common.h"
 
-typedef bool llist_find_t(void *data, void *search);
+typedef bool llist_find_t(const void *data, const void *search);
 
 struct llist_node {
     struct llist_node *next;
@@ -98,7 +98,7 @@ static void llist_remove(struct llist *l, struct llist_node *node) {
     l->size--;
 }
 
-static struct llist_node *llist_find(struct llist *l, void *search, llist_find_t compare) {
+static struct llist_node *llist_find(struct llist *l, const void *search, llist_find_t compare) {
     struct llist_node *node = l->head;
     while (node != NULL) {
         if (compare(node, search)) {
