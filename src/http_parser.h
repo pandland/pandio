@@ -9,7 +9,7 @@
 
 enum http_parser_state {
   METHOD,
-  URL,
+  PATH,
   VERSION,
   HEADERS_START,
   HEADER_NAME,
@@ -25,7 +25,7 @@ enum http_parser_state {
   parser->state = ERROR
 
 #define EXPECT_CHAR(ch) \
-  if (*(buf++) != ch) {     \
+  if (*buf == 0 || *(buf++) != ch) {     \
     SET_ERROR();         \
     return NULL;        \
   }
@@ -39,7 +39,8 @@ enum http_parser_errno {
   INVALID_METHOD,
   INVALID_PATH,
   INVALID_VERSION,
-  INVALID_HEADER
+  INVALID_HEADER,
+  INVALID_REQUEST
 };
 
 typedef struct http_parser {
@@ -102,12 +103,14 @@ static char *parse_method(http_parser_t *parser, char *buf) {
   }
 
   EXPECT_CHAR(' ');
-  parser->state = URL;
+  parser->state = PATH;
 
   return buf;
 }
 
-static char *parse_url(http_parser_t *parser, char *buf) {
+static char *parse_path(http_parser_t *parser, char *buf) {
+  char *path_start = buf;
+  size_t path_size = 0;
   // temporary
   while (*buf && *buf != ' ') {
     if (!isalnum(*buf) && *buf != '/' && *buf != '.') {
@@ -115,8 +118,12 @@ static char *parse_url(http_parser_t *parser, char *buf) {
       return NULL;
     }
 
+    path_size++;
     buf++;
   }
+
+  slice_t path_slice = { .start = path_start, .size = path_size };
+  parser->req->path = slice_to_cstr(path_slice);
 
   parser->state = VERSION;
   EXPECT_CHAR(' ');
@@ -210,14 +217,15 @@ static int http_parse(http_request_t *req, char *buf) {
   http_parser_t parser = { .state = METHOD, .req = req, .err = UNKNOWN };
 
   while (*buf) {
-    //printf("buffer value: %s\n", buf);
     switch (parser.state) {
+      case ERROR:
+        return parser.err;
       case METHOD:
         buf = parse_method(&parser, buf);
         SET_ERRNO(INVALID_METHOD);
         break;
-      case URL:
-        buf = parse_url(&parser, buf);
+      case PATH:
+        buf = parse_path(&parser, buf);
         SET_ERRNO(INVALID_PATH);
         break;
       case VERSION:
@@ -239,7 +247,6 @@ static int http_parse(http_request_t *req, char *buf) {
         char *header_value = slice_to_cstr(parser.header_value);
 
         htable_insert(&parser.req->headers, header_name, header_value);
-
         break;
       case BODY_START:
         return 0;
@@ -250,5 +257,10 @@ static int http_parse(http_request_t *req, char *buf) {
     }
   }
 
-  return 0;
+  // last state
+  if (parser.state == BODY_START) {
+    return 0;
+  }
+
+  return INVALID_REQUEST;
 }

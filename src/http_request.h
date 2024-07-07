@@ -22,7 +22,12 @@ struct http_request_s {
 typedef struct http_request_s http_request_t;
 
 static http_request_t *http_request_alloc() {
-  return malloc(sizeof(http_request_t));
+  http_request_t *req = malloc(sizeof(http_request_t));
+  req->headers = htable_create();
+  req->path = NULL;
+  req->body = NULL;
+
+  return req;
 }
 
 static void http_request_destroy(http_request_t *req) {
