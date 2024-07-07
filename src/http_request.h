@@ -10,6 +10,26 @@ enum HTTP_METHOD {
   OPTIONS
 };
 
+static char *map_method(enum HTTP_METHOD method) {
+  switch (method)
+  {
+  case 0:
+    return "GET";
+  case 1:
+    return "POST";
+  case 2:
+    return "PUT";
+  case 3:
+    return "PATCH";
+  case 4:
+    return "DELETE";
+  case 5:
+    return "OPTIONS";
+  default:
+    return "UNKNOWN";
+  }
+}
+
 typedef enum HTTP_METHOD http_method_t;
 
 struct http_request_s {

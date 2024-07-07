@@ -31,8 +31,6 @@ Test(http_parser, invalid_method) {
 
 
 Test(http_parser, invalid_request) {
-  printf("Testing http_parser::invalid_request\n");
-  fflush(stdout);
   http_request_t *req = http_request_alloc();
 
   int status = http_parse(req, "GET ASDA103I HTTP/1.1213E");

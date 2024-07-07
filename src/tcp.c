@@ -6,6 +6,8 @@
 #include "logger.h"
 #include "common.h"
 #include "tcp.h"
+#include "http_parser.h"
+#include "http_request.h"
 
 void tcp_accept(event_t *event) {
   tcp_listener_t *listener = container_of(event, tcp_listener_t, ev);
@@ -86,6 +88,19 @@ void tcp_handler(event_t *event) {
     }
 
     buffer[bytes_read] = '\0';
+    
+    http_request_t *req = http_request_alloc();
+    int status = http_parse(req, buffer);
+
+    if (status != 0) {
+      log_err("Parsing failure with status: %d", status);
+      ev_remove(conn->ev.loop, conn->fd);
+      close(conn->fd);
+      free(conn);
+      return;
+    }
+
+    log_info("{ method: %s, path: %s }", map_method(req->method), req->path);
     //printf("Received: %s\n", buffer);
 
     const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n\r\n<h1>Hello world!</h1>\n";
