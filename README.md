@@ -10,7 +10,7 @@
 
 ## TO-DO
 - [x] Non-blocking architecture for handling connections.
-- [ ] Parse HTTP requests using finite state machine.
+- [x] Parse HTTP requests using finite state machine.
 - [ ] Handling keep-alive requests and timeouts.
 
 ## Building and running
