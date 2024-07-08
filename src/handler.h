@@ -5,22 +5,21 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-// Response formatting function to ensure buffer safety and correct content length calculation
 static void fmt_response(char *res, size_t buffer_size) {
-    char *body = strdup(res);  // Duplicate the response to preserve it during formatting
-    if (body == NULL) return;  // Check for successful memory allocation
+    char *body = strdup(res);
+    if (body == NULL) return;
 
     int n = snprintf(NULL, 0, "HTTP/1.1 200 OK\r\nContent-Length: %zu\r\n\r\n%s", strlen(body), body);
-    if (n > 0 && n < buffer_size) {  // Check if the buffer is large enough
+    if (n > 0 && n < buffer_size) {
         snprintf(res, buffer_size, "HTTP/1.1 200 OK\r\nContent-Length: %zu\r\n\r\n%s", strlen(body), body);
     }
-    free(body);  // Free the duplicated string
+    free(body);
 }
 
 static char *handle_request(http_request_t *req) {
-    const size_t response_size = 2048;  // Increase buffer size if needed
+    const size_t response_size = 2048;
     char *response = malloc(response_size);
-    if (response == NULL) return NULL;  // Always check malloc return
+    if (response == NULL) return NULL;
 
     char *hostname = htable_get(&req->headers, "Host");
 
