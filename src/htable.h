@@ -98,7 +98,7 @@ static void *htable_get(struct htable *h, const char *key) {
     return entry->value;
 }
 
-static void htable_free(struct htable *h) {
+static void htable_destroy(struct htable *h) {
     for (size_t i = 0; i < h->capacity; ++i) {
         struct llist *bucket = h->buckets[i];
         if (bucket) {
@@ -112,6 +112,10 @@ static void htable_free(struct htable *h) {
         }
     }
     free(h->buckets);
+}
+
+static void htable_free(struct htable *h) {
+    htable_destroy(h);
     free(h);
 }
 

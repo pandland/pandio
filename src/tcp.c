@@ -9,6 +9,8 @@
 #include "http_parser.h"
 #include "http_request.h"
 
+#include "handler.h"
+
 void tcp_accept(event_t *event) {
   tcp_listener_t *listener = container_of(event, tcp_listener_t, ev);
 
@@ -69,7 +71,6 @@ socket_t tcp_listen(int port) {
   return listener_fd;
 }
 
-
 #define BUFFER_SIZE 1024
 
 void tcp_handler(event_t *event) {
@@ -90,25 +91,31 @@ void tcp_handler(event_t *event) {
     buffer[bytes_read] = '\0';
     
     http_request_t *req = http_request_alloc();
+    req->connection = conn;
+
     int status = http_parse(req, buffer);
 
     if (status != 0) {
       log_err("Parsing failure with status: %d", status);
       ev_remove(conn->ev.loop, conn->fd);
       close(conn->fd);
+      http_request_free(req);
       free(conn);
       return;
     }
 
     log_info("{ method: %s, path: %s }", map_method(req->method), req->path);
     //printf("Received: %s\n", buffer);
-
-    const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n\r\n<h1>Hello world!</h1>\n";
+    char *response = handle_request(req);
+    //const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n\r\n<h1>Hello world!</h1>\n";
     send(conn->fd, response, strlen(response), 0);
+
+    free(response);
     ev_remove(conn->ev.loop, conn->fd);
 
     close(conn->fd);
 
+    http_request_free(req);
     free(conn);
 }
 
@@ -121,7 +128,3 @@ tcp_connection_t *tcp_init_conn(ev_loop_t *loop, socket_t fd) {
 
   return conn;
 }
-
-int tcp_recv(tcp_connection_t *conn, char *bytes);
-
-void tcp_send(tcp_connection_t *conn, char *bytes);

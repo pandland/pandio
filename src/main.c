@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "http_request.h"
 #include "logger.h"
 #include "ev.h"
 #include "tcp.h"
@@ -17,6 +18,7 @@ void worker(socket_t lfd) {
     ev_register(&loop, lfd, &listener->ev);
     ev_loop_run(&loop);
 }
+
 
 int getenv_int(const char *name, int default_value) {
     char *value = getenv(name);
