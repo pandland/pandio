@@ -9,15 +9,15 @@ struct ttimer {
   struct heap_node hnode;
 } typedef ttimer_t;
 
-int heap_comparator(struct heap_node *a, struct heap_node *b) {
-  ttimer_t *parent = container_of(a, ttimer_t, hnode);
-  ttimer_t *child = container_of(b, ttimer_t, hnode);
+int timer_comparator(struct heap_node *a, struct heap_node *b) {
+  ttimer_t *child = container_of(a, ttimer_t, hnode);
+  ttimer_t *parent = container_of(b, ttimer_t, hnode);
   //printf("%d vs %d\n", parent->timeout, child->timeout);
-  if (parent->timeout > child->timeout) {
-    return 0;
+  if (child->timeout < parent->timeout) {
+    return 1;
   }
 
-  return 1;
+  return 0;
 }
 
 ttimer_t init_timer(int timeout) {
@@ -51,7 +51,7 @@ void print_heap(struct heap *h) {
 }
 
 Test(heap, remove) {
-  struct heap h = heap_init(heap_comparator);
+  struct heap h = heap_init(timer_comparator);
   
   ttimer_t timer1 = init_timer(200);
   ttimer_t timer2 = init_timer(10);
@@ -79,7 +79,7 @@ Test(heap, remove) {
   heap_insert(&h, &timer11.hnode);
   heap_insert(&h, &timer12.hnode);
 
-  //print_heap(&h);
+  print_heap(&h);
   //printf("============================================================\n");
   struct heap_node *min_node = heap_pop(&h);
   ttimer_t *min_timer = container_of(min_node, ttimer_t, hnode);
@@ -91,11 +91,11 @@ Test(heap, remove) {
   cr_expect(min_timer->timeout == 5, "Expected 5, got %d", min_timer->timeout);
   //printf("============================================================\n");
   //print_heap(&h);
-  //heap_remove(&h, &timer6.hnode);
+  heap_remove(&h, &timer6.hnode);
   struct heap_node *mid_node = heap_remove(&h, &timer8.hnode);
   ttimer_t *mid_timer = container_of(mid_node, ttimer_t, hnode);
   cr_expect(mid_timer->timeout == timer8.timeout, "Expected %d, got %d", timer8.timeout, mid_timer->timeout);
 
-  //printf("============================================================\n");
-  //print_heap(&h);
+  printf("============================================================\n");
+  print_heap(&h);
 }
