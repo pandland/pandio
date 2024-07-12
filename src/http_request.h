@@ -1,6 +1,6 @@
 #pragma once
 #include "htable.h"
-#include "tcp.h"
+#include "net.h"
 
 enum HTTP_METHOD {
   GET,
@@ -38,7 +38,7 @@ struct http_request_s {
   http_method_t method;
   htable_t headers;
   char *body;
-  tcp_connection_t *connection;
+  lxe_connection_t *connection;
 };
 
 typedef struct http_request_s http_request_t;

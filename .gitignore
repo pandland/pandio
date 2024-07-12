@@ -54,3 +54,4 @@ dkms.conf
 build/
 server
 old.c
+test.c

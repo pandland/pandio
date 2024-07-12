@@ -1,15 +1,15 @@
 #include "common.h"
 #include "event.h"
 
-lxe_loop_t lxe_loop() {
-  lxe_loop_t loop;
-  loop.epoll_fd = epoll_create1(0);
-  if (loop.epoll_fd == -1) {
+lxe_io_t lxe_init() {
+  lxe_io_t ctx;
+  ctx.epoll_fd = epoll_create1(0);
+  if (ctx.epoll_fd == -1) {
     perror("epoll");
     exit(EXIT_FAILURE);
   }
 
-  return loop;
+  return ctx;
 }
 
 void lxe_make_nonblocking(int fd) {
@@ -30,24 +30,24 @@ void lxe_add_event(lxe_event_t *event, int fd) {
   struct epoll_event ev;
   ev.events = EPOLLIN;
   ev.data.ptr = event;
-  if (epoll_ctl(event->loop->epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1) {
+  if (epoll_ctl(event->ctx->epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1) {
     perror("lxe_add_event");
     exit(EXIT_FAILURE);
   }
 }
 
 void lxe_remove_event(lxe_event_t *event, int fd) {
-  if (epoll_ctl(event->loop->epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1) {
+  if (epoll_ctl(event->ctx->epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1) {
     perror("lxe_remove_event");
     exit(EXIT_FAILURE);
   }
 }
 
-void lxe_run(lxe_loop_t *loop) {
+void lxe_run(lxe_io_t *ctx) {
     struct epoll_event events[MAX_EVENTS];
 
     while(true) {
-        int events_count = epoll_wait(loop->epoll_fd, events, MAX_EVENTS, -1);
+        int events_count = epoll_wait(ctx->epoll_fd, events, MAX_EVENTS, -1);
         if (events_count == -1) {
             perror("epoll_wait");
             exit(EXIT_FAILURE);

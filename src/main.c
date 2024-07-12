@@ -1,51 +1,44 @@
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 
-#include "http_request.h"
-#include "logger.h"
-#include "ev.h"
-#include "tcp.h"
+#include "net.h"
 
-#define DEFAULT_PORT 8080
+#define DEFAULT_PORT 8000
 #define DEFAULT_WORKERS 4
 
 #define MAX_EVENTS 128
 #define BUFFER_SIZE 1024
 
-void worker(socket_t lfd) {
-    ev_loop_t loop = ev_loop_init();
-    tcp_listener_t *listener = tcp_init_listener(&loop, lfd);
-    ev_register(&loop, lfd, &listener->ev);
-    ev_loop_run(&loop);
+void echo_handler(lxe_connection_t *conn) {
+    char buffer[BUFFER_SIZE];
+    int bytes_read = recv(conn->fd, buffer, BUFFER_SIZE, 0);
+    recv(conn->fd, buffer, 1024, 0);
+
+    if (bytes_read == -1) {
+        perror("read");
+        exit(EXIT_FAILURE);
+    }
+
+    if (bytes_read == 0) {
+        close(conn->fd);
+        return;
+    }
+
+    buffer[bytes_read] = '\0';
+
+    printf("Received: %s", buffer);
+    send(conn->fd, buffer, bytes_read, 0);
 }
 
-
-int getenv_int(const char *name, int default_value) {
-    char *value = getenv(name);
-    if (value == NULL) {
-        return default_value;
-    }
-    return atoi(value);
+void acceptor(lxe_connection_t *conn) {
+    conn->ondata = echo_handler;
 }
 
 int main() {
-    int port = getenv_int("PORT", DEFAULT_PORT);
-    int workers = getenv_int("WORKERS", DEFAULT_WORKERS);
+    lxe_io_t ctx = lxe_init();
+    lxe_listen(&ctx, DEFAULT_PORT, acceptor);
+    lxe_run(&ctx);
 
-    socket_t lfd = tcp_listen(port);
-
-    for (int i = 0; i < workers; i++) {
-        int pid = fork();
-        if (pid == 0) {
-            log_info("Worker #%d with pid %d started", i + 1, getpid());
-            worker(lfd);
-            exit(EXIT_SUCCESS);
-        }
-    }
-
-    log_info("Listening on port %d", port);
-
-    while(true) {
-        // waiting for signals etc...
-    }
+    return 0;
 }
