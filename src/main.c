@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "net.h"
 #include "http_request.h"
@@ -9,11 +11,9 @@
 
 #define DEFAULT_PORT 8000
 #define DEFAULT_WORKERS 4
-
-#define MAX_EVENTS 128
 #define BUFFER_SIZE 1024
 
-void echo_handler(lxe_connection_t *conn) {
+void request_handler(lxe_connection_t *conn) {
     char buffer[BUFFER_SIZE];
     int bytes_read = recv(conn->fd, buffer, BUFFER_SIZE, 0);
     recv(conn->fd, buffer, 1024, 0);
@@ -44,7 +44,8 @@ void echo_handler(lxe_connection_t *conn) {
       return;
     }
 
-    log_info("{ method: %s, path: %s }", map_method(req->method), req->path);
+    int worker_id = *(int*)(conn->listener->data);
+    log_info("{ worker: %d, method: %s, path: %s }", worker_id, map_method(req->method), req->path);
     const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n\r\n<h1>Hello world!</h1>\n";
     send(conn->fd, response, strlen(response), 0);
     //free(response);
@@ -57,16 +58,36 @@ void echo_handler(lxe_connection_t *conn) {
 }
 
 void acceptor(lxe_connection_t *conn) {
-    conn->ondata = echo_handler;
+    conn->ondata = request_handler;
+}
+
+void worker(int id, int port) {
+    lxe_io_t ctx = lxe_init();
+    lxe_listener_t *listener = lxe_listen(&ctx, port, acceptor);
+
+    listener->data = &id;
+    lxe_run(&ctx);
 }
 
 int main() {
+    int workers = DEFAULT_WORKERS;
     int port = DEFAULT_PORT;
-    lxe_io_t ctx = lxe_init();
-    lxe_listen(&ctx, port, acceptor);
+
+    for (int i = 0; i < workers; i++) {
+        pid_t pid = fork();
+        if (pid == 0) {
+            int id = i + 1;
+            log_info("Worker #%d with pid %d started", id, getpid());
+            worker(id, port);
+            exit(EXIT_SUCCESS);
+        }
+    }
     
-    log_info("Server started on port: %d", port);
-    lxe_run(&ctx);
+    log_info("Server listen on port: %d", port);
+
+    for (int i = 0; i < workers; i++) {
+        wait(NULL);
+    }
 
     return 0;
 }

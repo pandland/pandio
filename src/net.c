@@ -73,10 +73,11 @@ lxe_listener_t *lxe_listen(lxe_io_t *ctx, int port, void (*onaccept)(struct lxe_
   address.sin_port = htons(port);
 
   int opt = 1;
-  if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
-        perror("setsockopt");
-        exit(EXIT_FAILURE);
-    }
+
+  if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+    perror("setsockopt");
+    exit(EXIT_FAILURE);
+  }
 
   if (bind(lfd, (struct sockaddr *)&address, sizeof(address)) < 0) {
     perror("bind");
