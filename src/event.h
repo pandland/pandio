@@ -2,12 +2,16 @@
 
 #include <fcntl.h>
 #include <sys/epoll.h>
-#include "event.h"
+#include <stdint.h>
+
+#include "heap.h"
 
 #define MAX_EVENTS 128
 
 typedef struct lxe_io {
-  int epoll_fd; 
+  int epoll_fd;
+  struct heap timers;
+  uint64_t now;
 } lxe_io_t;
 
 typedef struct lxe_event {

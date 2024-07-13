@@ -97,6 +97,7 @@ static struct heap_node *heap_remove(struct heap *h, struct heap_node *rnode) {
 
     if (h->size == 1) {
         h->root = NULL;
+        h->size = 0;
         return rnode;
     }
 

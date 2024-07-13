@@ -67,10 +67,10 @@ Test(llist, iterate) {
   //llist_remove(l, &s2.lnode);
 
 
-  printf("\nSize: %ld\n", l->size);
+  //printf("\nSize: %ld\n", l->size);
   llist_loop(l) {
     sample_t *container = container_of(node, sample_t, lnode);
-    printf("%d, ", container->number);
+    ///printf("%d, ", container->number);
   }
 
   llist_free(l);

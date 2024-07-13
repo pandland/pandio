@@ -8,6 +8,7 @@
 #include "http_request.h"
 #include "http_parser.h"
 #include "logger.h"
+#include "timer.h"
 
 #define DEFAULT_PORT 8000
 #define DEFAULT_WORKERS 4
@@ -57,8 +58,16 @@ void request_handler(lxe_connection_t *conn) {
     free(conn);
 }
 
+void mytimeout(lxe_timer_t *mytimer) {
+    log_info("Timer expired");
+    lxe_timer_destroy(mytimer);
+}
+
 void acceptor(lxe_connection_t *conn) {
     conn->ondata = request_handler;
+    log_info("New connection accepted");
+    lxe_timer_t *mytimer = lxe_timer_init(conn->event.ctx);
+    lxe_timer_start(mytimer, mytimeout, 3000);
 }
 
 void worker(int id, int port) {
@@ -69,6 +78,12 @@ void worker(int id, int port) {
     lxe_run(&ctx);
 }
 
+int main() {
+    worker(1, 8000);
+    return 0;
+}
+
+/*
 int main() {
     int workers = DEFAULT_WORKERS;
     int port = DEFAULT_PORT;
@@ -91,3 +106,4 @@ int main() {
 
     return 0;
 }
+*/

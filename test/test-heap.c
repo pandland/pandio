@@ -50,6 +50,17 @@ void print_heap(struct heap *h) {
   print_heap_until(h->root, 0);
 }
 
+Test(heap, signle_item) {
+  struct heap h = heap_init(timer_comparator);
+  ttimer_t timer1 = init_timer(200);
+  ttimer_t timer2 = init_timer(400);
+  heap_insert(&h, &timer1.hnode);
+  heap_remove(&h, &timer1.hnode);
+  heap_insert(&h, &timer2.hnode);
+  heap_remove(&h, &timer2.hnode);
+  print_heap(&h);
+}
+
 Test(heap, remove) {
   struct heap h = heap_init(timer_comparator);
   
@@ -79,7 +90,7 @@ Test(heap, remove) {
   heap_insert(&h, &timer11.hnode);
   heap_insert(&h, &timer12.hnode);
 
-  print_heap(&h);
+  //print_heap(&h);
   //printf("============================================================\n");
   struct heap_node *min_node = heap_pop(&h);
   ttimer_t *min_timer = container_of(min_node, ttimer_t, hnode);
@@ -96,6 +107,6 @@ Test(heap, remove) {
   ttimer_t *mid_timer = container_of(mid_node, ttimer_t, hnode);
   cr_expect(mid_timer->timeout == timer8.timeout, "Expected %d, got %d", timer8.timeout, mid_timer->timeout);
 
-  printf("============================================================\n");
-  print_heap(&h);
+  //printf("============================================================\n");
+  //print_heap(&h);
 }
