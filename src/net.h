@@ -30,3 +30,4 @@ lxe_connection_t *lxe_connection_init(lxe_io_t *ctx, socket_t fd);
 lxe_listener_t *lxe_listener_init(lxe_io_t *ctx, socket_t lfd);
 void lxe_listener_handler(lxe_event_t *event);
 void lxe_connection_handler(lxe_event_t *event);
+void lxe_close(lxe_connection_t *conn);

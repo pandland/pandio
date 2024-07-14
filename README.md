@@ -11,7 +11,7 @@
 ## TO-DO
 - [x] Non-blocking architecture for handling connections.
 - [x] Parse HTTP requests using finite state machine.
-- [ ] Handling keep-alive requests and timeouts.
+- [x] Handling timeouts using heap data structure
 
 ## Building and running
 

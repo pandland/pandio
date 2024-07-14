@@ -97,3 +97,13 @@ lxe_listener_t *lxe_listen(lxe_io_t *ctx, int port, void (*onaccept)(struct lxe_
   lxe_add_event(&listener->event, lfd);
   return listener;
 }
+
+/* closes tcp connection, removes from epoll and free connection from memory */
+void lxe_close(lxe_connection_t *conn) {
+  lxe_remove_event(&conn->event, conn->fd);
+  close(conn->fd);
+  if (conn->onclose)
+    conn->onclose(conn); // user should clear data, close timers etc
+  
+  free(conn);
+}

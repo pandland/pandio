@@ -1,6 +1,7 @@
 #pragma once
 #include "htable.h"
 #include "net.h"
+#include "timer.h"
 
 enum HTTP_METHOD {
   GET,
@@ -39,6 +40,7 @@ struct http_request_s {
   htable_t headers;
   char *body;
   lxe_connection_t *connection;
+  lxe_timer_t *timeout;
 };
 
 typedef struct http_request_s http_request_t;
@@ -49,6 +51,7 @@ static http_request_t *http_request_alloc() {
   req->path = NULL;
   req->body = NULL;
   req->connection = NULL;
+  req->timeout = NULL;
 
   return req;
 }
