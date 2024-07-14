@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "timer.h"
+#include "logger.h"
 
 uint64_t lxe_now() {
   struct timespec now;

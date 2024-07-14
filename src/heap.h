@@ -136,7 +136,6 @@ static struct heap_node *heap_remove(struct heap *h, struct heap_node *rnode) {
 
     if (last == rnode)
         return rnode;
-        
 
     if (rnode->parent) {
         if (rnode->parent->left == rnode)
@@ -147,6 +146,12 @@ static struct heap_node *heap_remove(struct heap *h, struct heap_node *rnode) {
         h->root = last;
     }
 
+    if (rnode->left)
+        rnode->left->parent = last;
+    
+    if (rnode->right)
+        rnode->right->parent = last;
+
     last->left = rnode->left;
     last->right = rnode->right;
     last->parent = rnode->parent;
@@ -155,7 +160,7 @@ static struct heap_node *heap_remove(struct heap *h, struct heap_node *rnode) {
         struct heap_node *swap_node = NULL;
 
         if (last->left && last->right) {
-            if (h->comparator(last->left, last->right) > 0) {
+            if (h->comparator(last->left, last->right)) {
                 swap_node = last->left;
             } else {
                 swap_node = last->right;
@@ -166,14 +171,14 @@ static struct heap_node *heap_remove(struct heap *h, struct heap_node *rnode) {
             swap_node = last->right;
         }
 
-        if (!swap_node || h->comparator(last, swap_node) > 0) {
+        if (!swap_node || h->comparator(last, swap_node)) {
             break;
         }
 
         heap_swap(h, swap_node, last);
     }
 
-    while (last->parent != NULL && h->comparator(last, last->parent) > 0) {
+    while (last->parent != NULL && h->comparator(last, last->parent)) {
         heap_swap(h, last, last->parent);
     }
 

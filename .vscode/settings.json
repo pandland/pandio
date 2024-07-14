@@ -1,5 +1,7 @@
 {
   "files.associations": {
-    "*.h": "c"
+    "*.css": "css",
+    "*.h": "c",
+    "executor": "c"
   }
 }

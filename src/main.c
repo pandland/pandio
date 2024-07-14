@@ -79,12 +79,6 @@ void worker(int id, int port) {
 }
 
 int main() {
-    worker(1, 8000);
-    return 0;
-}
-
-/*
-int main() {
     int workers = DEFAULT_WORKERS;
     int port = DEFAULT_PORT;
 
@@ -106,4 +100,3 @@ int main() {
 
     return 0;
 }
-*/
