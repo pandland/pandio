@@ -1,51 +1,109 @@
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
+#include "net.h"
 #include "http_request.h"
+#include "http_parser.h"
 #include "logger.h"
-#include "ev.h"
-#include "tcp.h"
+#include "timer.h"
 
-#define DEFAULT_PORT 8080
+#define DEFAULT_PORT 8000
 #define DEFAULT_WORKERS 4
-
-#define MAX_EVENTS 128
 #define BUFFER_SIZE 1024
 
-void worker(socket_t lfd) {
-    ev_loop_t loop = ev_loop_init();
-    tcp_listener_t *listener = tcp_init_listener(&loop, lfd);
-    ev_register(&loop, lfd, &listener->ev);
-    ev_loop_run(&loop);
+void request_handler(lxe_connection_t *conn) {
+    char buffer[BUFFER_SIZE];
+    int bytes_read = recv(conn->fd, buffer, BUFFER_SIZE, 0);
+    recv(conn->fd, buffer, 1024, 0);
+
+    if (bytes_read == -1) {
+        perror("read");
+        exit(EXIT_FAILURE);
+    }
+
+    if (bytes_read == 0) {
+        close(conn->fd);
+        return;
+    }
+
+    buffer[bytes_read] = '\0';
+
+    http_request_t *req = http_request_alloc();
+    req->connection = conn;
+
+    int status = http_parse(req, buffer);
+
+    if (status != 0) {
+      log_err("Parsing failure with status: %d", status);
+      lxe_remove_event(&conn->event, conn->fd);
+      close(conn->fd);
+      http_request_free(req);
+      free(conn);
+      return;
+    }
+
+    int worker_id = *(int*)(conn->listener->data);
+    log_info("{ worker: %d, method: %s, path: %s }", worker_id, map_method(req->method), req->path);
+    const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n\r\n<h1>Hello world!</h1>\n";
+    send(conn->fd, response, strlen(response), 0);
+    //free(response);
+    lxe_remove_event(&conn->event, conn->fd);
+
+    close(conn->fd);
+
+    http_request_free(req);
+    free(conn);
 }
 
+void mytimeout(lxe_timer_t *mytimer) {
+    log_info("Timer expired");
+    lxe_timer_destroy(mytimer);
+}
 
-int getenv_int(const char *name, int default_value) {
-    char *value = getenv(name);
-    if (value == NULL) {
-        return default_value;
-    }
-    return atoi(value);
+void acceptor(lxe_connection_t *conn) {
+    conn->ondata = request_handler;
+    log_info("New connection accepted");
+    lxe_timer_t *mytimer = lxe_timer_init(conn->event.ctx);
+    lxe_timer_start(mytimer, mytimeout, 3000);
+}
+
+void worker(int id, int port) {
+    lxe_io_t ctx = lxe_init();
+    lxe_listener_t *listener = lxe_listen(&ctx, port, acceptor);
+
+    listener->data = &id;
+    lxe_run(&ctx);
 }
 
 int main() {
-    int port = getenv_int("PORT", DEFAULT_PORT);
-    int workers = getenv_int("WORKERS", DEFAULT_WORKERS);
+    worker(1, 8000);
+    return 0;
+}
 
-    socket_t lfd = tcp_listen(port);
+/*
+int main() {
+    int workers = DEFAULT_WORKERS;
+    int port = DEFAULT_PORT;
 
     for (int i = 0; i < workers; i++) {
-        int pid = fork();
+        pid_t pid = fork();
         if (pid == 0) {
-            log_info("Worker #%d with pid %d started", i + 1, getpid());
-            worker(lfd);
+            int id = i + 1;
+            log_info("Worker #%d with pid %d started", id, getpid());
+            worker(id, port);
             exit(EXIT_SUCCESS);
         }
     }
+    
+    log_info("Server listen on port: %d", port);
 
-    log_info("Listening on port %d", port);
-
-    while(true) {
-        // waiting for signals etc...
+    for (int i = 0; i < workers; i++) {
+        wait(NULL);
     }
+
+    return 0;
 }
+*/

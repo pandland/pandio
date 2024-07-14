@@ -1,11 +1,11 @@
 #pragma once
-
 #include "common.h"
 
 typedef bool llist_find_t(const void *data, const void *search);
 
 struct llist_node {
     struct llist_node *next;
+    struct llist_node *prev;
 };
 
 struct llist {
@@ -32,6 +32,7 @@ static struct llist llist_create() {
 
 static void llist_init_node(struct llist_node *node) {
     node->next = NULL;
+    node->prev = NULL;
 }
 
 static bool llist_empty(struct llist *l) {
@@ -43,42 +44,19 @@ static void llist_add(struct llist *l, struct llist_node *node) {
         l->head = node;
     } else {
         l->tail->next = node;
+        node->prev = l->tail;
     }
     l->tail = node;
     l->size++;
 }
 
-static void llist_remove_last(struct llist *l) {
-    if (l->head == NULL || l->tail == NULL) {
-        return;
-    }
-
-    struct llist_node *it = l->head;
-    struct llist_node *node = NULL;
-
-    if (l->head == l->tail) {
-        node = l->tail;
-        l->head = NULL;
-        l->tail = NULL;
-        l->size = 0;
-        return;
-    }
-
-    while (it->next != l->tail) {
-        it = it->next;
-    }
-
-    node = l->tail;
-    it->next = NULL;
-    l->tail = it;
-    l->size--;
-}
 
 static void llist_remove(struct llist *l, struct llist_node *node) {
     if (l->head == NULL) {
         return;
     }
 
+    l->size--;
     if (node == l->head && node == l->tail) {
         l->head = NULL;
         l->tail = NULL;
@@ -86,16 +64,20 @@ static void llist_remove(struct llist *l, struct llist_node *node) {
         return;
     }
 
-    // O(n) removal
     if (node->next == NULL) {
-        llist_remove_last(l);
+        node->prev->next = NULL;
+        l->tail = node->prev;
         return;
     }
 
-    // O(1) removal
-    struct llist_node *deleted = node->next;
-    node->next = deleted->next;
-    l->size--;
+    if (l->head == node) {
+        l->head = node->next;
+        l->head->prev = NULL;
+        return;
+    }
+
+    node->prev->next = node->next;
+    node->next->prev = node->prev;
 }
 
 static struct llist_node *llist_find(struct llist *l, const void *search, llist_find_t compare) {

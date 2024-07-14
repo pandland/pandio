@@ -1,4 +1,5 @@
 #include <criterion/criterion.h>
+#include <stdio.h>
 #include "../src/llist.h"
 
 struct sample {
@@ -39,6 +40,37 @@ Test(llist, iterate) {
     sample_t *container = container_of(node, sample_t, lnode);
     cr_expect_eq(container->number, expected);
     expected += 200;
+    printf("%d, ", container->number);
+  }
+
+
+  sample_t s4 = sample_init(200);
+  sample_t s5 = sample_init(800);
+  sample_t s6 = sample_init(50);
+  sample_t s7 = sample_init(70);
+
+  llist_remove(l, &s3.lnode);
+  llist_remove(l, &s1.lnode);
+
+  llist_add(l, &s4.lnode);
+  llist_add(l, &s5.lnode);
+  llist_remove(l, &s4.lnode);
+  //llist_remove(l, &s2.lnode);
+  llist_add(l, &s6.lnode);
+  llist_add(l, &s7.lnode);
+  llist_add(l, &s3.lnode);
+
+  //llist_remove(l, &s6.lnode);
+  llist_remove(l, &s7.lnode);
+  //llist_remove(l, &s3.lnode);
+  llist_remove(l, &s5.lnode);
+  //llist_remove(l, &s2.lnode);
+
+
+  //printf("\nSize: %ld\n", l->size);
+  llist_loop(l) {
+    sample_t *container = container_of(node, sample_t, lnode);
+    ///printf("%d, ", container->number);
   }
 
   llist_free(l);
