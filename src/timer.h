@@ -1,11 +1,11 @@
 #pragma once
+
 #include <time.h>
 #include <stdint.h>
 
 #include "heap.h"
 #include "queue.h"
 #include "event.h"
-
 
 typedef enum lxe_timer_state {
   TIMER_NONE,
@@ -32,7 +32,8 @@ typedef struct lxe_timer {
 uint64_t lxe_now();
 void timers_init(lxe_io_t*);
 int timers_comparator(struct heap_node*, struct heap_node*);
-lxe_timer_t *lxe_timer_init(lxe_io_t*);
+void lxe_timer_init(lxe_io_t*, lxe_timer_t*);
+lxe_timer_t *lxe_timer_alloc(lxe_io_t*);
 void lxe_timer_start(lxe_timer_t*, lxe_timer_callback_t, uint64_t);
 void lxe_timer_stop(lxe_timer_t*);
 void lxe_timer_destroy(lxe_timer_t*);

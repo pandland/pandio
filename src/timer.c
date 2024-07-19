@@ -15,7 +15,7 @@ uint64_t lxe_now() {
 int timers_comparator(struct heap_node *a, struct heap_node *b) {
   lxe_timer_t *child = timer_get(a);
   lxe_timer_t *parent = timer_get(b);
-  //printf("%d vs %d\n", parent->timeout, child->timeout);
+
   if (child->timeout < parent->timeout) {
     return 1;
   }
@@ -27,15 +27,18 @@ void timers_init(lxe_io_t *ctx) {
   ctx->timers = heap_init(timers_comparator);
 }
 
-lxe_timer_t *lxe_timer_init(lxe_io_t *ctx) {
-  lxe_timer_t *timer = malloc(sizeof(lxe_timer_t));
-
+void lxe_timer_init(lxe_io_t *ctx, lxe_timer_t *timer) {
   timer->ctx = ctx;
   timer->state = TIMER_NONE;
-  timer->data = NULL;;
+  timer->data = NULL;
   timer->ontimeout = NULL;
   timer->timeout = 0;
   heap_init_node(&timer->hnode);
+}
+
+lxe_timer_t *lxe_timer_alloc(lxe_io_t *ctx) {
+  lxe_timer_t *timer = malloc(sizeof(lxe_timer_t));
+  lxe_timer_init(ctx, timer);
 
   return timer;
 }

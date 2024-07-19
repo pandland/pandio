@@ -22,8 +22,13 @@ typedef struct lxe_connection {
     void *data;     // pointer to the higher level protocol object
     lxe_listener_t *listener;
     lxe_event_t event;
+    /* buffer is stored in TCP connection object, 
+     * because I want to support multiple protocols (http and ws), each with own struct
+     * so I can reuse same buffer to save memory usage
+     */
+    size_t size;
+    char buf[8192]; // TODO: define it as flexible array member?
 } lxe_connection_t;
-
 
 lxe_listener_t *lxe_listen(lxe_io_t *ctx, int port, void (*)(lxe_connection_t*));
 lxe_connection_t *lxe_connection_init(lxe_io_t *ctx, socket_t fd);

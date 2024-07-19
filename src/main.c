@@ -11,7 +11,7 @@
 #include "timer.h"
 
 #define DEFAULT_PORT 8000
-#define DEFAULT_WORKERS 6
+#define DEFAULT_WORKERS 4
 #define BUFFER_SIZE 1024
 
 void request_handler(lxe_connection_t *conn) {
@@ -43,11 +43,10 @@ void request_handler(lxe_connection_t *conn) {
     }
 
     int worker_id = *(int*)(conn->listener->data);
-    log_info("{ worker: %d, method: %s, path: %s }", worker_id, map_method(req->method), req->path);
+    //log_info("{ worker: %d, method: %s, path: %s }", worker_id, map_method(req->method), req->path);
     const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n\r\n<h1>Hello world!</h1>\n";
     send(conn->fd, response, strlen(response), 0);
 
-    //http_request_free(req);
     lxe_close(conn);
 }
 
@@ -58,34 +57,29 @@ void mytimeout(lxe_timer_t *mytimer) {
 }
 
 void handle_close(lxe_connection_t *conn) {
-    log_info("Closing HTTP connection");
+    //log_info("Closing HTTP connection");
     http_request_t *req = conn->data;
     if (!req) {
         return;
     }
 
-    if (req->timeout) {
-        lxe_timer_stop(req->timeout);
-        lxe_timer_destroy(req->timeout);
-    }
-
+    lxe_timer_stop(&req->timeout);
     http_request_free(req);
 }
 
 void acceptor(lxe_connection_t *conn) {
-    log_info("New connection accepted");
+    //log_info("New connection accepted");
 
     conn->ondata = request_handler;
     conn->onclose = handle_close;
 
-    lxe_timer_t *mytimer = lxe_timer_init(conn->event.ctx);
     http_request_t *req = http_request_alloc();
     req->connection = conn;
-    req->timeout = mytimer;
+    lxe_timer_init(conn->event.ctx, &req->timeout);
 
     conn->data = req;
-    mytimer->data = conn;
-    lxe_timer_start(mytimer, mytimeout, 10 * 1000);
+    req->timeout.data = conn;
+    lxe_timer_start(&req->timeout, mytimeout, 10 * 1000);
 }
 
 void worker(int id, int port) {

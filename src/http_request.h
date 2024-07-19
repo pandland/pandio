@@ -1,4 +1,5 @@
 #pragma once
+
 #include "htable.h"
 #include "net.h"
 #include "timer.h"
@@ -9,7 +10,10 @@ enum HTTP_METHOD {
   PUT,
   PATCH,
   DELETE,
-  OPTIONS
+  OPTIONS,
+  HEAD,
+  TRACE,
+  CONNECT
 };
 
 typedef enum HTTP_METHOD http_method_t;
@@ -17,18 +21,24 @@ typedef enum HTTP_METHOD http_method_t;
 static char *map_method(http_method_t method) {
   switch (method)
   {
-  case 0:
+  case GET:
     return "GET";
-  case 1:
+  case POST:
     return "POST";
-  case 2:
+  case PUT:
     return "PUT";
-  case 3:
+  case PATCH:
     return "PATCH";
-  case 4:
+  case DELETE:
     return "DELETE";
-  case 5:
+  case OPTIONS:
     return "OPTIONS";
+  case HEAD:
+    return "HEAD";
+  case TRACE:
+    return "TRACE";
+  case CONNECT:
+    return "CONNECT";
   default:
     return "UNKNOWN";
   }
@@ -40,7 +50,7 @@ struct http_request_s {
   htable_t headers;
   char *body;
   lxe_connection_t *connection;
-  lxe_timer_t *timeout;
+  lxe_timer_t timeout;
 };
 
 typedef struct http_request_s http_request_t;
@@ -51,7 +61,6 @@ static http_request_t *http_request_alloc() {
   req->path = NULL;
   req->body = NULL;
   req->connection = NULL;
-  req->timeout = NULL;
 
   return req;
 }
