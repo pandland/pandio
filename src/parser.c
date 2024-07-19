@@ -19,11 +19,45 @@
 #define LF '\n'
 
 typedef struct lxe_buf {
-  const unsigned char *buf;
+  unsigned char *buf;
   size_t size;
 } lxe_buf_t;
 
-typedef enum lxe_parser_status { error, partial, complete } lxe_parser_status_t;
+typedef enum lxe_parser_status {
+  LX_COMPLETE,
+  LX_PARTIAL,
+  // error codes:
+  LX_UNEXPECTED_ERROR, // if something will go really bad with implementation
+  LX_INVALID_METHOD,
+  LX_INVALID_URI,
+  LX_INVALID_CHAR,
+  LX_INVALID_HEADER_KEY_CHAR,
+  LX_INVALID_HEADER_VALUE_CHAR,
+} lxe_parser_status_t;
+
+const char *lxe_http_map_code(lxe_parser_status_t code) {
+  switch (code)
+  {
+  case LX_COMPLETE:
+    return "HTTP request is completed and valid.";
+  case LX_PARTIAL:
+    return "Received partial data and parser is waiting for more data.";
+  case LX_UNEXPECTED_ERROR:
+    return "Unexpected parser error.";
+  case LX_INVALID_METHOD:
+    return "HTTP method is invalid.";
+  case LX_INVALID_URI:
+    return "HTTP URI target is invalid.";
+  case LX_INVALID_CHAR:
+    return "Illegal character in HTTP request.";
+  case LX_INVALID_HEADER_KEY_CHAR:
+    return "Illegal character in header key.";
+  case LX_INVALID_HEADER_VALUE_CHAR:
+    return "Illegal character in header value.";
+  default:
+    return "Unknown HTTP parser code.";
+  }
+}
 
 typedef enum lxe_parser_state {
   // line section
@@ -70,13 +104,13 @@ typedef struct lxe_parser {
 
 #define CHECK_EOF()                                                            \
   if (buf == buf_end) {                                                        \
-    return partial;                                                            \
+    return LX_PARTIAL;                                                            \
   }
 
 #define CHECK_CHAR(ch)                                                         \
   if (*(buf++) != ch) {                                                           \
     parser->state = parser_err;                                                \
-    return error;                                                              \
+    return LX_INVALID_CHAR;                                                              \
   }
 
 #define EXPECT_CHAR(ch)                                                        \
@@ -167,7 +201,7 @@ static int parse(lxe_parser_t *parser, lxe_buf_t *data) {
       } else if (*buf == ' ') {
         MOVE_TO(method_end);
       } else {
-        return error;
+        return LX_INVALID_METHOD;
       }
     case method_end:
       #define EXPECT_METHOD(expected) strncmp(parser->method.start, expected, method_len) == 0
@@ -192,7 +226,7 @@ static int parse(lxe_parser_t *parser, lxe_buf_t *data) {
       } else if (method_len == 7 && EXPECT_METHOD("CONNECT")) {
         parser->req->method = CONNECT;
       } else {
-        return error;
+        return LX_INVALID_METHOD;
       }
 
       MOVE_TO(uri_start);
@@ -209,12 +243,12 @@ static int parse(lxe_parser_t *parser, lxe_buf_t *data) {
     case uri:
       CHECK_EOF();
       // temporary:
-      if (isalnum(*buf) || *buf == '/' || *buf == '.' || *buf == '?' || *buf == '&' || *buf == '#') {
+      if (isalnum(*buf) || *buf == '/' || *buf == '.' || *buf == '?' || *buf == '&' || *buf == '#' || *buf == '_' || *buf == '-') {
         buf++;
       } else if (*buf == ' ') {
         MOVE_TO(uri_end);
       } else {
-        return error;
+        return LX_INVALID_URI;
       }
       break;
     case uri_end:
@@ -277,7 +311,7 @@ static int parse(lxe_parser_t *parser, lxe_buf_t *data) {
       } else if (*buf == ':') {
         MOVE_TO(header_key_end);
       } else {
-        return error;
+        return LX_INVALID_HEADER_KEY_CHAR;
       }
       break;
     case header_key_end:
@@ -300,7 +334,7 @@ static int parse(lxe_parser_t *parser, lxe_buf_t *data) {
       } else if (*buf == CR) {
         MOVE_TO(header_value_end);
       } else {
-        return error;
+        return LX_INVALID_HEADER_VALUE_CHAR;
       }
       break;
     case header_value_end:
@@ -322,15 +356,17 @@ static int parse(lxe_parser_t *parser, lxe_buf_t *data) {
       }
       break;
     case end:
-      return complete;
+      return LX_COMPLETE;
+    default:
+      return LX_UNEXPECTED_ERROR;
     }
   }
   
   if (parser->state == end) {
-    return complete;
+    return LX_COMPLETE;
   }
 
-  return partial;
+  return LX_PARTIAL;
 }
 
 int main() { 
@@ -340,7 +376,7 @@ int main() {
   http_request_t *r = http_request_alloc();
   parser.req = r;
 
-  unsigned char str[] = "PUT /index.html HTTP/1.1\r\nHost: localhost\r\nX-User: Michał\r\n\r\n";
+  unsigned char str[] = "PUTTO /index.html HTTP/1.1\r\nHost: localhost\r\nX-User: Michał\r\n\r\n";
   //unsigned char *str1 = "PUT ";
   //strcpy(str, str1);
   lxe_buf_t buf = { .buf = str, .size = 50 };

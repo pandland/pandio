@@ -2,6 +2,7 @@
   "files.associations": {
     "*.css": "css",
     "*.h": "c",
-    "executor": "c"
+    "executor": "c",
+    "socket": "c"
   }
 }
