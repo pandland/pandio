@@ -1,19 +1,20 @@
 > ⚠️ Early stage of development.
 
-# HTTP Server in C
+# luxio
 
-## pre-fork model
+Simple async io library for C (it will be in the future, for now it's just HTTP server).
+First component of larger thing - my very own JavaScript runtime called **lux.js** (it will be written in C++).
 
-- Master process inits listener socket and spawns N workers (using `fork`).
-- Each worker has own event loop and uses `epoll` + `fcntl` for non-blocking I/O operations.
-- With these techniques I achieved a decent level of concurrency.
+### TODO:
 
-## TO-DO
-- [x] Non-blocking architecture for handling connections.
-- [x] Parse HTTP requests using finite state machine.
-- [x] Handling timeouts using heap data structure
-
-## Building and running
+- [x] Timers using heap data structure (works like `setTimeout`).
+- [x] Non-blocking IO for sockets using epoll.
+- [x] Basic networking abstraction to handle TCP.
+- [ ] HTTP module.
+- [ ] WebSockets module.
+- [ ] TLS support.
+- [ ] Thread pool and files handling.
+- [ ] Support many platforms: Windows, MacOS and FreeBSD.
 
 ```sh
 make && ./build/server
@@ -34,37 +35,6 @@ pacaur -S criterion
 # Running tests:
 make test
 ```
-
-
-## Benchmark
-
-> ⚠️ There is no HTTP request parsing yet.
-
-In 1 minute test with 7000 concurrent connections I achieved 126 220 requests per second:
-
-```
-$ wrk -t10 -c7000 -d60s http://localhost:8080/
-
-Running 1m test @ http://localhost:8080/
-  10 threads and 7000 connections
-  Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency    26.96ms   18.13ms 879.95ms   90.27%
-    Req/Sec    12.78k     2.63k   24.79k    69.77%
-  7585409 requests in 1.00m, 368.93MB read
-  Socket errors: connect 0, read 7585034, write 0, timeout 0
-Requests/sec: 126219.65
-Transfer/sec:      6.14MB
-```
-
-```md
-# Specs:
-Laptop: Acer Nitro AN515-45
-CPU:  AMD Ryzen 5 5600H (12) @ 3.293GHz
-GPU: NVIDIA GeForce RTX 3060 (Laptop GPU)
-RAM: 32 GB
-```
-
-> ⚠️ I ran benchmark inside WSL so resources are probably more limited.
 
 ## Resources
 - [Beej's Guide to Network Programming](https://www.beej.us/guide/bgnet/html/split/index.html)

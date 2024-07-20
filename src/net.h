@@ -6,33 +6,33 @@
 #include <unistd.h>
 
 typedef int socket_t;
-typedef struct lxe_connection lxe_connection_t;
+typedef struct lx_connection lx_connection_t;
 
-typedef struct lxe_listener {
+typedef struct lx_listener {
     socket_t fd;
     void *data;
-    lxe_event_t event;
-    void (*onaccept)(struct lxe_connection *);
-} lxe_listener_t;
+    lx_event_t event;
+    void (*onaccept)(struct lx_connection *);
+} lx_listener_t;
 
-typedef struct lxe_connection {
+typedef struct lx_connection {
     socket_t fd;
-    void (*ondata)(struct lxe_connection *);
-    void (*onclose)(struct lxe_connection *);
+    void (*ondata)(struct lx_connection *);
+    void (*onclose)(struct lx_connection *);
     void *data;     // pointer to the higher level protocol object
-    lxe_listener_t *listener;
-    lxe_event_t event;
+    lx_listener_t *listener;
+    lx_event_t event;
     /* buffer is stored in TCP connection object, 
      * because I want to support multiple protocols (http and ws), each with own struct
      * so I can reuse same buffer to save memory usage
      */
     size_t size;
     char buf[8192]; // TODO: define it as flexible array member?
-} lxe_connection_t;
+} lx_connection_t;
 
-lxe_listener_t *lxe_listen(lxe_io_t *ctx, int port, void (*)(lxe_connection_t*));
-lxe_connection_t *lxe_connection_init(lxe_io_t *ctx, socket_t fd);
-lxe_listener_t *lxe_listener_init(lxe_io_t *ctx, socket_t lfd);
-void lxe_listener_handler(lxe_event_t *event);
-void lxe_connection_handler(lxe_event_t *event);
-void lxe_close(lxe_connection_t *conn);
+lx_listener_t *lx_listen(lx_io_t *ctx, int port, void (*)(lx_connection_t*));
+lx_connection_t *lx_connection_init(lx_io_t *ctx, socket_t fd);
+lx_listener_t *lx_listener_init(lx_io_t *ctx, socket_t lfd);
+void lx_listener_handler(lx_event_t *event);
+void lx_connection_handler(lx_event_t *event);
+void lx_close(lx_connection_t *conn);

@@ -2,10 +2,10 @@
 #include "event.h"
 #include "timer.h"
 
-lxe_io_t lxe_init() {
-  lxe_io_t ctx;
+lx_io_t lx_init() {
+  lx_io_t ctx;
   ctx.epoll_fd = epoll_create1(0);
-  ctx.now = lxe_now(); // it will be updated with every cycle anyway
+  ctx.now = lx_now(); // it will be updated with every cycle anyway
   if (ctx.epoll_fd == -1) {
     perror("epoll");
     exit(EXIT_FAILURE);
@@ -16,7 +16,7 @@ lxe_io_t lxe_init() {
   return ctx;
 }
 
-void lxe_make_nonblocking(int fd) {
+void lx_make_nonblocking(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);
     if (flags == -1) {
         perror("fcntl");
@@ -30,24 +30,24 @@ void lxe_make_nonblocking(int fd) {
     }
 }
 
-void lxe_add_event(lxe_event_t *event, int fd) {
+void lx_add_event(lx_event_t *event, int fd) {
   struct epoll_event ev;
   ev.events = EPOLLIN;
   ev.data.ptr = event;
   if (epoll_ctl(event->ctx->epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1) {
-    perror("lxe_add_event");
+    perror("lx_add_event");
     exit(EXIT_FAILURE);
   }
 }
 
-void lxe_remove_event(lxe_event_t *event, int fd) {
+void lx_remove_event(lx_event_t *event, int fd) {
   if (epoll_ctl(event->ctx->epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1) {
-    perror("lxe_remove_event");
+    perror("lx_remove_event");
     exit(EXIT_FAILURE);
   }
 }
 
-void lxe_run(lxe_io_t *ctx) {
+void lx_run(lx_io_t *ctx) {
     struct epoll_event events[MAX_EVENTS];
     int epoll_timeout = -1;
 
@@ -58,13 +58,13 @@ void lxe_run(lxe_io_t *ctx) {
             exit(EXIT_FAILURE);
         }
 
-        ctx->now = lxe_now();
+        ctx->now = lx_now();
 
         for (int i = 0; i < events_count; i++) {
-            lxe_event_t *event = events[i].data.ptr;
+            lx_event_t *event = events[i].data.ptr;
             event->handler(event);
         }
 
-        epoll_timeout = lxe_timers_run(ctx);
+        epoll_timeout = lx_timers_run(ctx);
     }
 }

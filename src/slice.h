@@ -1,5 +1,7 @@
 #pragma once
 #include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 
 struct buffer_slice {
   const unsigned char *start;

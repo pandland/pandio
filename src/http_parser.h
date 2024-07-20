@@ -1,266 +1,68 @@
 #pragma once
-#include "string.h"
-#include "ctype.h"
-#include "http_request.h"
-#include "stdio.h"
 #include "slice.h"
 
-#define MAX_HEADERS 64
+typedef enum lx_parser_status {
+  LX_COMPLETE,
+  LX_PARTIAL,
+  // error codes:
+  LX_UNEXPECTED_ERROR, // if something will go really bad within implementation
+  LX_INVALID_METHOD,
+  LX_INVALID_URI,
+  LX_INVALID_CHAR,
+  LX_INVALID_HEADER_KEY_CHAR,
+  LX_INVALID_HEADER_VALUE_CHAR,
+} lx_parser_status_t;
 
-enum http_parser_state {
-  METHOD,
-  PATH,
-  VERSION,
-  HEADERS_START,
-  HEADER_NAME,
-  HEADER_VALUE,
-  BODY_START,
-  ERROR
-};
+typedef struct lx_buf {
+  unsigned char *buf;
+  size_t size;
+} lx_buf_t;
 
-#define CR '\r'
-#define LF '\n'
+typedef enum lx_parser_state {
+  // line section
+  line_start,
+  method,
+  method_end,
+  uri_start,
+  uri,
+  uri_end,
+  version_start,
+  version_h,
+  version_ht,
+  version_htt,
+  version_http,
+  version_http_slash,
+  version_http_major,
+  version_http_dot,
+  version_http_minor,
+  version_end,
+  line_end,
+  // headers section
+  header_key_start,
+  header_key,
+  header_key_end,
+  header_space,
+  header_value_start,
+  header_value,
+  header_value_end,
+  header_end,
+  maybe_end,
+  end
+} lx_parser_state_t;
 
-#define SET_ERROR() \
-  parser->state = ERROR
+typedef struct http_request_s http_request_t;
 
-#define EXPECT_CHAR(ch) \
-  if (*buf == 0 || *(buf++) != ch) {     \
-    SET_ERROR();         \
-    return NULL;        \
-  }
-
-#define SET_ERRNO(no) \
-  if (parser.state == ERROR) \
-    parser.err = no
-
-enum http_parser_errno {
-  UNKNOWN = 1,
-  INVALID_METHOD,
-  INVALID_PATH,
-  INVALID_VERSION,
-  INVALID_HEADER,
-  INVALID_REQUEST
-};
-
-typedef struct http_parser {
-  enum http_parser_state state;
-  enum http_parser_errno err;
+typedef struct lx_http_parser {
+  size_t nread;
+  lx_parser_state_t state;
   http_request_t *req;
-  slice_t header_name;
+  slice_t uri;
+  slice_t method;
+  slice_t header_key;
   slice_t header_value;
-} http_parser_t;
+  size_t content_length;
+} lx_http_parser_t;
 
-static char *parse_method(http_parser_t *parser, char *buf) {
-  switch (*buf) {
-    case 'G':
-      EXPECT_CHAR('G');
-      EXPECT_CHAR('E');
-      EXPECT_CHAR('T');
-      parser->req->method = GET;
-      break;
-    case 'P':
-      EXPECT_CHAR('P');
-      if (*buf == 'A') {
-        EXPECT_CHAR('A');
-        EXPECT_CHAR('T');
-        EXPECT_CHAR('C');
-        EXPECT_CHAR('H');
-        parser->req->method = PATCH;
-      }
-      else if (*buf == 'O') {
-        EXPECT_CHAR('O');
-        EXPECT_CHAR('S');
-        EXPECT_CHAR('T');
-        parser->req->method = POST;
-      } else {
-        EXPECT_CHAR('U');
-        EXPECT_CHAR('T');
-        parser->req->method = PUT;
-      }
-      break;
-    case 'D':
-      EXPECT_CHAR('D');
-      EXPECT_CHAR('E');
-      EXPECT_CHAR('L');
-      EXPECT_CHAR('E');
-      EXPECT_CHAR('T');
-      EXPECT_CHAR('E');
-      parser->req->method = DELETE;
-      break;
-    case 'O':
-      EXPECT_CHAR('O');
-      EXPECT_CHAR('P');
-      EXPECT_CHAR('T');
-      EXPECT_CHAR('I');
-      EXPECT_CHAR('O');
-      EXPECT_CHAR('N');
-      EXPECT_CHAR('S');
-      parser->req->method = OPTIONS;
-    default:
-      SET_ERROR();
-      return NULL;
-  }
-
-  EXPECT_CHAR(' ');
-  parser->state = PATH;
-
-  return buf;
-}
-
-static char *parse_path(http_parser_t *parser, char *buf) {
-  char *path_start = buf;
-  size_t path_size = 0;
-  // temporary
-  while (*buf && *buf != ' ') {
-    if (!isalnum(*buf) && *buf != '/' && *buf != '.') {
-      SET_ERROR();
-      return NULL;
-    }
-
-    path_size++;
-    buf++;
-  }
-
-  slice_t path_slice = { .start = path_start, .size = path_size };
-  parser->req->path = slice_to_cstr(path_slice);
-
-  parser->state = VERSION;
-  EXPECT_CHAR(' ');
-  return buf;
-}
-
-static char *parse_version(http_parser_t *parser, char *buf) {
-  EXPECT_CHAR('H');
-  EXPECT_CHAR('T');
-  EXPECT_CHAR('T');
-  EXPECT_CHAR('P');
-  EXPECT_CHAR('/');
-  EXPECT_CHAR('1');
-  EXPECT_CHAR('.');
-  EXPECT_CHAR('1');
-
-  EXPECT_CHAR(CR);
-  EXPECT_CHAR(LF);
-
-  parser->state = HEADERS_START;
-
-  return buf;
-}
-
-static char *parse_header_name(http_parser_t *parser, char *buf) {
-  if (buf == NULL) {
-    fprintf(stderr, "Error: NULL buffer\n");
-    return NULL;
-  }
-
-  char *header_start = buf;
-  size_t header_size = 0;
-
-  while (*buf) {
-    if (*buf == ':') {
-      break;
-    }
-    header_size++;
-    buf++;
-  }
-
-  parser->state = HEADER_VALUE;
-
-  parser->header_name.start = header_start;
-  parser->header_name.size = header_size;
-
-  EXPECT_CHAR(':');
-  EXPECT_CHAR(' ');
-
-  return buf;
-}
-
-static char *parse_header_value(http_parser_t *parser, char *buf) {
-  if (buf == NULL) {
-    fprintf(stderr, "Error: NULL buffer\n");
-    return NULL;
-  }
-
-  char *header_start = buf;
-  size_t header_size = 0;
-
-  while (*buf) {
-    if (*buf == CR) {
-      break;
-    }
-    header_size++;
-    buf++;
-  }
-
-  parser->state = HEADER_VALUE;
-
-  parser->header_value.start = header_start;
-  parser->header_value.size = header_size;
-
-  EXPECT_CHAR(CR);
-  EXPECT_CHAR(LF);
-
-  if (*buf == CR) {
-    EXPECT_CHAR(CR);
-    EXPECT_CHAR(LF);
-    parser->state = BODY_START;
-  } else {
-    parser->state = HEADER_NAME;
-  }
-
-  return buf;
-}
-
-/* returns non-zero value on error */
-static int http_parse(http_request_t *req, char *buf) {
-  http_parser_t parser = { .state = METHOD, .req = req, .err = UNKNOWN };
-
-  while (*buf) {
-    switch (parser.state) {
-      case ERROR:
-        return parser.err;
-      case METHOD:
-        buf = parse_method(&parser, buf);
-        SET_ERRNO(INVALID_METHOD);
-        break;
-      case PATH:
-        buf = parse_path(&parser, buf);
-        SET_ERRNO(INVALID_PATH);
-        break;
-      case VERSION:
-        buf = parse_version(&parser, buf);
-        SET_ERRNO(INVALID_VERSION);
-        break;
-      case HEADERS_START:
-        parser.state = HEADER_NAME;
-        break;
-      case HEADER_NAME:
-        buf = parse_header_name(&parser, buf);
-        SET_ERRNO(INVALID_HEADER);
-        break;
-      case HEADER_VALUE:
-        buf = parse_header_value(&parser, buf);
-        SET_ERRNO(INVALID_HEADER);
-
-        char *header_name = slice_to_cstr(parser.header_name);
-        char *header_value = slice_to_cstr(parser.header_value);
-
-        htable_insert(&parser.req->headers, header_name, header_value);
-        break;
-      case BODY_START:
-        return 0;
-    }
-
-    if (parser.state == ERROR) {
-      return parser.err;
-    }
-  }
-
-  // last state
-  if (parser.state == BODY_START) {
-    return 0;
-  }
-
-  return INVALID_REQUEST;
-}
+const char* lx_http_map_code(lx_parser_status_t);
+void lx_http_parser_init(lx_http_parser_t *parser);
+int lx_http_parser_exec(lx_http_parser_t *parser, lx_buf_t *data);

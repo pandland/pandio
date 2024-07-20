@@ -1,8 +1,8 @@
 #include "net.h"
 #include "common.h"
 
-lxe_connection_t *lxe_connection_init(lxe_io_t *ctx, socket_t fd) {
-  lxe_connection_t *conn = malloc(sizeof(lxe_connection_t));
+lx_connection_t *lx_connection_init(lx_io_t *ctx, socket_t fd) {
+  lx_connection_t *conn = malloc(sizeof(lx_connection_t));
   conn->fd = fd;
   conn->ondata = NULL;
   conn->onclose = NULL;
@@ -10,27 +10,27 @@ lxe_connection_t *lxe_connection_init(lxe_io_t *ctx, socket_t fd) {
 
   conn->event.ctx = ctx;
   conn->event.data = NULL;
-  conn->event.handler = lxe_connection_handler;
+  conn->event.handler = lx_connection_handler;
 
   return conn;
 }
 
-lxe_listener_t *lxe_listener_init(lxe_io_t *ctx, socket_t lfd) {
-  lxe_listener_t *listener = malloc(sizeof(lxe_listener_t));
+lx_listener_t *lx_listener_init(lx_io_t *ctx, socket_t lfd) {
+  lx_listener_t *listener = malloc(sizeof(lx_listener_t));
   listener->fd = lfd;
   listener->data = NULL;
   listener->onaccept = NULL;
 
   listener->event.ctx = ctx;
-  listener->event.handler = lxe_listener_handler;
+  listener->event.handler = lx_listener_handler;
   listener->event.data = NULL;
 
   return listener;
 }
 
 /* epoll event handler for listener */
-void lxe_listener_handler(lxe_event_t *event) {
-  lxe_listener_t *listener = container_of(event, lxe_listener_t, event);
+void lx_listener_handler(lx_event_t *event) {
+  lx_listener_t *listener = container_of(event, lx_listener_t, event);
 
   struct sockaddr_in address;
   int addrlen = sizeof(address);
@@ -43,24 +43,24 @@ void lxe_listener_handler(lxe_event_t *event) {
     exit(EXIT_FAILURE);
   }
 
-  lxe_make_nonblocking(client_fd);
+  lx_make_nonblocking(client_fd);
 
-  lxe_connection_t *conn = lxe_connection_init(event->ctx, client_fd);
+  lx_connection_t *conn = lx_connection_init(event->ctx, client_fd);
   conn->listener = listener;
 
-  lxe_add_event(&conn->event, client_fd);
+  lx_add_event(&conn->event, client_fd);
   if (listener->onaccept != NULL)
     listener->onaccept(conn);
 }
 
 /* epoll event handler for connection (EPOLLIN) */
-void lxe_connection_handler(lxe_event_t *event) {
-    lxe_connection_t *conn = container_of(event, lxe_connection_t, event);
+void lx_connection_handler(lx_event_t *event) {
+    lx_connection_t *conn = container_of(event, lx_connection_t, event);
     if (conn->ondata != NULL)
       conn->ondata(conn);
 }
 
-lxe_listener_t *lxe_listen(lxe_io_t *ctx, int port, void (*onaccept)(struct lxe_connection *)) {
+lx_listener_t *lx_listen(lx_io_t *ctx, int port, void (*onaccept)(struct lx_connection *)) {
   socket_t lfd = socket(AF_INET, SOCK_STREAM, 0);
   if (lfd <= 0) {
     perror("socket");
@@ -84,23 +84,23 @@ lxe_listener_t *lxe_listen(lxe_io_t *ctx, int port, void (*onaccept)(struct lxe_
     exit(EXIT_FAILURE);
   }
 
-  lxe_make_nonblocking(lfd);
+  lx_make_nonblocking(lfd);
 
   if (listen(lfd, SOMAXCONN) < 0) {
     perror("listen");
     exit(EXIT_FAILURE);
   }
   
-  lxe_listener_t *listener = lxe_listener_init(ctx, lfd);
+  lx_listener_t *listener = lx_listener_init(ctx, lfd);
   listener->onaccept = onaccept;
 
-  lxe_add_event(&listener->event, lfd);
+  lx_add_event(&listener->event, lfd);
   return listener;
 }
 
 /* closes tcp connection, removes from epoll and free connection from memory */
-void lxe_close(lxe_connection_t *conn) {
-  lxe_remove_event(&conn->event, conn->fd);
+void lx_close(lx_connection_t *conn) {
+  lx_remove_event(&conn->event, conn->fd);
   close(conn->fd);
   if (conn->onclose)
     conn->onclose(conn); // user should clear data, close timers etc

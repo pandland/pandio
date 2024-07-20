@@ -3,6 +3,7 @@
 #include "htable.h"
 #include "net.h"
 #include "timer.h"
+#include "http_parser.h"
 
 enum HTTP_METHOD {
   GET,
@@ -18,7 +19,7 @@ enum HTTP_METHOD {
 
 typedef enum HTTP_METHOD http_method_t;
 
-static char *map_method(http_method_t method) {
+static char *http_map_method(http_method_t method) {
   switch (method)
   {
   case GET:
@@ -49,8 +50,10 @@ struct http_request_s {
   http_method_t method;
   htable_t headers;
   char *body;
-  lxe_connection_t *connection;
-  lxe_timer_t timeout;
+  size_t body_size;
+  lx_http_parser_t parser;
+  lx_connection_t *connection;
+  lx_timer_t timeout;
 };
 
 typedef struct http_request_s http_request_t;
@@ -61,6 +64,8 @@ static http_request_t *http_request_alloc() {
   req->path = NULL;
   req->body = NULL;
   req->connection = NULL;
+  lx_http_parser_init(&req->parser);
+  req->parser.req = req;
 
   return req;
 }

@@ -5,7 +5,7 @@
 #include "timer.h"
 #include "logger.h"
 
-uint64_t lxe_now() {
+uint64_t lx_now() {
   struct timespec now;
   clock_gettime(CLOCK_MONOTONIC, &now);
 
@@ -13,8 +13,8 @@ uint64_t lxe_now() {
 }
 
 int timers_comparator(struct heap_node *a, struct heap_node *b) {
-  lxe_timer_t *child = timer_get(a);
-  lxe_timer_t *parent = timer_get(b);
+  lx_timer_t *child = timer_get(a);
+  lx_timer_t *parent = timer_get(b);
 
   if (child->timeout < parent->timeout) {
     return 1;
@@ -23,11 +23,11 @@ int timers_comparator(struct heap_node *a, struct heap_node *b) {
   return 0;
 }
 
-void timers_init(lxe_io_t *ctx) {
+void timers_init(lx_io_t *ctx) {
   ctx->timers = heap_init(timers_comparator);
 }
 
-void lxe_timer_init(lxe_io_t *ctx, lxe_timer_t *timer) {
+void lx_timer_init(lx_io_t *ctx, lx_timer_t *timer) {
   timer->ctx = ctx;
   timer->state = TIMER_NONE;
   timer->data = NULL;
@@ -36,21 +36,21 @@ void lxe_timer_init(lxe_io_t *ctx, lxe_timer_t *timer) {
   heap_init_node(&timer->hnode);
 }
 
-lxe_timer_t *lxe_timer_alloc(lxe_io_t *ctx) {
-  lxe_timer_t *timer = malloc(sizeof(lxe_timer_t));
-  lxe_timer_init(ctx, timer);
+lx_timer_t *lx_timer_alloc(lx_io_t *ctx) {
+  lx_timer_t *timer = malloc(sizeof(lx_timer_t));
+  lx_timer_init(ctx, timer);
 
   return timer;
 }
 
-void lxe_timer_start(lxe_timer_t *timer, lxe_timer_callback_t ontimeout, uint64_t timeout) {
+void lx_timer_start(lx_timer_t *timer, lx_timer_callback_t ontimeout, uint64_t timeout) {
   timer->state = TIMER_ACTIVE;
   timer->timeout = timer->ctx->now + timeout;
   timer->ontimeout = ontimeout;
   heap_insert(&timer->ctx->timers, &timer->hnode);
 }
 
-void lxe_timer_stop(lxe_timer_t *timer) {
+void lx_timer_stop(lx_timer_t *timer) {
   if (timer->state != TIMER_ACTIVE)
     return;
 
@@ -58,12 +58,12 @@ void lxe_timer_stop(lxe_timer_t *timer) {
   heap_remove(&timer->ctx->timers, &timer->hnode);
 }
 
-void lxe_timer_destroy(lxe_timer_t *timer) {
+void lx_timer_destroy(lx_timer_t *timer) {
   free(timer);
 }
 
-int lxe_timers_run(lxe_io_t *ctx) {
-  lxe_timer_t *min;
+int lx_timers_run(lx_io_t *ctx) {
+  lx_timer_t *min;
 
   while (true) {
     min = timer_get(ctx->timers.root);
@@ -73,7 +73,7 @@ int lxe_timers_run(lxe_io_t *ctx) {
     if (min->timeout > ctx->now)
       break;
     
-    lxe_timer_stop(min);
+    lx_timer_stop(min);
     min->ontimeout(min);
   }
 
