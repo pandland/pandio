@@ -2,8 +2,7 @@
 
 # luxio
 
-Simple async io library for C (it will be in the future, for now it's just HTTP server).
-First component of larger thing - my very own JavaScript runtime called **lux.js** (it will be written in C++).
+Simple async io library for C (it will be in the future, for now it's just HTTP server) - it will be used across my personal projects.
 
 ### TODO:
 
