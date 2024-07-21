@@ -7,6 +7,7 @@ lx_connection_t *lx_connection_init(lx_io_t *ctx, socket_t fd) {
   conn->ondata = NULL;
   conn->onclose = NULL;
   conn->data = NULL;
+  conn->size = 0;
 
   conn->event.ctx = ctx;
   conn->event.data = NULL;
@@ -106,4 +107,13 @@ void lx_close(lx_connection_t *conn) {
     conn->onclose(conn); // user should clear data, close timers etc
   
   free(conn);
+}
+
+int lx_recv(lx_connection_t *conn) {
+  int bytes = recv(conn->fd, conn->buf + conn->size, LX_NET_BUFFER_SIZE - conn->size, 0);
+  if (bytes <= 0)
+    return bytes;
+
+  conn->size += bytes;
+  return bytes;
 }

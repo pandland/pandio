@@ -5,6 +5,8 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
+#define LX_NET_BUFFER_SIZE 8192
+
 typedef int socket_t;
 typedef struct lx_connection lx_connection_t;
 
@@ -27,8 +29,10 @@ typedef struct lx_connection {
      * so I can reuse same buffer to save memory usage
      */
     size_t size;
-    char buf[8192]; // TODO: define it as flexible array member?
+    char buf[LX_NET_BUFFER_SIZE]; // TODO: define it as flexible array member?
 } lx_connection_t;
+
+#define lx_conn_ctx(conn_ptr) conn_ptr->event.ctx
 
 lx_listener_t *lx_listen(lx_io_t *ctx, int port, void (*)(lx_connection_t*));
 lx_connection_t *lx_connection_init(lx_io_t *ctx, socket_t fd);
@@ -36,3 +40,4 @@ lx_listener_t *lx_listener_init(lx_io_t *ctx, socket_t lfd);
 void lx_listener_handler(lx_event_t *event);
 void lx_connection_handler(lx_event_t *event);
 void lx_close(lx_connection_t *conn);
+int lx_recv(lx_connection_t *conn);

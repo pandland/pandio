@@ -3,6 +3,11 @@
     "*.css": "css",
     "*.h": "c",
     "executor": "c",
-    "socket": "c"
+    "socket": "c",
+    "array": "c",
+    "string": "c",
+    "buffer": "c",
+    "internet": "c",
+    "string_view": "c"
   }
 }
