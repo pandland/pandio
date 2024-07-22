@@ -11,7 +11,8 @@ typedef enum lx_parser_status {
   LX_INVALID_CHAR,
   LX_INVALID_HEADER_KEY_CHAR,
   LX_INVALID_HEADER_VALUE_CHAR,
-  LX_TOO_MANY_HEADERS
+  LX_TOO_MANY_HEADERS,
+  LX_INVALID_CONTENT_LENGTH
 } lx_parser_status_t;
 
 typedef struct lx_buf {

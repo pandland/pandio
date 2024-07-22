@@ -8,6 +8,8 @@
     "string": "c",
     "buffer": "c",
     "internet": "c",
-    "string_view": "c"
+    "string_view": "c",
+    "sstream": "c",
+    "random": "c"
   }
 }

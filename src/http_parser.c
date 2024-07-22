@@ -1,9 +1,10 @@
 #include "http_parser.h"
 #include "http_request.h"
+#include "common.h"
+
 #include <ctype.h>
 #include <string.h>
-#include "common.h"
-#include "stdio.h"
+#include <stdio.h>
 
 #ifdef __GNUC__
 #define LIKELY(X) __builtin_expect(!!(X), 1)
@@ -15,6 +16,9 @@
 
 #define CR '\r'
 #define LF '\n'
+
+#define CONTENT_LENGTH "content-length"
+#define CONNECTION "connection"
 
 const char *lx_http_map_code(lx_parser_status_t code) {
   switch (code)
@@ -36,7 +40,9 @@ const char *lx_http_map_code(lx_parser_status_t code) {
   case LX_INVALID_HEADER_VALUE_CHAR:
     return "Illegal character in header value.";
   case LX_TOO_MANY_HEADERS:
-    return "Limit of max headers exceeded";
+    return "Limit of max headers exceeded.";
+  case LX_INVALID_CONTENT_LENGTH:
+    return "Invalid content-length header value.";
   default:
     return "Unknown HTTP parser code.";
   }
@@ -117,6 +123,29 @@ void lx_http_parser_init(lx_http_parser_t *parser) {
 
   parser->method.start = NULL;
   parser->method.size = 0;
+}
+
+// TODO: it would be more performant to detect specific headers during processing
+int lx_on_header_complete(lx_http_parser_t *parser) {
+  http_raw_header_t *header = parser->req->raw_headers + parser->nheaders;
+  header->key = parser->header_key;
+  header->value = parser->header_value;
+  parser->nheaders++;
+
+  switch(header->key.size) {
+    case 14:
+      if (slice_lower_cstrcmp(header->key, CONTENT_LENGTH)) {
+        int64_t result = slice_toint64(header->value);
+        if (result == -1) {
+          return LX_INVALID_CONTENT_LENGTH;
+        }
+        parser->content_length = result;
+      }
+      break;
+    default:
+      return 0;
+  }
+  return 0;
 }
 
 int lx_http_parser_exec(lx_http_parser_t *parser, lx_buf_t *data) {
@@ -287,11 +316,9 @@ int lx_http_parser_exec(lx_http_parser_t *parser, lx_buf_t *data) {
       break;
     case header_value_end:
       parser->header_value.size = buf - parser->header_value.start;
-      
-      http_raw_header_t *header = parser->req->raw_headers + parser->nheaders;
-      header->key = parser->header_key;
-      header->value = parser->header_value;
-      parser->nheaders++;
+      int errcode = lx_on_header_complete(parser);
+      if (errcode)
+        return errcode;
 
       MOVE_TO(header_end);
       break;
