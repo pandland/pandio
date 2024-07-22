@@ -11,6 +11,7 @@ typedef enum lx_parser_status {
   LX_INVALID_CHAR,
   LX_INVALID_HEADER_KEY_CHAR,
   LX_INVALID_HEADER_VALUE_CHAR,
+  LX_TOO_MANY_HEADERS
 } lx_parser_status_t;
 
 typedef struct lx_buf {
@@ -61,6 +62,7 @@ typedef struct lx_http_parser {
   slice_t header_key;
   slice_t header_value;
   size_t content_length;
+  unsigned nheaders;
 } lx_http_parser_t;
 
 const char* lx_http_map_code(lx_parser_status_t);

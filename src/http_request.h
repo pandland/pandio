@@ -45,6 +45,13 @@ static char *http_map_method(http_method_t method) {
   }
 }
 
+#define MAX_HEADERS 64
+
+typedef struct http_raw_header {
+  slice_t key;
+  slice_t value;
+} http_raw_header_t;
+
 struct http_request_s {
   char *path;
   http_method_t method;
@@ -54,6 +61,7 @@ struct http_request_s {
   lx_http_parser_t parser;
   lx_connection_t *connection;
   lx_timer_t timeout;
+  http_raw_header_t raw_headers[MAX_HEADERS];
 };
 
 typedef struct http_request_s http_request_t;

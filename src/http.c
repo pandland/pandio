@@ -5,6 +5,17 @@
 #define HTTP_DEFAULT_TIMEOUT 60000
 #define lx_http_ctx(conn) conn->listener->data
 
+void print_raw_headers(http_request_t *req) {
+  unsigned nheaders = req->parser.nheaders;
+
+  printf("{ \n");
+  for (int i = 0; i < nheaders; ++i) {
+    http_raw_header_t header = req->raw_headers[i];
+    printf("  %s: %s, \n", slice_to_cstr(header.key), slice_to_cstr(header.value));
+  }
+  printf("}\n");
+}
+
 // handle conn->ondata()
 void lx_http_handle_data(lx_connection_t *conn) {
   lx_http_t *http_ctx = lx_http_ctx(conn);
@@ -40,6 +51,7 @@ void lx_http_handle_data(lx_connection_t *conn) {
   switch (parser_code) {
     case LX_COMPLETE:
       log_info("Received complete request");
+      print_raw_headers(req);
       const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n\r\n<h1>Hello world!</h1>\n";
       send(conn->fd, response, strlen(response), 0);
       lx_close(conn);

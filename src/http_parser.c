@@ -5,8 +5,6 @@
 #include "common.h"
 #include "stdio.h"
 
-#define MAX_HEADERS 64
-
 #ifdef __GNUC__
 #define LIKELY(X) __builtin_expect(!!(X), 1)
 #define UNLIKELY(X) __builtin_expect(!!(X), 0)
@@ -37,6 +35,8 @@ const char *lx_http_map_code(lx_parser_status_t code) {
     return "Illegal character in header key.";
   case LX_INVALID_HEADER_VALUE_CHAR:
     return "Illegal character in header value.";
+  case LX_TOO_MANY_HEADERS:
+    return "Limit of max headers exceeded";
   default:
     return "Unknown HTTP parser code.";
   }
@@ -103,6 +103,7 @@ static int HTTP_HEADER_VALUE_MAP[256] = {
 void lx_http_parser_init(lx_http_parser_t *parser) {
   parser->state = line_start;
   parser->nread = 0;
+  parser->nheaders = 0;
   parser->content_length = 0;
 
   parser->header_key.start = NULL;
@@ -244,6 +245,10 @@ int lx_http_parser_exec(lx_http_parser_t *parser, lx_buf_t *data) {
       MOVE_TO(header_key_start);
       break;
     case header_key_start:
+      if (parser->nheaders >= MAX_HEADERS) {
+        return LX_TOO_MANY_HEADERS;
+      }
+
       parser->header_key.start = buf;
       parser->header_key.size = 0;
       MOVE_TO(header_key);
@@ -282,6 +287,12 @@ int lx_http_parser_exec(lx_http_parser_t *parser, lx_buf_t *data) {
       break;
     case header_value_end:
       parser->header_value.size = buf - parser->header_value.start;
+      
+      http_raw_header_t *header = parser->req->raw_headers + parser->nheaders;
+      header->key = parser->header_key;
+      header->value = parser->header_value;
+      parser->nheaders++;
+
       MOVE_TO(header_end);
       break;
     case header_end:
