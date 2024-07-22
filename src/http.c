@@ -41,8 +41,6 @@ void lx_http_handle_data(lx_connection_t *conn) {
     lx_close(conn);
     return;
   }
-  
-  log_info("Received: %d bytes, buffer size: %ld, nread size: %ld", bytes, conn->size, req->parser.nread);
 
   lx_buf_t input = { .buf = conn->buf, .size = conn->size };
   int parser_code = lx_http_parser_exec(&req->parser, &input);

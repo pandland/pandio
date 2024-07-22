@@ -43,6 +43,8 @@ const char *lx_http_map_code(lx_parser_status_t code) {
     return "Limit of max headers exceeded.";
   case LX_INVALID_CONTENT_LENGTH:
     return "Invalid content-length header value.";
+  case LX_CONTENT_LENGTH_DUPLICATE:
+    return "Received duplicated content-length header with different value.";
   default:
     return "Unknown HTTP parser code.";
   }
@@ -111,6 +113,7 @@ void lx_http_parser_init(lx_http_parser_t *parser) {
   parser->nread = 0;
   parser->nheaders = 0;
   parser->content_length = 0;
+  parser->content_length_received = 0;
 
   parser->header_key.start = NULL;
   parser->header_key.size = 0;
@@ -124,6 +127,13 @@ void lx_http_parser_init(lx_http_parser_t *parser) {
   parser->method.start = NULL;
   parser->method.size = 0;
 }
+
+enum lx_http_connection_header {
+  LX_KEEP_ALIVE,
+  LX_UPGRADE,
+  LX_CLOSE,
+  LX_INVALID
+};
 
 // TODO: it would be more performant to detect specific headers during processing
 int lx_on_header_complete(lx_http_parser_t *parser) {
@@ -139,7 +149,13 @@ int lx_on_header_complete(lx_http_parser_t *parser) {
         if (result == -1) {
           return LX_INVALID_CONTENT_LENGTH;
         }
+
+        if (parser->content_length_received && parser->content_length != result) {
+          return LX_CONTENT_LENGTH_DUPLICATE;
+        }
+
         parser->content_length = result;
+        parser->content_length_received = 1;
       }
       break;
     default:
