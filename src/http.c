@@ -12,6 +12,12 @@ void lx_http_handle_data(lx_connection_t *conn) {
 
   char *buf = conn->buf + conn->size;
   size_t to_read = LX_NET_BUFFER_SIZE - conn->size;
+  if (to_read == 0 && req->parser.state != end) {
+    log_err("Max headers size exceeded.");
+    lx_close(conn);
+    return;
+  }
+
   int bytes = recv(conn->fd, buf, to_read, 0);
   conn->size += bytes;
 
