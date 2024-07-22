@@ -10,7 +10,11 @@ void print_raw_headers(http_request_t *req) {
   printf("{ \n");
   for (int i = 0; i < nheaders; ++i) {
     http_raw_header_t header = req->raw_headers[i];
-    printf("  %s: %s, \n", slice_to_cstr(header.key), slice_to_cstr(header.value));
+    char *header_key = slice_to_cstr(header.key);
+    char *header_value = slice_to_cstr(header.value);
+    printf("  %s: %s, \n", header_key, header_value);
+    free(header_key);
+    free(header_value);
   }
   printf("}\n");
 }

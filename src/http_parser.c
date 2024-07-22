@@ -309,6 +309,9 @@ int lx_http_parser_exec(lx_http_parser_t *parser, lx_buf_t *data) {
       break;
     case header_key_end:
       parser->header_key.size = buf - parser->header_key.start;
+      // Reject empty header keys. Empty header values are allowed.
+      if (parser->header_key.size == 0)
+        return LX_INVALID_HEADER_KEY_CHAR;
       buf++;
       MOVE_TO(header_space);
       break;
