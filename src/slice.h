@@ -24,21 +24,40 @@ static char *slice_to_cstr(slice_t slice) {
     return result;
 }
 
-#define LOWER(c) ((unsigned char)(c) | 0x20)
-// lowercase and compare
+// case insensitive comparation with c-string
 static bool slice_lower_cstrcmp(slice_t slice, const char* expected) {
     const char *buffer = slice.start;
 
-    while (slice.size-- && *expected) {
-        char buf_char = (*buffer >= 'A' && *buffer <= 'Z') ? LOWER(*buffer) : *buffer;
-        char str_char = (*expected >= 'A' && *expected <= 'Z') ? LOWER(*expected) : *expected;
+    while (slice.size && *expected) {
+        char buf_char = tolower((unsigned char)*buffer);
+        char str_char = tolower((unsigned char)*expected);
         
         if (buf_char != str_char) {
             return false;
         }
         buffer++;
         expected++;
+        slice.size--;
     }
+
+    return slice.size == 0 && *expected == '\0';
+}
+
+static bool slice_lower_startswith(slice_t slice, const char* expected) {
+    const char *buffer = slice.start;
+
+    while (slice.size && *expected) {
+        char buf_char = tolower((unsigned char)*buffer);
+        char str_char = tolower((unsigned char)*expected);
+        
+        if (buf_char != str_char) {
+            return false;
+        }
+        buffer++;
+        expected++;
+        slice.size--;
+    }
+
     return *expected == '\0';
 }
 

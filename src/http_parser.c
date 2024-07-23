@@ -17,9 +17,6 @@
 #define CR '\r'
 #define LF '\n'
 
-#define CONTENT_LENGTH "content-length"
-#define CONNECTION "connection"
-
 const char *lx_http_map_code(lx_parser_status_t code) {
   switch (code)
   {
@@ -128,12 +125,8 @@ void lx_http_parser_init(lx_http_parser_t *parser) {
   parser->method.size = 0;
 }
 
-enum lx_http_connection_header {
-  LX_KEEP_ALIVE,
-  LX_UPGRADE,
-  LX_CLOSE,
-  LX_INVALID
-};
+#define CONTENT_LENGTH "content-length"
+#define CONNECTION "connection"
 
 // TODO: it would be more performant to detect specific headers during processing
 int lx_on_header_complete(lx_http_parser_t *parser) {
@@ -156,6 +149,16 @@ int lx_on_header_complete(lx_http_parser_t *parser) {
 
         parser->content_length = result;
         parser->content_length_received = 1;
+      }
+      break;
+    case 10:
+      if (slice_lower_cstrcmp(header->key, CONNECTION)) {
+        if (slice_lower_startswith(header->value, "close"))
+          parser->req->persistent = 0;
+        else if (slice_lower_startswith(header->value, "upgrade"))
+          parser->req->upgrade = 1;
+        else
+          parser->req->persistent = 1;
       }
       break;
     default:

@@ -23,12 +23,9 @@ http
         // Note: the 2 lines above could be replaced with this next one:
         // response.writeHead(200, {'Content-Type': 'application/json'})
         const responseBody = { headers, method, url, body };
-        response.write(JSON.stringify(responseBody));
-        request.socket.cork
-        response.end();
-        // Note: the 2 lines above could be replaced with this next one:
-        // response.end(JSON.stringify(responseBody))
-        // END OF NEW STUFF
+        //response.write(JSON.stringify(responseBody));
+        //response.end();
+        response.end(JSON.stringify(responseBody))
       });
   })
   .listen(4000);
