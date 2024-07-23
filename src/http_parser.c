@@ -126,7 +126,59 @@ void lx_http_parser_init(lx_http_parser_t *parser) {
 }
 
 #define CONTENT_LENGTH "content-length"
+
 #define CONNECTION "connection"
+#define CLOSE "close"
+#define UPGRADE "upgrade"
+
+#define TRANSFER_ENCODING "transfer-encoding"
+
+bool lx_is_chunked(slice_t value) {
+  enum {
+    h_tstart,
+    h_tchunked,
+    h_ttoken,
+  };
+
+  int state = h_tstart;
+  const char *buf = value.start;
+
+  while (value.size) {
+    switch (state)
+    {
+    case h_tstart:
+      if (*buf == 'c' || *buf == 'C')
+        state = h_tchunked;
+      else if (*buf == ',')
+        state = h_tstart;
+      else
+        state = h_ttoken; // any other token
+      break;
+    case h_tchunked:
+      if ((value.size >= 6) && (strncasecmp(buf, "hunked", 6) == 0)) {
+        buf += 6;
+        value.size -= 6;
+        if (value.size == 0 || *buf == ',') {
+          return true;
+        }
+      }
+      state = h_ttoken;
+      break;
+    case h_ttoken:
+      if (*buf == ',')
+        state = h_tstart;
+      break;
+    default:
+      state = h_tstart;
+      break;
+    }
+
+    buf++;
+    value.size--;
+  }
+
+  return false;
+}
 
 // TODO: it would be more performant to detect specific headers during processing
 int lx_on_header_complete(lx_http_parser_t *parser) {
@@ -136,8 +188,15 @@ int lx_on_header_complete(lx_http_parser_t *parser) {
   parser->nheaders++;
 
   switch(header->key.size) {
+    case 17:
+      if (slice_lower_cstrcmp(header->key, TRANSFER_ENCODING)) {
+        if (lx_is_chunked(header->value))
+          parser->req->chunked = 1;
+      }
+      break;
     case 14:
-      if (slice_lower_cstrcmp(header->key, CONTENT_LENGTH)) {
+      // if transfer-encoding chunked is present - ignore this header at all
+      if (!parser->req->chunked && slice_lower_cstrcmp(header->key, CONTENT_LENGTH)) {
         int64_t result = slice_toint64(header->value);
         if (result == -1) {
           return LX_INVALID_CONTENT_LENGTH;
@@ -153,9 +212,9 @@ int lx_on_header_complete(lx_http_parser_t *parser) {
       break;
     case 10:
       if (slice_lower_cstrcmp(header->key, CONNECTION)) {
-        if (slice_lower_startswith(header->value, "close"))
+        if (slice_lower_startswith(header->value, CLOSE))
           parser->req->persistent = 0;
-        else if (slice_lower_startswith(header->value, "upgrade"))
+        else if (slice_lower_startswith(header->value, UPGRADE))
           parser->req->upgrade = 1;
         else
           parser->req->persistent = 1;

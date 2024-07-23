@@ -56,6 +56,7 @@ struct http_request_s {
   http_method_t method;
   unsigned persistent: 1;
   unsigned upgrade: 1;
+  unsigned chunked: 1;
   char *body;
   size_t body_size;
   lx_http_parser_t parser;
@@ -74,6 +75,7 @@ static http_request_t *http_request_alloc() {
   lx_http_parser_init(&req->parser);
   req->parser.req = req;
   req->persistent = 1;
+  req->chunked = 0;
   req->upgrade = 0; // it is only indicator that client may want to upgrade protocol
 
   return req;
