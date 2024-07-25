@@ -10,7 +10,7 @@
 #define DEFAULT_PORT 8000
 #define DEFAULT_WORKERS 4
 
-void handle_onrequest() {}
+void handle_onrequest(http_request_t *req) {}
 
 void worker(int id, int port) {
     lx_io_t ctx = lx_init();

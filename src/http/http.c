@@ -23,6 +23,16 @@ void print_raw_headers(http_request_t *req) {
 void lx_http_on_request(http_request_t *req) {
   log_info("%s %s", http_map_method(req->method), req->path);
   print_raw_headers(req);
+  
+  if (req->body) {
+    log_info("Request with body (%ld):", req->received);
+    //fwrite(req->body, 1, req->received + 1, stdout);
+    for (size_t i = 0; i < req->received; ++i) {
+      printf("%c", req->body[i]);
+    }
+    printf("\n");
+  }
+
   const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n\r\n<h1>Hello world!</h1>\n";
   send(req->connection->fd, response, strlen(response), 0);
 }
@@ -31,6 +41,38 @@ void lx_http_on_request(http_request_t *req) {
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 #define MAX_BODY_BUFFER 16000
+
+void lx_http_read_body(lx_connection_t *conn) {
+  lx_http_t *http_ctx = lx_http_ctx(conn);
+  http_request_t *req = conn->data;
+
+  size_t to_read = req->content_length - req->received;
+
+  if (to_read <= 0) {
+    lx_http_on_request(req);
+    lx_close(conn);
+    return;
+  }
+
+  size_t chunk_size = recv(conn->fd, req->body + req->received, to_read, 0);
+  if (chunk_size < 0) {
+    perror("body:recv");
+    lx_close(conn);
+    return;
+  }
+
+  if (chunk_size == 0) {
+    lx_close(conn);
+    return;
+  }
+
+  req->received += chunk_size;
+
+  if (req->content_length <= req->received) {
+    lx_http_on_request(req);
+    lx_close(conn);
+  }
+}
 
 void lx_http_read_headers(lx_connection_t *conn) {
   lx_http_t *http_ctx = lx_http_ctx(conn);
@@ -64,8 +106,32 @@ void lx_http_read_headers(lx_connection_t *conn) {
 
   switch (parser_code) {
     case LX_COMPLETE:
-      lx_http_on_request(req);
-      lx_close(conn);
+      size_t nread = req->parser.nread;
+      if (req->content_length == 0) {
+        lx_http_on_request(req);
+        lx_close(conn);
+        return;
+      }
+
+      if (req->content_length > MAX_BODY_BUFFER) {
+        log_err("Too big body");
+        lx_close(conn);
+        return;
+      }
+
+      req->body = malloc(req->content_length * sizeof(char));
+      if (conn->size > nread) {
+        memcpy(req->body, conn->buf + nread, conn->size - nread);
+        req->received += conn->size - nread;
+      }
+
+      if (req->received == req->content_length) {
+        lx_http_on_request(req);
+        lx_close(conn);
+        return;
+      }
+
+      conn->ondata = lx_http_read_body;
       return;
     case LX_PARTIAL:
       log_info("Received partial data");

@@ -125,7 +125,6 @@ void lx_http_parser_init(lx_http_parser_t *parser) {
 }
 
 #define CONTENT_LENGTH "content-length"
-
 #define CONNECTION "connection"
 #define CLOSE "close"
 #define UPGRADE "upgrade"
@@ -418,6 +417,7 @@ int lx_http_parser_exec(lx_http_parser_t *parser, lx_buf_t *data) {
       }
       break;
     case h_end:
+      parser->nread = buf - data->buf;
       return LX_COMPLETE;
     default:
       return LX_UNEXPECTED_ERROR;
@@ -425,6 +425,7 @@ int lx_http_parser_exec(lx_http_parser_t *parser, lx_buf_t *data) {
   }
   
   if (parser->state == h_end) {
+    parser->nread = buf - data->buf;
     return LX_COMPLETE;
   }
 
