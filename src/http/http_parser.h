@@ -1,6 +1,11 @@
 #pragma once
 #include "slice.h"
 
+typedef struct lx_buf {
+  unsigned char *buf;
+  size_t size;
+} lx_buf_t;
+
 typedef enum lx_parser_status {
   LX_COMPLETE,
   LX_PARTIAL,
@@ -16,41 +21,36 @@ typedef enum lx_parser_status {
   LX_CONTENT_LENGTH_DUPLICATE
 } lx_parser_status_t;
 
-typedef struct lx_buf {
-  unsigned char *buf;
-  size_t size;
-} lx_buf_t;
-
 typedef enum lx_parser_state {
   // line section
-  line_start,
-  method,
-  method_end,
-  uri_start,
-  uri,
-  uri_end,
-  version_start,
-  version_h,
-  version_ht,
-  version_htt,
-  version_http,
-  version_http_slash,
-  version_http_major,
-  version_http_dot,
-  version_http_minor,
-  version_end,
-  line_end,
+  h_line_start,
+  h_method,
+  h_method_end,
+  h_uri_start,
+  h_uri,
+  h_uri_end,
+  h_version_start,
+  h_version_h,
+  h_version_ht,
+  h_version_htt,
+  h_version_http,
+  h_version_http_slash,
+  h_version_http_major,
+  h_version_http_dot,
+  h_version_http_minor,
+  h_version_end,
+  h_line_end,
   // headers section
-  header_key_start,
-  header_key,
-  header_key_end,
-  header_space,
-  header_value_start,
-  header_value,
-  header_value_end,
-  header_end,
-  maybe_end,
-  end
+  h_header_key_start,
+  h_header_key,
+  h_header_key_end,
+  h_header_space,
+  h_header_value_start,
+  h_header_value,
+  h_header_value_end,
+  h_header_end,
+  h_maybe_end,
+  h_end
 } lx_parser_state_t;
 
 typedef struct http_request_s http_request_t;
@@ -63,7 +63,6 @@ typedef struct lx_http_parser {
   slice_t method;
   slice_t header_key;
   slice_t header_value;
-  size_t content_length;
   int content_length_received: 1;
   unsigned nheaders;
 } lx_http_parser_t;

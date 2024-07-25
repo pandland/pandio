@@ -19,14 +19,27 @@ void print_raw_headers(http_request_t *req) {
   printf("}\n");
 }
 
-// handle conn->ondata()
-void lx_http_handle_data(lx_connection_t *conn) {
+// handle request with parsed headers
+void lx_http_on_request(http_request_t *req) {
+  log_info("%s %s", http_map_method(req->method), req->path);
+  print_raw_headers(req);
+  const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n\r\n<h1>Hello world!</h1>\n";
+  send(req->connection->fd, response, strlen(response), 0);
+}
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
+#define MAX_BODY_BUFFER 16000
+
+void lx_http_read_headers(lx_connection_t *conn) {
   lx_http_t *http_ctx = lx_http_ctx(conn);
   http_request_t *req = conn->data;
 
+  // reading headers:
   char *buf = conn->buf + conn->size;
   size_t to_read = LX_NET_BUFFER_SIZE - conn->size;
-  if (to_read == 0 && req->parser.state != end) {
+  if (to_read == 0 && req->parser.state != h_end) {
     log_err("Max headers size exceeded.");
     lx_close(conn);
     return;
@@ -51,10 +64,7 @@ void lx_http_handle_data(lx_connection_t *conn) {
 
   switch (parser_code) {
     case LX_COMPLETE:
-      print_raw_headers(req);
-      log_info("Persistent: %d & upgrade? %d & chunked? %d", req->persistent, req->upgrade, req->chunked);
-      const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n\r\n<h1>Hello world!</h1>\n";
-      send(conn->fd, response, strlen(response), 0);
+      lx_http_on_request(req);
       lx_close(conn);
       return;
     case LX_PARTIAL:
@@ -90,7 +100,7 @@ void lx_http_handle_accept(lx_connection_t *conn) {
   req->timeout.data = conn;
   
   conn->data = req;
-  conn->ondata = lx_http_handle_data;
+  conn->ondata = lx_http_read_headers;
   conn->onclose = lx_http_handle_close;
 
   lx_http_t *http_ctx = lx_http_ctx(conn);

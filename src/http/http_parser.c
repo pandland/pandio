@@ -41,7 +41,7 @@ const char *lx_http_map_code(lx_parser_status_t code) {
   case LX_INVALID_CONTENT_LENGTH:
     return "Invalid content-length header value.";
   case LX_CONTENT_LENGTH_DUPLICATE:
-    return "Received duplicated content-length header with different value.";
+    return "Received duplicated content-length header.";
   default:
     return "Unknown HTTP parser code.";
   }
@@ -106,10 +106,9 @@ static int HTTP_HEADER_VALUE_MAP[256] = {
 #define IS_HEADER_VALUE_CHAR(ch) HTTP_HEADER_VALUE_MAP[ch] == 1
 
 void lx_http_parser_init(lx_http_parser_t *parser) {
-  parser->state = line_start;
+  parser->state = h_line_start;
   parser->nread = 0;
   parser->nheaders = 0;
-  parser->content_length = 0;
   parser->content_length_received = 0;
 
   parser->header_key.start = NULL;
@@ -202,11 +201,11 @@ int lx_on_header_complete(lx_http_parser_t *parser) {
           return LX_INVALID_CONTENT_LENGTH;
         }
 
-        if (parser->content_length_received && parser->content_length != result) {
+        if (parser->content_length_received) {
           return LX_CONTENT_LENGTH_DUPLICATE;
         }
 
-        parser->content_length = result;
+        parser->req->content_length = result;
         parser->content_length_received = 1;
       }
       break;
@@ -232,27 +231,27 @@ int lx_http_parser_exec(lx_http_parser_t *parser, lx_buf_t *data) {
 
   for (; buf != buf_end; parser->nread = buf - data->buf) {
     switch (parser->state) {
-    case line_start:
+    case h_line_start:
       CHECK_EOF();
       if (UNLIKELY(isspace(*buf))) {
         buf++;
       } else {
         parser->method.start = buf;
-        MOVE_TO(method);
+        MOVE_TO(h_method);
       }
       break;
-    case method:
+    case h_method:
       CHECK_EOF();
       // simplified check, all common methods have letters in range: A - U
       if (LIKELY(*buf >= 'A' && *buf <= 'U')) {
         buf++;
         continue;
       } else if (*buf == ' ') {
-        MOVE_TO(method_end);
+        MOVE_TO(h_method_end);
       } else {
         return LX_INVALID_METHOD;
       }
-    case method_end:
+    case h_method_end:
       #define EXPECT_METHOD(expected) strncmp(parser->method.start, expected, method_len) == 0
 
       unsigned char *method_end = buf;
@@ -280,151 +279,152 @@ int lx_http_parser_exec(lx_http_parser_t *parser, lx_buf_t *data) {
         return LX_INVALID_METHOD;
       }
 
-      MOVE_TO(uri_start);
+      MOVE_TO(h_uri_start);
       break;
-    case uri_start:
+    case h_uri_start:
       CHECK_EOF();
       if (LIKELY(isspace(*buf))) {
         buf++;
       } else {
         parser->uri.start = buf;
-        MOVE_TO(uri);
+        MOVE_TO(h_uri);
       }
       break;
-    case uri:
+    case h_uri:
       CHECK_EOF();
       // temporary:
       if (isalnum(*buf) || *buf == '/' || *buf == '.' || *buf == '?' || *buf == '&' || *buf == '=' || *buf == '#' || *buf == '_' || *buf == '-') {
         buf++;
       } else if (*buf == ' ') {
-        MOVE_TO(uri_end);
+        MOVE_TO(h_uri_end);
       } else {
         return LX_INVALID_URI;
       }
       break;
-    case uri_end:
+    case h_uri_end:
       parser->uri.size = buf - parser->uri.start;
-      MOVE_TO(version_start);
+      parser->req->path = slice_to_cstr(parser->uri);
+      MOVE_TO(h_version_start);
       break;
-    case version_start:
+    case h_version_start:
       CHECK_EOF();
       if (LIKELY(isspace(*buf))) {
         buf++;
       } else {
-        MOVE_TO(version_h);
+        MOVE_TO(h_version_h);
       }
       break;
-    case version_h:
+    case h_version_h:
       EXPECT_CHAR('H');
-      MOVE_TO(version_ht);
+      MOVE_TO(h_version_ht);
       break;
-    case version_ht:
+    case h_version_ht:
       EXPECT_CHAR('T');
-      MOVE_TO(version_htt);
+      MOVE_TO(h_version_htt);
       break;
-    case version_htt:
+    case h_version_htt:
       EXPECT_CHAR('T');
-      MOVE_TO(version_http);
+      MOVE_TO(h_version_http);
       break;
-    case version_http:
+    case h_version_http:
       EXPECT_CHAR('P');
-      MOVE_TO(version_http_slash);
+      MOVE_TO(h_version_http_slash);
       break;
-    case version_http_slash:
+    case h_version_http_slash:
       EXPECT_CHAR('/');
-      MOVE_TO(version_http_major);
+      MOVE_TO(h_version_http_major);
       break;
-    case version_http_major:
+    case h_version_http_major:
       EXPECT_CHAR('1');
-      MOVE_TO(version_http_dot);
+      MOVE_TO(h_version_http_dot);
       break;
-    case version_http_dot:
+    case h_version_http_dot:
       EXPECT_CHAR('.');
-      MOVE_TO(version_http_minor);
+      MOVE_TO(h_version_http_minor);
       break;
-    case version_http_minor:
+    case h_version_http_minor:
       EXPECT_CHAR('1');
-      MOVE_TO(line_end);
+      MOVE_TO(h_line_end);
       break;
-    case line_end:
+    case h_line_end:
       EXPECT_CHAR(CR);
       EXPECT_CHAR(LF);
-      MOVE_TO(header_key_start);
+      MOVE_TO(h_header_key_start);
       break;
-    case header_key_start:
+    case h_header_key_start:
       if (parser->nheaders >= MAX_HEADERS) {
         return LX_TOO_MANY_HEADERS;
       }
 
       parser->header_key.start = buf;
       parser->header_key.size = 0;
-      MOVE_TO(header_key);
+      MOVE_TO(h_header_key);
       break;
-    case header_key:
+    case h_header_key:
       if (IS_HEADER_KEY_CHAR(*buf)) {
         buf++;
       } else if (*buf == ':') {
-        MOVE_TO(header_key_end);
+        MOVE_TO(h_header_key_end);
       } else {
         return LX_INVALID_HEADER_KEY_CHAR;
       }
       break;
-    case header_key_end:
+    case h_header_key_end:
       parser->header_key.size = buf - parser->header_key.start;
       // Reject empty header keys. Empty header values are allowed.
       if (parser->header_key.size == 0)
         return LX_INVALID_HEADER_KEY_CHAR;
       buf++;
-      MOVE_TO(header_space);
+      MOVE_TO(h_header_space);
       break;
-    case header_space:
+    case h_header_space:
       EXPECT_CHAR(' ');
-      MOVE_TO(header_value_start);
+      MOVE_TO(h_header_value_start);
       break;
-    case header_value_start:
+    case h_header_value_start:
       parser->header_value.start = buf;
       parser->header_value.size = 0;
-      MOVE_TO(header_value);
+      MOVE_TO(h_header_value);
       break;
-    case header_value:
+    case h_header_value:
       if (IS_HEADER_VALUE_CHAR(*buf)) {
         buf++;
       } else if (*buf == CR) {
-        MOVE_TO(header_value_end);
+        MOVE_TO(h_header_value_end);
       } else {
         return LX_INVALID_HEADER_VALUE_CHAR;
       }
       break;
-    case header_value_end:
+    case h_header_value_end:
       parser->header_value.size = buf - parser->header_value.start;
       int errcode = lx_on_header_complete(parser);
       if (errcode)
         return errcode;
 
-      MOVE_TO(header_end);
+      MOVE_TO(h_header_end);
       break;
-    case header_end:
+    case h_header_end:
       EXPECT_CHAR(CR);
       EXPECT_CHAR(LF);
-      MOVE_TO(maybe_end);
+      MOVE_TO(h_maybe_end);
       break;
-    case maybe_end:
+    case h_maybe_end:
       if (*buf == CR) {
         buf++;
         EXPECT_CHAR(LF);
-        MOVE_TO(end);
+        MOVE_TO(h_end);
       } else {
-        MOVE_TO(header_key_start);
+        MOVE_TO(h_header_key_start);
       }
       break;
-    case end:
+    case h_end:
       return LX_COMPLETE;
     default:
       return LX_UNEXPECTED_ERROR;
     }
   }
   
-  if (parser->state == end) {
+  if (parser->state == h_end) {
     return LX_COMPLETE;
   }
 

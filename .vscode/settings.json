@@ -1,4 +1,5 @@
 {
+  "C_Cpp.default.includePath": ["src"],
   "files.associations": {
     "*.css": "css",
     "*.h": "c",

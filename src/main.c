@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include "http.h"
+#include "http/http.h"
 #include "logger.h"
 
 #define DEFAULT_PORT 8000
