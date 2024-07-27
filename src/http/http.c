@@ -19,6 +19,13 @@ void print_raw_headers(http_request_t *req) {
   printf("}\n");
 }
 
+void print_raw_body(http_request_t *req) {
+  for (size_t i = 0; i < req->received; ++i) {
+    printf("%c", req->body[i]);
+  }
+  printf("\n");
+}
+
 // handle request with parsed headers
 void lx_http_on_request(http_request_t *req) {
   log_info("%s %s", http_map_method(req->method), req->path);
@@ -26,15 +33,11 @@ void lx_http_on_request(http_request_t *req) {
   
   if (req->body) {
     log_info("Request with body (%ld):", req->received);
-    //fwrite(req->body, 1, req->received + 1, stdout);
-    for (size_t i = 0; i < req->received; ++i) {
-      printf("%c", req->body[i]);
-    }
-    printf("\n");
+    print_raw_body(req);
   }
 
   const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n\r\n<h1>Hello world!</h1>\n";
-  send(req->connection->fd, response, strlen(response), 0);
+  lx_write(req->connection, response, strlen(response));
 }
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -109,7 +112,7 @@ void lx_http_read_headers(lx_connection_t *conn) {
       size_t nread = req->parser.nread;
       if (req->content_length == 0) {
         lx_http_on_request(req);
-        lx_close(conn);
+        //lx_close(conn);
         return;
       }
 
@@ -127,7 +130,7 @@ void lx_http_read_headers(lx_connection_t *conn) {
 
       if (req->received == req->content_length) {
         lx_http_on_request(req);
-        lx_close(conn);
+        //lx_close(conn);
         return;
       }
 

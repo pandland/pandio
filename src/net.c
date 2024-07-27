@@ -9,9 +9,14 @@ lx_connection_t *lx_connection_init(lx_io_t *ctx, socket_t fd) {
   conn->data = NULL;
   conn->size = 0;
 
+  conn->output = NULL;
+  conn->written = 0;
+  conn->output_size = 0;
+
   conn->event.ctx = ctx;
-  conn->event.data = NULL;
-  conn->event.handler = lx_connection_handler;
+  conn->event.flags = 0;
+  conn->event.read = lx_connection_read;
+  conn->event.write = lx_connection_write;
 
   return conn;
 }
@@ -23,8 +28,9 @@ lx_listener_t *lx_listener_init(lx_io_t *ctx, socket_t lfd) {
   listener->onaccept = NULL;
 
   listener->event.ctx = ctx;
-  listener->event.handler = lx_listener_handler;
-  listener->event.data = NULL;
+  listener->event.flags = 0;
+  listener->event.read = lx_listener_handler;
+  listener->event.write = NULL;
 
   return listener;
 }
@@ -55,10 +61,36 @@ void lx_listener_handler(lx_event_t *event) {
 }
 
 /* epoll event handler for connection (EPOLLIN) */
-void lx_connection_handler(lx_event_t *event) {
+void lx_connection_read(lx_event_t *event) {
     lx_connection_t *conn = container_of(event, lx_connection_t, event);
     if (conn->ondata != NULL)
       conn->ondata(conn);
+}
+
+/* epoll event handler for connection (EPOLLOUT) */
+void lx_connection_write(lx_event_t *event) {
+  lx_connection_t *conn = container_of(event, lx_connection_t, event);
+
+  // idk what to do in this scenario
+  if (conn->output == NULL)
+    return;
+
+  size_t to_write = conn->output_size - conn->written;
+  char *buf = conn->output + conn->written;
+
+  ssize_t written = write(conn->fd, buf, to_write);
+  if (written == -1)
+    perror("socket::write");
+  
+  conn->written += written;
+
+  if (conn->written == conn->output_size) {
+    printf("Everything is written\n");
+    conn->written = 0;
+    conn->output_size = 0;
+    conn->output = NULL;
+    lx_stop_writing(event, conn->fd);
+  }
 }
 
 lx_listener_t *lx_listen(lx_io_t *ctx, int port, void (*onaccept)(struct lx_connection *)) {
@@ -75,7 +107,7 @@ lx_listener_t *lx_listen(lx_io_t *ctx, int port, void (*onaccept)(struct lx_conn
 
   int opt = 1;
 
-  if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+  if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
     perror("setsockopt");
     exit(EXIT_FAILURE);
   }
@@ -109,11 +141,19 @@ void lx_close(lx_connection_t *conn) {
   free(conn);
 }
 
-int lx_recv(lx_connection_t *conn) {
-  int bytes = recv(conn->fd, conn->buf + conn->size, LX_NET_BUFFER_SIZE - conn->size, 0);
-  if (bytes <= 0)
-    return bytes;
+// TODO: add callback: void (*onwrite)(char *buf, size_t size)
+int lx_write(lx_connection_t *conn, char *buf, size_t size) {
+  /*
+  int written = write(conn->fd, buf, size);
 
-  conn->size += bytes;
-  return bytes;
+  if (written < 0) {
+    if (written != EWOULDBLOCK || written != EAGAIN)
+      return -1;
+  }
+  */
+  conn->output = buf;
+  conn->output_size = size;
+  //conn->written += written;
+
+  lx_set_write_event(&conn->event, conn->fd);
 }

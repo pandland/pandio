@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <sys/epoll.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "heap.h"
 
@@ -16,14 +17,19 @@ typedef struct lx_io {
 
 typedef struct lx_event {
   lx_io_t *ctx;
-  void (*handler)(struct lx_event *); 
-  void *data;
+  int flags;
+  void (*read)(struct lx_event*);
+  void (*write)(struct lx_event*);
 } lx_event_t;
 
 /* initializes the event loop */
 lx_io_t lx_init();
 /* adds event to the epoll */
-void lx_add_event(lx_event_t*, int);
+void lx_add_event(lx_event_t *, int);
+void lx_set_read_event(lx_event_t*, int);
+void lx_set_write_event(lx_event_t*, int);
+void lx_stop_reading(lx_event_t*, int);
+void lx_stop_writing(lx_event_t*, int);
 /* removes event from the epoll and destroy it */
 void lx_remove_event(lx_event_t*, int);
 void lx_make_nonblocking(int fd);

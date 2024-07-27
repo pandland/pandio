@@ -1,7 +1,5 @@
 #pragma once
-#include <stdio.h>
 #include <stdlib.h>
-#include "stdbool.h"
 #include "common.h"
 
 struct heap_node {
@@ -216,11 +214,13 @@ static void heap_swap(struct heap *h, struct heap_node *child, struct heap_node 
 
     parent->parent = child;
 
+    // prevent self-reference:
     if (tmp.left == child)
         child->left = parent;
     else
         child->left = tmp.left;
 
+    // prevent self-reference:
     if (tmp.right == child)
         child->right = parent;
     else
@@ -228,6 +228,7 @@ static void heap_swap(struct heap *h, struct heap_node *child, struct heap_node 
     
     child->parent = tmp.parent;
 
+    // don't forget to set new root..
     if (!child->parent)
         h->root = child;
 }

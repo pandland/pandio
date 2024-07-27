@@ -30,20 +30,45 @@ void lx_make_nonblocking(int fd) {
     }
 }
 
-void lx_add_event(lx_event_t *event, int fd) {
+void lx_modify_event(lx_event_t *event, int fd, uint32_t operation, uint32_t flags) {
   struct epoll_event ev;
-  ev.events = EPOLLIN;
+  event->flags = flags;
+
+  ev.events = event->flags;
   ev.data.ptr = event;
-  if (epoll_ctl(event->ctx->epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1) {
-    perror("lx_add_event");
-    exit(EXIT_FAILURE);
+  if (epoll_ctl(event->ctx->epoll_fd, operation, fd, &ev) == -1) {
+    perror("lx_modify_event");
   }
+}
+
+void lx_add_event(lx_event_t *event, int fd) {
+  event->flags |= EPOLLIN;
+  lx_modify_event(event, fd, EPOLL_CTL_ADD, event->flags);
+}
+
+void lx_set_read_event(lx_event_t *event, int fd) {
+  event->flags |= EPOLLIN;
+  lx_modify_event(event, fd, EPOLL_CTL_MOD, event->flags);
+}
+
+void lx_set_write_event(lx_event_t *event, int fd) {
+  event->flags |= EPOLLOUT;
+  lx_modify_event(event, fd, EPOLL_CTL_MOD, event->flags);
+}
+
+void lx_stop_reading(lx_event_t *event, int fd) {
+  event->flags &= ~EPOLLIN;
+  lx_modify_event(event, fd, EPOLL_CTL_MOD, event->flags);
+}
+
+void lx_stop_writing(lx_event_t *event, int fd) {
+  event->flags &= ~EPOLLOUT;
+  lx_modify_event(event, fd, EPOLL_CTL_MOD, event->flags);
 }
 
 void lx_remove_event(lx_event_t *event, int fd) {
   if (epoll_ctl(event->ctx->epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1) {
     perror("lx_remove_event");
-    exit(EXIT_FAILURE);
   }
 }
 
@@ -54,15 +79,25 @@ void lx_run(lx_io_t *ctx) {
     while(true) {
         int events_count = epoll_wait(ctx->epoll_fd, events, MAX_EVENTS, epoll_timeout);
         if (events_count == -1) {
-            perror("epoll_wait");
-            exit(EXIT_FAILURE);
+          perror("epoll_wait");
+          exit(EXIT_FAILURE);
         }
 
         ctx->now = lx_now();
 
         for (int i = 0; i < events_count; i++) {
-            lx_event_t *event = events[i].data.ptr;
-            event->handler(event);
+          lx_event_t *event = events[i].data.ptr;
+          if (events[i].events & EPOLLIN) {
+            if (event->read) {
+              event->read(event);
+            }
+          }
+
+          if (events[i].events & EPOLLOUT) {
+            if (event->write) {
+              event->write(event);
+            }
+          }
         }
 
         epoll_timeout = lx_timers_run(ctx);
