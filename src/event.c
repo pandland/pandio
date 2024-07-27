@@ -74,7 +74,7 @@ void lx_remove_event(lx_event_t *event, int fd) {
 
 void lx_run(lx_io_t *ctx) {
     struct epoll_event events[MAX_EVENTS];
-    int epoll_timeout = -1;
+    int epoll_timeout = lx_timers_run(ctx);
 
     while(true) {
         int events_count = epoll_wait(ctx->epoll_fd, events, MAX_EVENTS, epoll_timeout);

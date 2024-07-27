@@ -33,6 +33,7 @@ void lx_timer_init(lx_io_t *ctx, lx_timer_t *timer) {
   timer->data = NULL;
   timer->ontimeout = NULL;
   timer->timeout = 0;
+  timer->interval = 0;
   heap_init_node(&timer->hnode);
 }
 
@@ -48,6 +49,11 @@ void lx_timer_start(lx_timer_t *timer, lx_timer_callback_t ontimeout, uint64_t t
   timer->timeout = timer->ctx->now + timeout;
   timer->ontimeout = ontimeout;
   heap_insert(&timer->ctx->timers, &timer->hnode);
+}
+
+void lx_timer_repeat(lx_timer_t *timer, lx_timer_callback_t ontimeout, uint64_t interval) {
+  timer->interval = interval;
+  lx_timer_start(timer, ontimeout, interval);
 }
 
 void lx_timer_stop(lx_timer_t *timer) {
@@ -75,6 +81,9 @@ int lx_timers_run(lx_io_t *ctx) {
     
     lx_timer_stop(min);
     min->ontimeout(min);
+
+    if (min->interval != 0)
+      lx_timer_start(min, min->ontimeout, min->interval);
   }
 
   // return next timeout for event selector (like epoll):

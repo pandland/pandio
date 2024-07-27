@@ -6,7 +6,7 @@ Simple async io library for C (it will be in the future, for now it's just HTTP 
 
 ### TODO:
 
-- [x] Timers using heap data structure (works like `setTimeout`).
+- [x] Timers using heap data structure (works like `setTimeout`, `setInterval`).
 - [x] Non-blocking IO for sockets using epoll.
 - [x] Basic networking abstraction to handle TCP.
 - [ ] HTTP module.
