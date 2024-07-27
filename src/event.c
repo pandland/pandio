@@ -6,6 +6,8 @@ lx_io_t lx_init() {
   lx_io_t ctx;
   ctx.epoll_fd = epoll_create1(0);
   ctx.now = lx_now(); // it will be updated with every cycle anyway
+  ctx.handles = 0;
+
   if (ctx.epoll_fd == -1) {
     perror("epoll");
     exit(EXIT_FAILURE);
@@ -43,6 +45,7 @@ void lx_modify_event(lx_event_t *event, int fd, uint32_t operation, uint32_t fla
 
 void lx_add_event(lx_event_t *event, int fd) {
   event->flags |= EPOLLIN;
+  event->ctx->handles++;
   lx_modify_event(event, fd, EPOLL_CTL_ADD, event->flags);
 }
 
@@ -67,6 +70,7 @@ void lx_stop_writing(lx_event_t *event, int fd) {
 }
 
 void lx_remove_event(lx_event_t *event, int fd) {
+  event->ctx->handles--;
   if (epoll_ctl(event->ctx->epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1) {
     perror("lx_remove_event");
   }
@@ -76,7 +80,8 @@ void lx_run(lx_io_t *ctx) {
     struct epoll_event events[MAX_EVENTS];
     int epoll_timeout = lx_timers_run(ctx);
 
-    while(true) {
+    while(ctx->handles > 0) {
+        printf("Active handles: %ld\n", ctx->handles);
         int events_count = epoll_wait(ctx->epoll_fd, events, MAX_EVENTS, epoll_timeout);
         if (events_count == -1) {
           perror("epoll_wait");

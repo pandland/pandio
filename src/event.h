@@ -13,6 +13,7 @@ typedef struct lx_io {
   int epoll_fd;
   struct heap timers;
   uint64_t now;
+  uint64_t handles;     // amount of active handles (timers, sockets etc.)
 } lx_io_t;
 
 typedef struct lx_event {

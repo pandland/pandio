@@ -32,7 +32,7 @@ void timer_test() {
     lx_io_t ctx = lx_init();
     lx_timer_t timer;
     lx_timer_init(&ctx, &timer);
-    lx_timer_start(&timer, timer_once, 5 * 1000);
+    lx_timer_start(&timer, timer_once, 8 * 1000);
 
     lx_timer_t timer2;
     lx_timer_init(&ctx, &timer2);

@@ -48,6 +48,7 @@ void lx_timer_start(lx_timer_t *timer, lx_timer_callback_t ontimeout, uint64_t t
   timer->state = TIMER_ACTIVE;
   timer->timeout = timer->ctx->now + timeout;
   timer->ontimeout = ontimeout;
+  timer->ctx->handles++;
   heap_insert(&timer->ctx->timers, &timer->hnode);
 }
 
@@ -61,6 +62,7 @@ void lx_timer_stop(lx_timer_t *timer) {
     return;
 
   timer->state = TIMER_STOPPED;
+  timer->ctx->handles--;
   heap_remove(&timer->ctx->timers, &timer->hnode);
 }
 
