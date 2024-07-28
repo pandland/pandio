@@ -37,7 +37,10 @@ void lx_http_on_request(http_request_t *req) {
   }
 
   const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n\r\n<h1>Hello world!</h1>\n";
-  lx_write(req->connection, response, strlen(response));
+  const char *body = "<h1>Hello world!</h1>\n";
+
+  lx_write(req->connection, response, strlen(response), NULL);
+  lx_write(req->connection, body, strlen(body), NULL);
 }
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))

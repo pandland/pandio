@@ -42,8 +42,8 @@ void timer_test() {
 }
 
 int main() {
-    timer_test();
-    //worker(1, 8000);
+    //timer_test();
+    worker(1, 8000);
     return 0;
 }
 /*

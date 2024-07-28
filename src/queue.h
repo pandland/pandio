@@ -1,6 +1,8 @@
 #pragma once
 #include "common.h"
 
+#define queue_empty(qptr) (((qptr)->head == NULL) && ((qptr)->tail == NULL))
+
 struct queue_node {
     struct queue_node *next;
     struct queue_node *prev;
@@ -11,10 +13,14 @@ struct queue {
     struct queue_node *tail;
 };
 
-static struct queue *queue_alloc() {
-    struct queue *q = malloc(sizeof(struct queue));
+static void queue_init(struct queue *q) {
     q->head = NULL;
     q->tail = NULL;
+}
+
+static struct queue *queue_alloc() {
+    struct queue *q = malloc(sizeof(struct queue));
+    queue_init(q);
 
     return q;
 }

@@ -9,9 +9,7 @@ lx_connection_t *lx_connection_init(lx_io_t *ctx, socket_t fd) {
   conn->data = NULL;
   conn->size = 0;
 
-  conn->output = NULL;
-  conn->written = 0;
-  conn->output_size = 0;
+  queue_init(&conn->output);
 
   conn->event.ctx = ctx;
   conn->event.flags = 0;
@@ -69,26 +67,37 @@ void lx_connection_read(lx_event_t *event) {
 
 /* epoll event handler for connection (EPOLLOUT) */
 void lx_connection_write(lx_event_t *event) {
+  printf("Handle EPOLLOUT...");
   lx_connection_t *conn = container_of(event, lx_connection_t, event);
 
-  // idk what to do in this scenario
-  if (conn->output == NULL)
-    return;
+  while (!queue_empty(&conn->output)) {
+    struct queue_node *next = conn->output.head;
+    lx_write_t *write_op = container_of(next, lx_write_t, qnode);
 
-  size_t to_write = conn->output_size - conn->written;
-  char *buf = conn->output + conn->written;
+    size_t to_write = write_op->size - write_op->written;
+    const char *buf = write_op->buf + write_op->written;
+    ssize_t written = write(conn->fd, buf, to_write);
 
-  ssize_t written = write(conn->fd, buf, to_write);
-  if (written == -1)
-    perror("socket::write");
-  
-  conn->written += written;
+    if (written < 0) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK)
+        return;
 
-  if (conn->written == conn->output_size) {
-    printf("Everything is written\n");
-    conn->written = 0;
-    conn->output_size = 0;
-    conn->output = NULL;
+      // idk what to do yet in this scenario
+      perror("socket->write");
+      return;
+    }
+
+    write_op->written += written;
+
+    if (write_op->written == write_op->size) {
+      queue_pop(&conn->output);
+      if (write_op->cb)
+        write_op->cb(write_op->buf, write_op->size);
+      free(write_op);
+    }
+  }
+
+  if (queue_empty(&conn->output)) {
     lx_stop_writing(event, conn->fd);
   }
 }
@@ -141,19 +150,51 @@ void lx_close(lx_connection_t *conn) {
   free(conn);
 }
 
+lx_write_t *enqueue_write(lx_connection_t *conn, const char *buf, size_t size, write_cb_t cb) {
+  printf("Enqueuing write...\n");
+  lx_write_t *write_op = malloc(sizeof(lx_write_t));
+  write_op->buf = buf;
+  write_op->size = size;
+  write_op->written = 0;
+  write_op->cb = cb;
+  queue_init_node(&write_op->qnode);
+  queue_push(&conn->output, &write_op->qnode);
+
+  return write_op;
+}
+
 // TODO: add callback: void (*onwrite)(char *buf, size_t size)
-int lx_write(lx_connection_t *conn, char *buf, size_t size) {
-  /*
-  int written = write(conn->fd, buf, size);
+int lx_write(lx_connection_t *conn, const char *buf, size_t size, write_cb_t cb) {
+  if (queue_empty(&conn->output)) {
+    // try write
+    ssize_t written = write(conn->fd, buf, size);
+    if (written < 0) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        enqueue_write(conn, buf, size, cb);
+        lx_set_write_event(&conn->event, conn->fd);
+        return 0;
+      } else {
+        return -1;
+      }
+    }
 
-  if (written < 0) {
-    if (written != EWOULDBLOCK || written != EAGAIN)
-      return -1;
+    // fully written
+    if (written == size) {
+      if (cb != NULL)
+        cb(buf, size);
+      return 1;
+    }
+
+    // partial write:
+    lx_write_t *write_op = enqueue_write(conn, buf, size, cb);
+    write_op->written = written;
+    lx_set_write_event(&conn->event, conn->fd);
+
+    return 0;
   }
-  */
-  conn->output = buf;
-  conn->output_size = size;
-  //conn->written += written;
 
+  enqueue_write(conn, buf, size, cb);
   lx_set_write_event(&conn->event, conn->fd);
+
+  return 0;
 }
