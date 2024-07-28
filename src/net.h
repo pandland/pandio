@@ -18,13 +18,16 @@ typedef struct lx_listener {
     void (*onaccept)(struct lx_connection *);
 } lx_listener_t;
 
-typedef void (*write_cb_t)(const char*, size_t);
+struct lx_write;
+
+typedef void (*write_cb_t)(struct lx_write*);
 
 typedef struct lx_write {
     const char *buf;
     size_t size;
     size_t written;
     write_cb_t cb;
+    void *data;
     struct queue_node qnode;
 } lx_write_t;
 
@@ -49,4 +52,6 @@ void lx_listener_handler(lx_event_t *event);
 void lx_connection_read(lx_event_t *event);
 void lx_connection_write(lx_event_t *event);
 void lx_close(lx_connection_t *conn);
-int lx_write(lx_connection_t *conn, const char *buf, size_t size, write_cb_t cb);
+
+lx_write_t *lx_write_alloc(const char *buf, size_t size);
+int lx_write(lx_write_t*, lx_connection_t *conn, write_cb_t cb);

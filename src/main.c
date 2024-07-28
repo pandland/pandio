@@ -1,9 +1,9 @@
+#include "signal.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-
 #include "http/http.h"
 #include "logger.h"
 
@@ -42,6 +42,7 @@ void timer_test() {
 }
 
 int main() {
+    signal(SIGPIPE, SIG_IGN);
     //timer_test();
     worker(1, 8000);
     return 0;

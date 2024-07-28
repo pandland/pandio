@@ -80,7 +80,7 @@ void lx_run(lx_io_t *ctx) {
     struct epoll_event events[MAX_EVENTS];
     int epoll_timeout = lx_timers_run(ctx);
 
-    while(ctx->handles > 0) {
+    while(1) {
         printf("Active handles: %ld\n", ctx->handles);
         int events_count = epoll_wait(ctx->epoll_fd, events, MAX_EVENTS, epoll_timeout);
         if (events_count == -1) {
