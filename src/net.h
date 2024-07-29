@@ -35,11 +35,11 @@ typedef struct lx_connection {
     socket_t fd;
     void (*ondata)(struct lx_connection *);
     void (*onclose)(struct lx_connection *);
-    void *data;     // pointer to the higher level protocol object
+    void *data;                                 // pointer to the higher level protocol object
     lx_listener_t *listener;
     lx_event_t event;
     size_t size;
-    char buf[LX_NET_BUFFER_SIZE]; // TODO: define it as flexible array member?
+    char buf[LX_NET_BUFFER_SIZE];               // TODO: remove this buffer
     struct queue output;
 } lx_connection_t;
 

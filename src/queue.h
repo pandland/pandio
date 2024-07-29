@@ -25,14 +25,6 @@ static struct queue *queue_alloc() {
     return q;
 }
 
-static struct queue queue_create() {
-    struct queue q;
-    q.head = NULL;
-    q.tail = NULL;
-
-    return q;
-}
-
 static void queue_init_node(struct queue_node *node) {
     node->next = NULL;
     node->prev = NULL;

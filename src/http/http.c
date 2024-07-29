@@ -52,9 +52,6 @@ void lx_http_on_request(http_request_t *req) {
   lx_write_t *body_write = lx_write_alloc(body, strlen(body));
   body_write->data = req->connection;
 
-  //send(req->connection->fd, response, strlen(response), 0);
-  //send(req->connection->fd, body, strlen(body), 0);
-  //lx_close(req->connection);
   lx_write(headers_write, req->connection, on_headers_written);
   lx_write(body_write, req->connection, on_body_written);
 }

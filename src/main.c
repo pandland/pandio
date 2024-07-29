@@ -49,6 +49,7 @@ int main() {
 }
 /*
 int main() {
+    signal(SIGPIPE, SIG_IGN);
     int workers = DEFAULT_WORKERS;
     int port = DEFAULT_PORT;
 
