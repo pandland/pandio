@@ -93,7 +93,6 @@ void lx_connection_write(lx_event_t *event) {
       queue_pop(&conn->output);
       if (write_op->cb)
         write_op->cb(write_op);
-      free(write_op);
     }
   }
 
