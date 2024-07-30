@@ -6,6 +6,10 @@
 #include <unistd.h>
 #include "queue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LX_NET_BUFFER_SIZE 8192
 
 typedef int socket_t;
@@ -58,3 +62,7 @@ void lx_close_pending(lx_io_t *ctx);
 
 lx_write_t *lx_write_alloc(const char *buf, size_t size);
 int lx_write(lx_write_t*, lx_connection_t *conn, write_cb_t cb);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus

@@ -7,6 +7,10 @@
 #include "queue.h"
 #include "event.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum lx_timer_state {
   TIMER_NONE,
   TIMER_ACTIVE,
@@ -40,3 +44,7 @@ void lx_timer_repeat(lx_timer_t*, lx_timer_callback_t, uint64_t);
 void lx_timer_stop(lx_timer_t*);
 void lx_timer_destroy(lx_timer_t*);
 int lx_timers_run(lx_io_t*);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus

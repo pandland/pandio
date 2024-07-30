@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct heap_node {
     struct heap_node *left;
     struct heap_node *right;
@@ -232,3 +236,7 @@ static void heap_swap(struct heap *h, struct heap_node *child, struct heap_node 
     if (!child->parent)
         h->root = child;
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus

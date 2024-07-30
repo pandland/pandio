@@ -2,6 +2,10 @@
 
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef PRETTY_LOG
 #define PRETTY_LOG 1
 #endif
@@ -20,3 +24,7 @@
     #define log_warn(fmt, ...)  printf("[WARN] " fmt "\n", ##__VA_ARGS__)
     #define log_err(fmt, ...) fprintf(stderr, "[ERROR] " fmt "\n", ##__VA_ARGS__)
 #endif
+
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus

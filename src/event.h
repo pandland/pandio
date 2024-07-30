@@ -10,6 +10,10 @@
 
 #define MAX_EVENTS 128
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct lx_io {
   int epoll_fd;
   struct heap timers;
@@ -37,3 +41,7 @@ void lx_stop_writing(lx_event_t*, int);
 void lx_remove_event(lx_event_t*, int);
 void lx_make_nonblocking(int fd);
 void lx_run(lx_io_t*);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus

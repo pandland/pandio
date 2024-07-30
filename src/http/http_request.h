@@ -4,6 +4,10 @@
 #include "timer.h"
 #include "http_parser.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum HTTP_METHOD {
   GET,
   POST,
@@ -93,3 +97,7 @@ static void http_request_free(http_request_t *req) {
   http_request_destroy(req);
   free(req);
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus

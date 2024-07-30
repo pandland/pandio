@@ -1,6 +1,10 @@
 #pragma once
 #include "slice.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct lx_buf {
   unsigned char *buf;
   size_t size;
@@ -70,3 +74,7 @@ typedef struct lx_http_parser {
 const char* lx_http_map_code(lx_parser_status_t);
 void lx_http_parser_init(lx_http_parser_t *parser);
 int lx_http_parser_exec(lx_http_parser_t *parser, lx_buf_t *data);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus

@@ -140,7 +140,7 @@ lx_listener_t *lx_listen(lx_io_t *ctx, int port, void (*onaccept)(struct lx_conn
   return listener;
 }
 
-/* closes tcp connection, removes from epoll and frees connection from memory */
+/* closes tcp connection, removes from epoll */
 void lx_close(lx_connection_t *conn) {
   if (conn->closing) {
     return;
@@ -157,7 +157,7 @@ void lx_close(lx_connection_t *conn) {
     write_op->cb(write_op, -1);
   }
   
-  // enqueue connection to close in next cycle
+  // enqueue cleanup to the next cycle
   queue_init_node(&conn->close_qnode);
   queue_push(&conn->event.ctx->pending_closes, &conn->close_qnode);
 }

@@ -107,6 +107,7 @@ void lx_run(lx_io_t *ctx) {
         }
 
         lx_close_pending(ctx);
+
         epoll_timeout = lx_timers_run(ctx);
     }
 }

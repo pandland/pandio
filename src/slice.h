@@ -7,6 +7,10 @@
 #include <limits.h>
 #include <ctype.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct buffer_slice {
   const unsigned char *start;
   size_t size;
@@ -83,3 +87,7 @@ static int64_t slice_toint64(slice_t slice) {
 
   return result;
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus

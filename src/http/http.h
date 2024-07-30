@@ -3,6 +3,10 @@
 #include "net.h"
 #include "http_request.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void (*lx_http_onrequest)();
 
 typedef struct lx_http {
@@ -14,3 +18,7 @@ typedef struct lx_http {
 
 lx_http_t lx_http_init(int port, lx_http_onrequest handler); 
 void lx_http_listen(lx_io_t*, lx_http_t*);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus
