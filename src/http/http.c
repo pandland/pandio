@@ -26,12 +26,16 @@ void print_raw_body(http_request_t *req) {
   printf("\n");
 }
 
-void on_headers_written(lx_write_t *write_op) {
+void on_headers_written(lx_write_t *write_op, int status) {
+  printf("Cleaning response headers, status: %d\n", status);
   free(write_op);
 }
 
-void on_body_written(lx_write_t *write_op) {
+void on_body_written(lx_write_t *write_op, int status) {
+   printf("Cleaning response body, status: %d\n", status);
   free(write_op);
+  printf("Closing connection\n");
+  lx_close(write_op->data);
   lx_close(write_op->data);
 }
 
@@ -45,8 +49,8 @@ void lx_http_on_request(http_request_t *req) {
     print_raw_body(req);
   }
 
-  const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n\r\n";
-  const char *body = "<h1>Hello world!</h1>\n";
+  const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 22\r\nContent-Type: text/html\r\n";
+  const char *body = "\r\n<h1>Hello world!</h1>\n";
 
   lx_write_t *headers_write = lx_write_alloc(response, strlen(response));
   lx_write_t *body_write = lx_write_alloc(body, strlen(body));
@@ -164,6 +168,7 @@ void lx_http_read_headers(lx_connection_t *conn) {
 
 // handle conn->onclose()
 void lx_http_handle_close(lx_connection_t *conn) {
+    printf("Close callback called!\n");
     http_request_t *req = conn->data;
     lx_timer_stop(&req->timeout);
     http_request_free(req);

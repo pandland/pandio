@@ -1,11 +1,12 @@
 #include "common.h"
 #include "event.h"
 #include "timer.h"
+#include "net.h"
 
 lx_io_t lx_init() {
   lx_io_t ctx;
   ctx.epoll_fd = epoll_create1(0);
-  ctx.now = lx_now(); // it will be updated with every cycle anyway
+  ctx.now = lx_now();   // it will be updated with every cycle anyway
   ctx.handles = 0;
 
   if (ctx.epoll_fd == -1) {
@@ -14,6 +15,7 @@ lx_io_t lx_init() {
   }
 
   timers_init(&ctx);
+  queue_init(&ctx.pending_closes);
 
   return ctx;
 }
@@ -104,6 +106,7 @@ void lx_run(lx_io_t *ctx) {
           }
         }
 
+        lx_close_pending(ctx);
         epoll_timeout = lx_timers_run(ctx);
     }
 }

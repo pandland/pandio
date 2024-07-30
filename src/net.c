@@ -8,6 +8,7 @@ lx_connection_t *lx_connection_init(lx_io_t *ctx, socket_t fd) {
   conn->onclose = NULL;
   conn->data = NULL;
   conn->size = 0;
+  conn->closing = 0;
 
   queue_init(&conn->output);
 
@@ -44,7 +45,7 @@ void lx_listener_handler(lx_event_t *event) {
     if (errno == EWOULDBLOCK || errno == EAGAIN) {
       return;
     }
-    perror("accept");
+    perror("socket->accept");
     exit(EXIT_FAILURE);
   }
 
@@ -67,7 +68,6 @@ void lx_connection_read(lx_event_t *event) {
 
 /* epoll event handler for connection (EPOLLOUT) */
 void lx_connection_write(lx_event_t *event) {
-  printf("Handle EPOLLOUT...");
   lx_connection_t *conn = container_of(event, lx_connection_t, event);
 
   while (!queue_empty(&conn->output)) {
@@ -82,8 +82,9 @@ void lx_connection_write(lx_event_t *event) {
       if (errno == EAGAIN || errno == EWOULDBLOCK)
         return;
 
-      // idk what to do yet in this scenario
       perror("socket->write");
+      queue_pop(&conn->output);
+      write_op->cb(write_op, -1);
       return;
     }
 
@@ -92,7 +93,7 @@ void lx_connection_write(lx_event_t *event) {
     if (write_op->written == write_op->size) {
       queue_pop(&conn->output);
       if (write_op->cb)
-        write_op->cb(write_op);
+        write_op->cb(write_op, 0);
     }
   }
 
@@ -141,12 +142,36 @@ lx_listener_t *lx_listen(lx_io_t *ctx, int port, void (*onaccept)(struct lx_conn
 
 /* closes tcp connection, removes from epoll and frees connection from memory */
 void lx_close(lx_connection_t *conn) {
+  if (conn->closing) {
+    return;
+  }
+  
+  conn->closing = 1;
   lx_remove_event(&conn->event, conn->fd);
   close(conn->fd);
-  if (conn->onclose)
-    conn->onclose(conn); // user should clear data, close timers etc
+
+  while (!queue_empty(&conn->output)) {
+    struct queue_node *next = queue_pop(&conn->output);
+    lx_write_t *write_op = container_of(next, lx_write_t, qnode);
+    // call callback on pending writes when closing
+    write_op->cb(write_op, -1);
+  }
   
-  free(conn);
+  // enqueue connection to close in next cycle
+  queue_init_node(&conn->close_qnode);
+  queue_push(&conn->event.ctx->pending_closes, &conn->close_qnode);
+}
+
+void lx_close_pending(lx_io_t *ctx) {
+  while (!queue_empty(&ctx->pending_closes)) {
+    struct queue_node *next = queue_pop(&ctx->pending_closes);
+    lx_connection_t *conn = container_of(next, lx_connection_t, close_qnode);
+
+    if (conn->onclose != NULL)
+      conn->onclose(conn);
+
+    free(conn);
+  }
 }
 
 lx_write_t *lx_write_alloc(const char *buf, size_t size) {
@@ -160,7 +185,6 @@ lx_write_t *lx_write_alloc(const char *buf, size_t size) {
 }
 
 void enqueue_write(lx_write_t *write_op, lx_connection_t *conn) {
-  printf("Enqueue write...\n");
   queue_init_node(&write_op->qnode);
   queue_push(&conn->output, &write_op->qnode);
 }
@@ -178,15 +202,15 @@ int lx_write(lx_write_t *write_op, lx_connection_t *conn, write_cb_t cb) {
         return 0;
       } else {
         perror("socket->write");
+        write_op->cb(write_op, -1);
         return -1;
       }
     }
 
     // fully written
     if (written == write_op->size) {
-      printf("Fully written\n");
       if (cb != NULL)
-        cb(write_op);
+        cb(write_op, 0);
       return 1;
     }
 

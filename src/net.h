@@ -20,7 +20,7 @@ typedef struct lx_listener {
 
 struct lx_write;
 
-typedef void (*write_cb_t)(struct lx_write*);
+typedef void (*write_cb_t)(struct lx_write*, int status);
 
 typedef struct lx_write {
     const char *buf;
@@ -33,6 +33,7 @@ typedef struct lx_write {
 
 typedef struct lx_connection {
     socket_t fd;
+    unsigned closing: 1;
     void (*ondata)(struct lx_connection *);
     void (*onclose)(struct lx_connection *);
     void *data;                                 // pointer to the higher level protocol object
@@ -41,6 +42,7 @@ typedef struct lx_connection {
     size_t size;
     char buf[LX_NET_BUFFER_SIZE];               // TODO: remove this buffer
     struct queue output;
+    struct queue_node close_qnode;              // queue node for pending connection closes
 } lx_connection_t;
 
 #define lx_conn_ctx(conn_ptr) conn_ptr->event.ctx
@@ -52,6 +54,7 @@ void lx_listener_handler(lx_event_t *event);
 void lx_connection_read(lx_event_t *event);
 void lx_connection_write(lx_event_t *event);
 void lx_close(lx_connection_t *conn);
+void lx_close_pending(lx_io_t *ctx);
 
 lx_write_t *lx_write_alloc(const char *buf, size_t size);
 int lx_write(lx_write_t*, lx_connection_t *conn, write_cb_t cb);
