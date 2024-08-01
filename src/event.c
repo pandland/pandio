@@ -3,21 +3,18 @@
 #include "timer.h"
 #include "net.h"
 
-lx_io_t lx_init() {
-  lx_io_t ctx;
-  ctx.epoll_fd = epoll_create1(0);
-  ctx.now = lx_now();   // it will be updated with every cycle anyway
-  ctx.handles = 0;
+void lx_init(lx_io_t *ctx) {
+  ctx->epoll_fd = epoll_create1(0);
+  ctx->now = lx_now();   // it will be updated with every cycle anyway
+  ctx->handles = 0;
 
-  if (ctx.epoll_fd == -1) {
+  if (ctx->epoll_fd == -1) {
     perror("epoll");
     exit(EXIT_FAILURE);
   }
 
-  timers_init(&ctx);
-  queue_init(&ctx.pending_closes);
-
-  return ctx;
+  timers_init(ctx);
+  queue_init(&ctx->pending_closes);
 }
 
 void lx_make_nonblocking(int fd) {
