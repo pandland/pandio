@@ -13,7 +13,8 @@
 void handle_onrequest(http_request_t *req) {}
 
 void worker(int id, int port) {
-    lx_io_t ctx = lx_init();
+    lx_io_t ctx;
+    lx_init(&ctx);
     lx_http_t http = lx_http_init(DEFAULT_PORT, handle_onrequest);
     lx_http_listen(&ctx, &http);
     log_info("Server is listening on port %d", DEFAULT_PORT);
@@ -29,7 +30,8 @@ void timer_once(lx_timer_t *timer) {
 }
 
 void timer_test() {
-    lx_io_t ctx = lx_init();
+    lx_io_t ctx;
+    lx_init(&ctx);
     lx_timer_t timer;
     lx_timer_init(&ctx, &timer);
     lx_timer_start(&timer, timer_once, 8 * 1000);
