@@ -1,8 +1,10 @@
 > ⚠️ Early stage of development.
 
-# luxio
+<img src="https://github.com/user-attachments/assets/cf70d4ac-9cef-4c66-8295-04946abdafd2" alt="banner" />
 
-Simple async io library for C (it will be in the future, for now it's just HTTP server) - it will be used across my personal projects.
+# Pandio
+
+Simple library for non-blocking I/O operations. Developed mainly for my PandJS project (JavaScript runtime).
 
 ### TODO:
 
