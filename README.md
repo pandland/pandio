@@ -14,9 +14,15 @@ Simple library for non-blocking I/O operations. Developed mainly for my PandJS p
 - [ ] Thread pool and files handling.
 - [ ] Support many platforms: Windows, MacOS and FreeBSD.
 
+### Build static library
+
+Make sure you have `make` utility installed. Library uses just system calls, so it does not have any external dependencies.
+
 ```sh
-make && ./build/server
+make lib
 ```
+
+> This command will create `libpandio.a` file inside `build` directory.
 
 ### Running tests
 
@@ -33,3 +39,7 @@ pacaur -S criterion
 # Running tests:
 make test
 ```
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.

@@ -1,10 +1,6 @@
 #pragma once
 #include "common.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define queue_empty(qptr) (((qptr)->head == NULL) && ((qptr)->tail == NULL))
 
 struct queue_node {
@@ -62,7 +58,3 @@ static struct queue_node *queue_pop(struct queue *q) {
 
     return found;
 }
-
-#ifdef __cplusplus
-} // extern "C"
-#endif // __cplusplus

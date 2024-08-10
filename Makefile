@@ -6,7 +6,7 @@ BUILD_DIR=build
 TEST_DIR=test
 TEST_BUILD_DIR=$(TEST_DIR)/build
 TARGET=server
-LIBRARY=libluxio.a
+LIBRARY=libpandio.a
 
 SRCS=$(shell find $(SRC_DIR) -name '*.c')
 TEST_SRCS=$(shell find $(TEST_DIR) -name '*.c')
