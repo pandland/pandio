@@ -17,7 +17,6 @@ struct heap
     heap_comparator_t comparator;
 };
 
-
 static void heap_swap(struct heap *h, struct heap_node *parent, struct heap_node *child);
 
 static void heap_init(struct heap *h, heap_comparator_t comparator) 

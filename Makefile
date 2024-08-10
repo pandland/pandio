@@ -8,7 +8,20 @@ TEST_BUILD_DIR=$(TEST_DIR)/build
 TARGET=server
 LIBRARY=libpandio.a
 
-SRCS=$(shell find $(SRC_DIR) -name '*.c')
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S),Linux)
+    PLATFORM_SRC=$(SRC_DIR)/unix
+else ifeq ($(UNAME_S),Darwin)  # Dodane wsparcie dla macOS
+    PLATFORM_SRC=$(SRC_DIR)/unix
+else ifeq ($(UNAME_S),Windows_NT)
+    PLATFORM_SRC=$(SRC_DIR)/win32
+else
+    $(error Platform not supported)
+endif
+
+SRCS=$(shell find $(SRC_DIR) -name '*.c' -not -path "$(SRC_DIR)/unix/*" -not -path "$(SRC_DIR)/win32/*") \
+     $(shell find $(PLATFORM_SRC) -name '*.c')
 TEST_SRCS=$(shell find $(TEST_DIR) -name '*.c')
 
 OBJECTS=$(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
