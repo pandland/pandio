@@ -25,10 +25,6 @@
 #include "heap.h"
 #include "queue.h"
 
-#if defined(__linux__)
-typedef int pnd_fd_t;
-#endif
-
 struct pnd_io {
   pnd_fd_t poll_handle;
   size_t handles;
@@ -52,42 +48,3 @@ struct pnd_event {
 };
 
 typedef struct pnd_event pnd_event_t;
-
-enum {
-  PND_TCP_NONE = 0,  // initial state, when socket is not initialized yet but zeroed struct exists.
-  PND_TCP_ACTIVE,
-  PND_TCP_CLOSING,
-  PND_TCP_CLOSED
-};
-
-struct pnd_tcp {
-  pnd_fd_t fd;
-  pnd_event_t ev;
-  void (*io_handler)(struct pnd_event*, unsigned events);
-  int state;
-  struct queue writes;
-  size_t writes_size;
-  struct queue_node close_qnode; // used to queue tcp streams for closing
-  // public fields for user to use:
-  void *data;
-  void (*on_data)(struct pnd_tcp *);
-  void (*on_close)(struct pnd_tcp *);
-  void (*on_connect)(pnd_fd_t);
-};
-
-typedef struct pnd_tcp pnd_tcp_t;
-
-struct pnd_write;
-
-typedef void (*write_cb_t)(struct pnd_write*, int status);
-
-struct pnd_write {
-  const char *buf;
-  size_t size;
-  size_t written;
-  write_cb_t cb;
-  void *data;
-  struct queue_node qnode;
-};
-
-typedef struct pnd_write pnd_write_t;

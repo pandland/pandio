@@ -5,6 +5,7 @@ SRC_DIR=src
 BUILD_DIR=build
 TEST_DIR=test
 TEST_BUILD_DIR=$(TEST_DIR)/build
+SAMPLES_DIR=samples
 TARGET=server
 LIBRARY=libpandio.a
 
@@ -23,9 +24,11 @@ endif
 SRCS=$(shell find $(SRC_DIR) -name '*.c' -not -path "$(SRC_DIR)/unix/*" -not -path "$(SRC_DIR)/win32/*") \
      $(shell find $(PLATFORM_SRC) -name '*.c')
 TEST_SRCS=$(shell find $(TEST_DIR) -name '*.c')
+SAMPLES_SRCS=$(shell find $(SAMPLES_DIR) -name '*.c')
 
 OBJECTS=$(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
 TEST_OBJECTS=$(patsubst $(TEST_DIR)/%.c,$(TEST_BUILD_DIR)/%.o,$(TEST_SRCS))
+SAMPLES_OBJECTS=$(patsubst $(SAMPLES_DIR)/%.c,$(BUILD_DIR)/samples/%.o,$(SAMPLES_SRCS))
 
 all: $(TARGET)
 
@@ -44,6 +47,14 @@ test: $(TARGET) $(TEST_OBJECTS)
 	$(TEST_BUILD_DIR)/test
 
 $(TEST_BUILD_DIR)/%.o: $(TEST_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+samples: lib $(SAMPLES_OBJECTS)
+	@mkdir -p $(BUILD_DIR)/samples
+	$(CC) $(CFLAGS) $(SAMPLES_OBJECTS) -L$(BUILD_DIR) -lpandio -lrt -o $(BUILD_DIR)/samples/tcp_echo
+
+$(BUILD_DIR)/samples/%.o: $(SAMPLES_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 

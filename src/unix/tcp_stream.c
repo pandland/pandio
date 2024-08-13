@@ -19,7 +19,8 @@
  * SOFTWARE.
  */
 
-#include "pandio.h"
+#include "tcp_stream.h"
+#include <stdio.h>
 #include "poll.h"
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -266,7 +267,9 @@ void pnd_tcp_client_io(struct pnd_event * event, unsigned events)
     pnd_tcp_write_io(stream);
   }
 
-  if (events & PND_CLOSE) {}
+  if (events & PND_CLOSE) {
+    pnd_tcp_destroy(stream);
+  }
 }
 
 int pnd_tcp_reject(pnd_fd_t fd) 
