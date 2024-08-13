@@ -34,6 +34,7 @@ struct pnd_io {
   size_t handles;
   uint64_t now;
   struct heap timers;
+  struct queue pending_closes;
 };
 
 typedef struct pnd_io pnd_io_t;
@@ -62,10 +63,11 @@ enum {
 struct pnd_tcp {
   pnd_fd_t fd;
   pnd_event_t ev;
-  void (*io_handler)(struct pnd_event*, int events);
+  void (*io_handler)(struct pnd_event*, unsigned events);
   int state;
   struct queue writes;
   size_t writes_size;
+  struct queue_node close_qnode; // used to queue tcp streams for closing
   // public fields for user to use:
   void *data;
   void (*on_data)(struct pnd_tcp *);

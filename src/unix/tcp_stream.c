@@ -169,7 +169,21 @@ void pnd_tcp_write_io(pnd_tcp_t *stream)
 
   if (queue_empty(&stream->writes)) {
     pnd_stop_writing(&stream->ev, stream->fd);
+    
+    if (stream->state == PND_TCP_CLOSING)
+      shutdown(stream->fd, SHUT_WR);
+      pnd_tcp_destroy(stream);
   }
+}
+
+void pnd_tcp_write_init(pnd_write_t *write_op, const char *buf, size_t size, write_cb_t cb)
+{
+  write_op->buf = buf;
+  write_op->size = size;
+  write_op->written = 0;
+  write_op->cb = cb;
+  write_op->data = NULL;
+  queue_init_node(&write_op->qnode);
 }
 
 #define PND_ERROR -1
@@ -217,7 +231,7 @@ void pnd_tcp_write(pnd_tcp_t *stream, pnd_write_t *write_op)
   }
 
   if (written < write_op->size) {
-    write_op->written = written;
+    write_op->written += written;
     pnd_tcp_write_async(stream, write_op);
   } else {
     write_op->cb(write_op, 0);
@@ -265,6 +279,7 @@ void pnd_tcp_accept(pnd_tcp_t *peer, pnd_fd_t fd)
   pnd_set_nonblocking(fd);
   pnd_tcp_init(peer);
   peer->fd = fd;
+  peer->state = PND_TCP_ACTIVE;
   peer->io_handler = pnd_tcp_client_io;
   pnd_add_event(&peer->ev, fd);
 }
@@ -277,4 +292,41 @@ void pnd_tcp_pause(pnd_tcp_t *stream)
 void pnd_tcp_resume(pnd_tcp_t *stream)
 {
   pnd_stop_reading(&stream->ev, stream->fd);
+}
+
+/* forcefully closes tcp stream and discards all enqueued writes */
+void pnd_tcp_destroy(pnd_tcp_t *stream)
+{
+  if (stream->state == PND_TCP_CLOSED)
+    return;
+
+  stream->state = PND_TCP_CLOSED;
+  pnd_remove_event(&stream->ev, stream->fd);
+  pnd_close_fd(stream->fd);
+
+  while (!queue_empty(&stream->writes)) {
+    struct queue_node *next = queue_pop(&stream->writes);
+    pnd_write_t *write_op = container_of(next, pnd_write_t, qnode);
+    write_op->cb(write_op, -1);
+  }
+
+  queue_init_node(&stream->close_qnode);
+  queue_push(&stream->ev.ctx->pending_closes, &stream->close_qnode);
+}
+
+/* gracefully closes tcp stream */
+void pnd_tcp_close(pnd_tcp_t *stream) 
+{
+  if (stream->state != PND_TCP_ACTIVE)
+    return;
+
+  stream->state = PND_TCP_CLOSING;
+
+  if (queue_empty(&stream->writes)) {
+    shutdown(stream->fd, SHUT_WR);
+    pnd_tcp_destroy(stream);
+  } else {
+    // wait for all writes to finish
+    pnd_start_reading(&stream->ev, stream->fd);
+  }
 }
