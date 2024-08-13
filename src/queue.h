@@ -33,6 +33,10 @@ static void queue_push(struct queue *q, struct queue_node *node) {
     q->tail = node;
 }
 
+static struct queue_node *queue_peek(struct queue *q) {
+    return q->head;
+}
+
 static struct queue_node *queue_pop(struct queue *q) {
     if (q->head == NULL) {
         return NULL;

@@ -113,7 +113,10 @@ int pnd_tcp_listen(pnd_tcp_t *server, int port, void (*onconnect)(int))
     return -1;
   }
 
-  pnd_set_nonblocking(lfd);
+  if (pnd_set_nonblocking(lfd) < 0) {
+    pnd_close_fd(lfd);
+    return -1;
+  }
 
   if (listen(lfd, SOMAXCONN) < 0) {
     perror("listen");
@@ -132,7 +135,42 @@ int pnd_tcp_listen(pnd_tcp_t *server, int port, void (*onconnect)(int))
 }
 
 /* Actually writes enqueued writes */
-void pnd_tcp_write_io(pnd_tcp_t *stream) {}
+void pnd_tcp_write_io(pnd_tcp_t *stream) 
+{
+  while (!queue_empty(&stream->writes)) {
+    struct queue_node *next = queue_peek(&stream->writes);
+    pnd_write_t *write_op = container_of(next, pnd_write_t, qnode);
+    
+    size_t to_write = write_op->size - write_op->written;
+    const char *buf = write_op->buf + write_op->written;
+    ssize_t written;
+
+    do {
+      written = write(stream->fd, buf, to_write);
+    } while (written < 0 && errno == EINTR);
+
+    if (written < 0) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        return;
+      } else {
+        perror("write");
+        queue_pop(&stream->writes);
+        write_op->cb(write_op, -1);
+        return;
+      }
+    }
+
+    if (write_op->written == write_op->size) {
+      queue_pop(&stream->writes);
+      if (write_op->cb)
+        write_op->cb(write_op, 0);
+    }
+  }
+
+  if (queue_empty(&stream->writes)) {
+    pnd_stop_writing(&stream->ev, stream->fd);
+  }
+}
 
 #define PND_ERROR -1
 #define PND_EAGAIN -2
