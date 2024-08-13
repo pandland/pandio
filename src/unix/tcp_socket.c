@@ -1,3 +1,24 @@
+/* Copyright (c) Michał Dziuba
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include "pandio.h"
 #include "poll.h"
 #include <sys/socket.h>
@@ -29,7 +50,7 @@ int pnd_close_fd(pnd_fd_t fd)
 }
 
 /* handler for I/O events from epoll/kqueue */
-void pnd_tcp_listener_io(struct pnd_event * event, unsigned events)
+void pnd_tcp_listener_io(struct pnd_event *event, unsigned events)
 {
   assert(events & PND_READABLE);
 
@@ -44,6 +65,7 @@ void pnd_tcp_listener_io(struct pnd_event * event, unsigned events)
   pnd_fd_t peer_fd = accept(listener->fd, (struct sockaddr *)&address, &addrlen);
   if (peer_fd < 0) {
     if (errno == EWOULDBLOCK || errno == EAGAIN) {
+      // ignore error and wait for another pnd_tcp_listener_io call...
       return;
     } else {
       perror("accept");
@@ -64,7 +86,7 @@ void pnd_tcp_listener_io(struct pnd_event * event, unsigned events)
   }
 }
 
-int pnd_tcp_listen(pnd_tcp_t * server, int port, void (*onconnect)(int)) 
+int pnd_tcp_listen(pnd_tcp_t *server, int port, void (*onconnect)(int)) 
 {
   pnd_fd_t lfd = socket(AF_INET, SOCK_STREAM, 0);
   if (lfd <= 0) {
@@ -79,7 +101,7 @@ int pnd_tcp_listen(pnd_tcp_t * server, int port, void (*onconnect)(int))
 
   int opt = 1;
 
-  if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
+  if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
     perror("setsockopt");
     pnd_close_fd(lfd);
     return -1;
@@ -112,21 +134,70 @@ int pnd_tcp_listen(pnd_tcp_t * server, int port, void (*onconnect)(int))
 /* Actually writes enqueued writes */
 void pnd_tcp_write_io(pnd_tcp_t *stream) {}
 
-/* Try to write synchronously */
-void pnd_tcp_try_write(pnd_tcp_t *stream, const char *chunk, size_t size)
-{
-  if (!queue_empty(&stream->writes))
-    return;
+#define PND_ERROR -1
+#define PND_EAGAIN -2
 
-  // TODO: try writing 
+/* Try to write synchronously */
+ssize_t pnd_tcp_try_write(pnd_tcp_t *stream, const char *chunk, size_t size)
+{
+  if (stream->state != PND_TCP_ACTIVE) {
+    return PND_ERROR;
+  }
+
+  if (!queue_empty(&stream->writes))
+    return PND_EAGAIN;
+
+  ssize_t written;
+
+  do {
+    written = write(stream->fd, chunk, size);
+  } while (written < 0 && errno == EINTR);
+
+  if (written < 0) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      return PND_EAGAIN;
+    } else {
+      perror("write");
+      return PND_ERROR;
+    }
+  }
+
+  return written;
+}
+
+void pnd_tcp_write(pnd_tcp_t *stream, pnd_write_t *write_op)
+{
+  ssize_t written = pnd_tcp_try_write(stream, write_op->buf, write_op->size);
+  if (written == PND_ERROR) {
+    write_op->cb(write_op, -1);
+    return;
+  }
+
+  if (written == PND_EAGAIN) {
+    pnd_tcp_write_async(stream, write_op);
+    return;
+  }
+
+  if (written < write_op->size) {
+    write_op->written = written;
+    pnd_tcp_write_async(stream, write_op);
+  } else {
+    write_op->cb(write_op, 0);
+  }
 }
 
 /* Enqueue write operation and do it asynchronously.
  * Usually requires copying data to the new structure
  */
-void pnd_tcp_write(pnd_tcp_t *stream, pnd_write_t *write_op)
+void pnd_tcp_write_async(pnd_tcp_t *stream, pnd_write_t *write_op)
 {
-  // TODO: enqueue writes
+  if (stream->state != PND_TCP_ACTIVE) {
+    write_op->cb(write_op, -1);
+    return;
+  }
+
+  queue_init_node(&write_op->qnode);
+  queue_push(&stream->writes, &write_op->qnode);
 }
 
 /* handler for I/O events from epoll/kqueue */
