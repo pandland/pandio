@@ -6,15 +6,14 @@
 struct pnd_timer;
 typedef void (*pnd_timer_callback_t)(struct pnd_timer*);
 
-struct pnd_timer
-{
-  pnd_io_t             *ctx;
-  uint64_t              timeout;
-  uint64_t              interval;
-  bool                  active;
-  void                 *data;       // custom data for callback
-  struct heap_node      hnode;
-  pnd_timer_callback_t  on_timeout;
+struct pnd_timer {
+  pnd_io_t *ctx;
+  uint64_t timeout;
+  uint64_t interval;
+  bool active;
+  void *data;       // custom data for callback
+  struct heap_node hnode;
+  pnd_timer_callback_t on_timeout;
 };
 
 typedef struct pnd_timer pnd_timer_t;
