@@ -22,6 +22,8 @@
 #pragma once
 #include "pandio.h"
 
+#define pnd_tcp_ctx(pnd_tcp) ((pnd_tcp)->ev.ctx)
+
 enum {
   PND_TCP_NONE = 0,  // initial state, when socket is not initialized yet but zeroed struct exists.
   PND_TCP_ACTIVE,
@@ -32,7 +34,6 @@ enum {
 struct pnd_tcp {
   pnd_fd_t fd;
   pnd_event_t ev;
-  void (*io_handler)(struct pnd_event*, unsigned events);
   int state;
   struct queue writes;
   size_t writes_size;
@@ -41,7 +42,7 @@ struct pnd_tcp {
   void *data;
   void (*on_data)(struct pnd_tcp *);
   void (*on_close)(struct pnd_tcp *);
-  void (*on_connect)(pnd_fd_t);
+  void (*on_connect)(struct pnd_tcp*, pnd_fd_t);
 };
 
 typedef struct pnd_tcp pnd_tcp_t;
@@ -61,9 +62,9 @@ struct pnd_write {
 
 typedef struct pnd_write pnd_write_t;
 
-void pnd_tcp_init(pnd_tcp_t *stream);
+void pnd_tcp_init(pnd_io_t *ctx, pnd_tcp_t *stream);
 
-int pnd_tcp_listen(pnd_tcp_t *server, int port, void (*onconnect)(int));
+int pnd_tcp_listen(pnd_tcp_t *server, int port, void (*onconnect)(pnd_tcp_t*, int));
 
 void pnd_tcp_write_init(pnd_write_t *write_op, const char *buf, size_t size, write_cb_t cb);
 

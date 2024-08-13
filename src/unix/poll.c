@@ -90,7 +90,7 @@ void pnd_init_event(pnd_event_t *event)
 	event->flags = 0;
 }
 
-void pnd_modify_event(pnd_event_t * event, int fd, uint32_t operation,
+void pnd_modify_event(pnd_event_t *event, int fd, uint32_t operation,
 		      uint32_t flags)
 {
 	struct epoll_event ev;
@@ -105,6 +105,7 @@ void pnd_modify_event(pnd_event_t * event, int fd, uint32_t operation,
 
 void pnd_add_event(pnd_event_t * event, pnd_fd_t fd)
 {
+	printf("FD: %d\n", fd);
 	event->flags |= EPOLLIN;
 	event->ctx->handles++;
 	pnd_modify_event(event, fd, EPOLL_CTL_ADD, event->flags);

@@ -48,3 +48,11 @@ struct pnd_event {
 };
 
 typedef struct pnd_event pnd_event_t;
+
+// exports
+#include "tcp_stream.h"
+#include "timers.h"
+
+void pnd_io_init(pnd_io_t *ctx);
+
+void pnd_io_run(pnd_io_t *ctx);

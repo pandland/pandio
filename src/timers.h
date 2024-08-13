@@ -52,4 +52,4 @@ void pnd_timers_heap_init(pnd_io_t*);
 
 void pnd_timers_run(pnd_io_t*);
 
-int pnd_timers_next_timeout(pnd_io_t*);
+int pnd_timers_next(pnd_io_t*);
