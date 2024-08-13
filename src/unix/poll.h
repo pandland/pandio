@@ -20,4 +20,4 @@ void pnd_stop_writing(pnd_event_t * event, pnd_fd_t fd);
 
 void pnd_remove_event(pnd_event_t * event, pnd_fd_t fd);
 
-void pnd_set_nonblocking(pnd_fd_t fd);
+int pnd_set_nonblocking(pnd_fd_t fd);

@@ -121,17 +121,19 @@ void pnd_remove_event(pnd_event_t * event, pnd_fd_t fd)
 	}
 }
 
-void pnd_set_nonblocking(pnd_fd_t fd)
+int pnd_set_nonblocking(pnd_fd_t fd)
 {
 	int flags = fcntl(fd, F_GETFL, 0);
 	if (flags == -1) {
 		perror("fcntl");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 
 	flags |= O_NONBLOCK;
 	if (fcntl(fd, F_SETFL, flags) == -1) {
 		perror("fcntl");
-		exit(EXIT_FAILURE);
+		return -1;
 	}
+
+	return 0;
 }

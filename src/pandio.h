@@ -53,3 +53,18 @@ struct pnd_tcp {
 };
 
 typedef struct pnd_tcp pnd_tcp_t;
+
+struct pnd_write;
+
+typedef void (*write_cb_t)(struct pnd_write*, int status);
+
+struct pnd_write {
+  const char *buf;
+  size_t size;
+  size_t written;
+  write_cb_t cb;
+  void *data;
+  struct queue_node qnode;
+};
+
+typedef struct pnd_write pnd_write_t;

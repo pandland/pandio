@@ -31,6 +31,7 @@ void handle_connection(pnd_fd_t fd) {
 
 int main() {
   pnd_tcp_t *server = malloc(sizeof(pnd_tcp_t));
+  pnd_tcp_init(server);
   pnd_tcp_listen(server, 8080, handle_connection);
   
   return 0;
