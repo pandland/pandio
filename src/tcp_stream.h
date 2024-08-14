@@ -52,7 +52,7 @@ struct pnd_write;
 typedef void (*write_cb_t)(struct pnd_write*, int status);
 
 struct pnd_write {
-  const char *buf;
+  char *buf;
   size_t size;
   size_t written;
   write_cb_t cb;
@@ -66,7 +66,7 @@ void pnd_tcp_init(pnd_io_t *ctx, pnd_tcp_t *stream);
 
 int pnd_tcp_listen(pnd_tcp_t *server, int port, void (*onconnect)(pnd_tcp_t*, int));
 
-void pnd_tcp_write_init(pnd_write_t *write_op, const char *buf, size_t size, write_cb_t cb);
+void pnd_tcp_write_init(pnd_write_t *write_op, char *buf, size_t size, write_cb_t cb);
 
 #define PND_ERROR -1
 #define PND_EAGAIN -2

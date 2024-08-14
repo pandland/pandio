@@ -2,11 +2,18 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <string.h>
 
 void handle_close(pnd_tcp_t *stream) {
   // perform clean up
   printf("Connection closed: %d\n", stream->fd);
   free(stream);
+}
+
+void handle_write(pnd_write_t *write_op, int status) {
+  printf("write completed\n");
+  free(write_op->buf);
+  free(write_op);
 }
 
 // echo server
@@ -26,8 +33,10 @@ void handle_read(pnd_tcp_t *stream) {
   }
 
   printf("read %ld bytes\n", bytes); fflush(stdout);
-  pnd_tcp_try_write(stream, buf, bytes);
-  printf("tried to write :*\n"); fflush(stdout);
+  pnd_write_t *write_op = malloc(sizeof(pnd_write_t));
+  pnd_tcp_write_init(write_op, malloc(bytes), bytes, handle_write);
+  memcpy((void*)write_op->buf, (void*)buf, bytes);
+  pnd_tcp_write_async(stream, write_op);
   pnd_tcp_close(stream);
 }
 

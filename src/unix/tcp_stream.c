@@ -149,6 +149,7 @@ void pnd_tcp_write_io(pnd_tcp_t *stream)
 
     do {
       written = write(stream->fd, buf, to_write);
+      printf("written: %ld\n", written); fflush(stdout);
     } while (written < 0 && errno == EINTR);
 
     if (written < 0) {
@@ -162,6 +163,8 @@ void pnd_tcp_write_io(pnd_tcp_t *stream)
       }
     }
 
+    write_op->written += written;
+
     if (write_op->written == write_op->size) {
       queue_pop(&stream->writes);
       if (write_op->cb)
@@ -174,11 +177,10 @@ void pnd_tcp_write_io(pnd_tcp_t *stream)
     
     if (stream->state == PND_TCP_CLOSING)
       shutdown(stream->fd, SHUT_WR);
-      pnd_tcp_destroy(stream);
   }
 }
 
-void pnd_tcp_write_init(pnd_write_t *write_op, const char *buf, size_t size, write_cb_t cb)
+void pnd_tcp_write_init(pnd_write_t *write_op, char *buf, size_t size, write_cb_t cb)
 {
   write_op->buf = buf;
   write_op->size = size;
@@ -330,6 +332,6 @@ void pnd_tcp_close(pnd_tcp_t *stream)
     shutdown(stream->fd, SHUT_WR);
   } else {
     // wait for all writes to finish
-    pnd_start_reading(&stream->ev, stream->fd);
+    pnd_start_writing(&stream->ev, stream->fd);
   }
 }
