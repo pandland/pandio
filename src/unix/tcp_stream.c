@@ -326,8 +326,8 @@ void pnd_tcp_close(pnd_tcp_t *stream)
   stream->state = PND_TCP_CLOSING;
 
   if (queue_empty(&stream->writes)) {
+    /* call shutdown and continue to read until EOF */
     shutdown(stream->fd, SHUT_WR);
-    pnd_tcp_destroy(stream);
   } else {
     // wait for all writes to finish
     pnd_start_reading(&stream->ev, stream->fd);

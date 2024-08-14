@@ -37,7 +37,7 @@ uint64_t pnd_now()
 	return now.tv_sec * 1000 + now.tv_nsec / 1000000;
 }
 
-void pnd_poll_init(pnd_io_t * ctx)
+void pnd_poll_init(pnd_io_t *ctx)
 {
 	ctx->poll_handle = epoll_create1(0);
 

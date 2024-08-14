@@ -18,7 +18,9 @@ void pnd_tcp_pending_close(pnd_io_t *ctx)
   while (!queue_empty(&ctx->pending_closes)) {
     struct queue_node *next = queue_pop(&ctx->pending_closes);
     pnd_tcp_t *stream = container_of(next, pnd_tcp_t, close_qnode);
-    stream->on_close(stream);
+
+    if (stream->on_close)
+      stream->on_close(stream);
   }
 }
 
