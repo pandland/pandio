@@ -53,7 +53,6 @@ int pnd_close_fd(pnd_fd_t fd)
 /* handler for I/O events from epoll/kqueue */
 void pnd_tcp_listener_io(struct pnd_event *event, unsigned events)
 {
-  printf("pnd_tcp_listener_io\n"); fflush(stdout);
   assert(events & PND_READABLE);
 
   pnd_tcp_t *listener = container_of(event, pnd_tcp_t, ev);
@@ -149,7 +148,6 @@ void pnd_tcp_write_io(pnd_tcp_t *stream)
 
     do {
       written = write(stream->fd, buf, to_write);
-      printf("written: %ld\n", written); fflush(stdout);
     } while (written < 0 && errno == EINTR);
 
     if (written < 0) {
@@ -261,6 +259,12 @@ void pnd_tcp_client_io(struct pnd_event * event, unsigned events)
 {
   pnd_tcp_t *stream = container_of(event, pnd_tcp_t, ev);
 
+  if (events & PND_CLOSE) {
+    printf("Detected PND_CLOSE\n");
+    pnd_tcp_destroy(stream);
+    return;
+  }
+
   if (events & PND_READABLE) {
     // TODO: actually read data and pass chunk to the on_data callback, instrad
     stream->on_data(stream);
@@ -268,10 +272,6 @@ void pnd_tcp_client_io(struct pnd_event * event, unsigned events)
 
   if (events & PND_WRITABLE) {
     pnd_tcp_write_io(stream);
-  }
-
-  if (events & PND_CLOSE) {
-    pnd_tcp_destroy(stream);
   }
 }
 
