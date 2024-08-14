@@ -24,6 +24,7 @@
 #include "poll.h"
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <unistd.h>
 
@@ -338,4 +339,36 @@ void pnd_tcp_close(pnd_tcp_t *stream)
     // wait for all writes to finish
     pnd_start_writing(&stream->ev, stream->fd);
   }
+}
+
+void pnd_tcp_connect(pnd_tcp_t *stream, const char *host, int port)
+{
+  pnd_fd_t fd = socket(AF_INET, SOCK_STREAM, 0);
+  if (fd < 0) {
+    perror("socket");
+    return;
+  }
+
+  if (pnd_set_nonblocking(fd) < 0) {
+    pnd_close_fd(fd);
+    return;
+  }
+
+  struct sockaddr_in address;
+  address.sin_family = AF_INET;
+  address.sin_port = htons(port);
+  address.sin_addr.s_addr = inet_addr(host);
+
+  if (connect(fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+    if (errno != EINPROGRESS) {
+      perror("connect");
+      pnd_close_fd(fd);
+      return;
+    }
+  }
+
+  stream->fd = fd;
+  stream->state = PND_TCP_ACTIVE;
+  stream->ev.callback = pnd_tcp_client_io;
+  pnd_add_event(&stream->ev, fd);
 }

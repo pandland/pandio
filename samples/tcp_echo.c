@@ -27,7 +27,7 @@ void handle_read(pnd_tcp_t *stream) {
 
   if (bytes == 0) {
     //pnd_tcp_close(stream);
-    //printf("Received 0 bytes lol\n");
+    printf("Received 0 bytes for: %d\n", stream->fd);
     pnd_tcp_destroy(stream);
     return;
   }
@@ -53,13 +53,52 @@ void handle_connection(pnd_tcp_t *server, pnd_fd_t fd) {
   client->on_close = handle_close;
 }
 
-int main() {
+int main_old() {
+  printf("Starting server, pid is: %d\n", getpid());
   pnd_io_t ctx;
   pnd_io_init(&ctx);
 
   pnd_tcp_t *server = malloc(sizeof(pnd_tcp_t));
   pnd_tcp_init(&ctx, server);
   pnd_tcp_listen(server, 8000, handle_connection);
+
+  pnd_io_run(&ctx);
+  
+  return 0;
+}
+
+void on_response(pnd_tcp_t *stream) {
+  char buf[1024] = {};
+  ssize_t bytes = read(stream->fd, buf, 1024);
+  if (bytes < 0) {
+    perror("read");
+    return;
+  }
+
+  if (bytes == 0) {
+    //pnd_tcp_close(stream);
+    printf("Received 0 bytes for: %d\n", stream->fd);
+    pnd_tcp_destroy(stream);
+    return;
+  }
+
+  printf("read %ld bytes\n", bytes); fflush(stdout);
+  pnd_tcp_close(stream);
+}
+
+int main() {
+  printf("Starting client, pid is: %d\n", getpid());
+  pnd_io_t ctx;
+  pnd_io_init(&ctx);
+
+  pnd_tcp_t *client = malloc(sizeof(pnd_tcp_t));
+  pnd_tcp_init(&ctx, client);
+  client->on_data = on_response;
+  client->on_close = handle_close;
+  pnd_tcp_connect(client, "127.0.0.1", 3000);
+  pnd_write_t *write_op = malloc(sizeof(pnd_write_t));
+  pnd_tcp_write_init(write_op, strdup("GET / HTTP/1.1\r\nHost: localhost\r\n\r\n"), 36, handle_write);
+  pnd_tcp_write(client, write_op);
 
   pnd_io_run(&ctx);
   
