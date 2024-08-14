@@ -6,12 +6,12 @@
 
 void handle_close(pnd_tcp_t *stream) {
   // perform clean up
-  printf("Connection closed: %d\n", stream->fd);
+  //printf("Connection closed: %d\n", stream->fd);
   free(stream);
 }
 
 void handle_write(pnd_write_t *write_op, int status) {
-  printf("write completed\n");
+  //printf("write completed with status: %d\n", status);
   free(write_op->buf);
   free(write_op);
 }
@@ -27,21 +27,23 @@ void handle_read(pnd_tcp_t *stream) {
 
   if (bytes == 0) {
     //pnd_tcp_close(stream);
-    printf("Received 0 bytes lol\n");
+    //printf("Received 0 bytes lol\n");
     pnd_tcp_destroy(stream);
     return;
   }
 
-  printf("read %ld bytes\n", bytes); fflush(stdout);
+  //printf("read %ld bytes\n", bytes); fflush(stdout);
   pnd_write_t *write_op = malloc(sizeof(pnd_write_t));
-  pnd_tcp_write_init(write_op, malloc(bytes), bytes, handle_write);
-  memcpy((void*)write_op->buf, (void*)buf, bytes);
+  const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello";
+  pnd_tcp_write_init(write_op, strdup(response), strlen(response), handle_write);
+  //memcpy((void*)write_op->buf, (void*)buf, bytes);
   pnd_tcp_write_async(stream, write_op);
+  //pnd_tcp_try_write(stream, response, strlen(response));
   pnd_tcp_close(stream);
 }
 
 void handle_connection(pnd_tcp_t *server, pnd_fd_t fd) {
-  printf("New connection accepted: %d\n", fd);
+  //printf("New connection accepted: %d\n", fd);
   pnd_tcp_t *client = malloc(sizeof(pnd_tcp_t));
   pnd_io_t *ctx = pnd_tcp_ctx(server);
   pnd_tcp_init(ctx, client);

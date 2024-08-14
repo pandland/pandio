@@ -99,6 +99,7 @@ void pnd_modify_event(pnd_event_t *event, int fd, uint32_t operation,
 	ev.events = event->flags;
 	ev.data.ptr = event;
 	if (epoll_ctl(event->ctx->poll_handle, operation, fd, &ev) == -1) {
+		printf("FD: %d, operation: %d, flags: %d\n", fd, operation, flags);
 		perror("pnd_modify_event");
 	}
 }

@@ -138,6 +138,10 @@ int pnd_tcp_listen(pnd_tcp_t *server, int port, void (*onconnect)(pnd_tcp_t*, in
 /* Actually writes enqueued writes */
 void pnd_tcp_write_io(pnd_tcp_t *stream) 
 {
+  // sometimes we get stale event when stream was closed in the same iteration
+  if (stream->state == PND_TCP_CLOSED)
+    return;
+
   while (!queue_empty(&stream->writes)) {
     struct queue_node *next = queue_peek(&stream->writes);
     pnd_write_t *write_op = container_of(next, pnd_write_t, qnode);
