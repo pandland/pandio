@@ -131,7 +131,7 @@ int pnd_tcp_listen(pnd_tcp_t *server, int port, void (*onconnect)(pnd_tcp_t*, in
   server->state = PND_TCP_ACTIVE;
   server->on_connect = onconnect;
 
-  pnd_add_event(&server->ev, lfd);
+  pnd_add_event_readable(&server->ev, lfd);
 
   return 0;
 }
@@ -260,7 +260,7 @@ void pnd_tcp_write_async(pnd_tcp_t *stream, pnd_write_t *write_op)
 }
 
 /* handler for I/O events from epoll/kqueue */
-void pnd_tcp_client_io(struct pnd_event * event, unsigned events)
+void pnd_tcp_client_io(struct pnd_event *event, unsigned events)
 {
   pnd_tcp_t *stream = container_of(event, pnd_tcp_t, ev);
 
@@ -291,7 +291,7 @@ void pnd_tcp_accept(pnd_tcp_t *peer, pnd_fd_t fd)
   peer->fd = fd;
   peer->state = PND_TCP_ACTIVE;
   peer->ev.callback = pnd_tcp_client_io;
-  pnd_add_event(&peer->ev, fd);
+  pnd_add_event_readable(&peer->ev, fd);
 }
 
 void pnd_tcp_pause(pnd_tcp_t *stream)
@@ -341,17 +341,39 @@ void pnd_tcp_close(pnd_tcp_t *stream)
   }
 }
 
-void pnd_tcp_connect(pnd_tcp_t *stream, const char *host, int port)
+void pnd_tcp_connect_io(pnd_event_t *ev, unsigned events)
+{
+  pnd_tcp_t *stream = container_of(ev, pnd_tcp_t, ev);
+
+  if (events & PND_CLOSE) {
+    pnd_tcp_destroy(stream);
+    return;
+  }
+
+  if (events & PND_WRITABLE) {
+    stream->state = PND_TCP_ACTIVE;
+    ev->callback = pnd_tcp_client_io;
+    
+    // TODO: we should make single system call
+    pnd_stop_writing(ev, stream->fd);
+    pnd_start_reading(ev, stream->fd);
+
+    if (stream->on_connect != NULL)
+      stream->on_connect(stream, stream->fd);
+  }
+}
+
+int pnd_tcp_connect(pnd_tcp_t *stream, const char *host, int port, void (*onconnect)(pnd_tcp_t*, int))
 {
   pnd_fd_t fd = socket(AF_INET, SOCK_STREAM, 0);
   if (fd < 0) {
     perror("socket");
-    return;
+    return -1;
   }
 
   if (pnd_set_nonblocking(fd) < 0) {
     pnd_close_fd(fd);
-    return;
+    return -1;
   }
 
   struct sockaddr_in address;
@@ -359,16 +381,19 @@ void pnd_tcp_connect(pnd_tcp_t *stream, const char *host, int port)
   address.sin_port = htons(port);
   address.sin_addr.s_addr = inet_addr(host);
 
+  stream->fd = fd;
+  stream->on_connect = onconnect;
+  stream->ev.callback = pnd_tcp_connect_io;
+
   if (connect(fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
     if (errno != EINPROGRESS) {
       perror("connect");
       pnd_close_fd(fd);
-      return;
+      // TODO: make a on_connect callback with error status?
+      return -1;
     }
   }
 
-  stream->fd = fd;
-  stream->state = PND_TCP_ACTIVE;
-  stream->ev.callback = pnd_tcp_client_io;
-  pnd_add_event(&stream->ev, fd);
+  pnd_add_event_writable(&stream->ev, fd);
+  return 0;
 }

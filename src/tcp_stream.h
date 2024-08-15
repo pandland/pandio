@@ -92,4 +92,4 @@ void pnd_tcp_destroy(pnd_tcp_t *stream);
 /* gracefully closes tcp stream */
 void pnd_tcp_close(pnd_tcp_t *stream);
 
-void pnd_tcp_connect(pnd_tcp_t *stream, const char *host, int port);
+int pnd_tcp_connect(pnd_tcp_t *stream, const char *host, int port, void (*onconnect)(pnd_tcp_t*, int));

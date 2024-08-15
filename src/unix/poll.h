@@ -29,7 +29,9 @@ void pnd_init_event(pnd_event_t * event);
 
 void pnd_modify_event(pnd_event_t * event, int fd, uint32_t operation, uint32_t flags);
 
-void pnd_add_event(pnd_event_t * event, pnd_fd_t fd);
+void pnd_add_event_readable(pnd_event_t *event, pnd_fd_t fd);
+
+void pnd_add_event_writable(pnd_event_t *event, pnd_fd_t fd);
 
 void pnd_start_reading(pnd_event_t * event, pnd_fd_t fd);
 

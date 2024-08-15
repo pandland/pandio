@@ -67,9 +67,9 @@ int main_old() {
   return 0;
 }
 
-void on_response(pnd_tcp_t *stream) {
+void on_server_response(pnd_tcp_t *stream) {
   char buf[1024] = {};
-  ssize_t bytes = read(stream->fd, buf, 1024);
+  ssize_t bytes = read(stream->fd, buf, 1023);
   if (bytes < 0) {
     perror("read");
     return;
@@ -82,8 +82,20 @@ void on_response(pnd_tcp_t *stream) {
     return;
   }
 
-  printf("read %ld bytes\n", bytes); fflush(stdout);
+  printf("Response from server: %s\n", buf);
+
   pnd_tcp_close(stream);
+}
+
+void handle_connect(pnd_tcp_t *client, pnd_fd_t fd) {
+  printf("Connected to server. Client fd: %d\n", fd);
+  
+  client->on_data = on_server_response;
+  client->on_close = handle_close;
+
+  pnd_write_t *write_op = malloc(sizeof(pnd_write_t));
+  pnd_tcp_write_init(write_op, strdup("GET / HTTP/1.1\r\nHost: localhost\r\n\r\n"), 35, handle_write);
+  pnd_tcp_write(client, write_op);
 }
 
 int main() {
@@ -93,12 +105,7 @@ int main() {
 
   pnd_tcp_t *client = malloc(sizeof(pnd_tcp_t));
   pnd_tcp_init(&ctx, client);
-  client->on_data = on_response;
-  client->on_close = handle_close;
-  pnd_tcp_connect(client, "127.0.0.1", 3000);
-  pnd_write_t *write_op = malloc(sizeof(pnd_write_t));
-  pnd_tcp_write_init(write_op, strdup("GET / HTTP/1.1\r\nHost: localhost\r\n\r\n"), 36, handle_write);
-  pnd_tcp_write(client, write_op);
+  pnd_tcp_connect(client, "127.0.0.1", 3000, handle_connect);
 
   pnd_io_run(&ctx);
   
