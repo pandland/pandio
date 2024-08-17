@@ -105,7 +105,8 @@ int main() {
 
   pnd_tcp_t *client = malloc(sizeof(pnd_tcp_t));
   pnd_tcp_init(&ctx, client);
-  pnd_tcp_connect(client, "127.0.0.1", 3000, handle_connect);
+  int status = pnd_tcp_connect(client, "127.0.0.1", 3000, handle_connect);
+  printf("Connect status: %d\n", status);
 
   pnd_io_run(&ctx);
   

@@ -19,7 +19,7 @@ Simple library for non-blocking I/O operations. Developed mainly for my PandJS p
 Make sure you have `make` utility installed. Library uses just system calls, so it does not have any external dependencies.
 
 ```sh
-make lib
+make
 ```
 
 > This command will create `libpandio.a` file inside `build` directory.

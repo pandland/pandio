@@ -76,6 +76,15 @@ void pnd_poll_run(pnd_io_t * ctx, int timeout)
 			pevents |= PND_WRITABLE;
 
 		if (ev.events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
+			if (ev.events & EPOLLERR)
+				printf("EPOLLERR\n");
+
+			if (ev.events & EPOLLHUP)
+				printf("EPOLLHUP\n");
+			
+			if (ev.events & EPOLLRDHUP)
+				printf("EPOLLRDHUP\n");
+				
 			pevents |= PND_CLOSE;
 		}
 

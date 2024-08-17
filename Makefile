@@ -33,14 +33,11 @@ SAMPLES_OBJECTS=$(patsubst $(SAMPLES_DIR)/%.c,$(BUILD_DIR)/samples/%.o,$(SAMPLES
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -o $(BUILD_DIR)/$(TARGET)
+	ar rcs $(BUILD_DIR)/$(LIBRARY) $(OBJECTS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-lib: $(OBJECTS)
-	ar rcs $(BUILD_DIR)/$(LIBRARY) $(OBJECTS)
+	$(CC) $(CFLAGS) -c $< -o $@	
 
 test: $(TARGET) $(TEST_OBJECTS)
 	$(CC) $(CFLAGS) $(TEST_OBJECTS) -o $(TEST_BUILD_DIR)/test -lcriterion
