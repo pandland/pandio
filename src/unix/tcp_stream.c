@@ -28,6 +28,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
+
 void pnd_tcp_init(pnd_io_t *ctx, pnd_tcp_t *stream) 
 {
   stream->fd = 0;
@@ -41,6 +42,7 @@ void pnd_tcp_init(pnd_io_t *ctx, pnd_tcp_t *stream)
   stream->ev.ctx = ctx;
 }
 
+
 int pnd_close_fd(pnd_fd_t fd)
 {
   int status;
@@ -50,6 +52,7 @@ int pnd_close_fd(pnd_fd_t fd)
 
   return status;
 }
+
 
 /* handler for I/O events from epoll/kqueue */
 void pnd_tcp_listener_io(struct pnd_event *event, unsigned events)
@@ -87,6 +90,7 @@ void pnd_tcp_listener_io(struct pnd_event *event, unsigned events)
     pnd_close_fd(peer_fd);
   }
 }
+
 
 int pnd_tcp_listen(pnd_tcp_t *server, int port, void (*onconnect)(pnd_tcp_t*, int)) 
 {
@@ -136,6 +140,7 @@ int pnd_tcp_listen(pnd_tcp_t *server, int port, void (*onconnect)(pnd_tcp_t*, in
   return 0;
 }
 
+
 /* Actually writes enqueued writes */
 void pnd_tcp_write_io(pnd_tcp_t *stream) 
 {
@@ -183,6 +188,7 @@ void pnd_tcp_write_io(pnd_tcp_t *stream)
   }
 }
 
+
 void pnd_tcp_write_init(pnd_write_t *write_op, char *buf, size_t size, write_cb_t cb)
 {
   write_op->buf = buf;
@@ -193,8 +199,10 @@ void pnd_tcp_write_init(pnd_write_t *write_op, char *buf, size_t size, write_cb_
   queue_init_node(&write_op->qnode);
 }
 
+
 #define PND_ERROR -1
 #define PND_EAGAIN -2
+
 
 /* Try to write synchronously */
 ssize_t pnd_tcp_try_write(pnd_tcp_t *stream, const char *chunk, size_t size)
@@ -224,6 +232,7 @@ ssize_t pnd_tcp_try_write(pnd_tcp_t *stream, const char *chunk, size_t size)
   return written;
 }
 
+
 void pnd_tcp_write(pnd_tcp_t *stream, pnd_write_t *write_op)
 {
   ssize_t written = pnd_tcp_try_write(stream, write_op->buf, write_op->size);
@@ -245,6 +254,7 @@ void pnd_tcp_write(pnd_tcp_t *stream, pnd_write_t *write_op)
   }
 }
 
+
 /* Enqueue write operation and do it asynchronously.
  * Usually requires copying data to the new structure
  */
@@ -258,6 +268,7 @@ void pnd_tcp_write_async(pnd_tcp_t *stream, pnd_write_t *write_op)
   queue_init_node(&write_op->qnode);
   queue_push(&stream->writes, &write_op->qnode);
 }
+
 
 /* handler for I/O events from epoll/kqueue */
 void pnd_tcp_client_io(struct pnd_event *event, unsigned events)
@@ -280,10 +291,12 @@ void pnd_tcp_client_io(struct pnd_event *event, unsigned events)
   }
 }
 
+
 int pnd_tcp_reject(pnd_fd_t fd) 
 {
   return pnd_close_fd(fd);
 }
+
 
 void pnd_tcp_accept(pnd_tcp_t *peer, pnd_fd_t fd)
 {
@@ -303,6 +316,7 @@ void pnd_tcp_resume(pnd_tcp_t *stream)
 {
   pnd_stop_reading(&stream->ev, stream->fd);
 }
+
 
 /* forcefully closes tcp stream and discards all enqueued writes */
 void pnd_tcp_destroy(pnd_tcp_t *stream)
@@ -324,6 +338,7 @@ void pnd_tcp_destroy(pnd_tcp_t *stream)
   queue_push(&stream->ev.ctx->pending_closes, &stream->close_qnode);
 }
 
+
 /* gracefully closes tcp stream */
 void pnd_tcp_close(pnd_tcp_t *stream) 
 {
@@ -340,6 +355,7 @@ void pnd_tcp_close(pnd_tcp_t *stream)
     pnd_start_writing(&stream->ev, stream->fd);
   }
 }
+
 
 void pnd_tcp_connect_io(pnd_event_t *ev, unsigned events)
 {
@@ -362,6 +378,7 @@ void pnd_tcp_connect_io(pnd_event_t *ev, unsigned events)
       stream->on_connect(stream, stream->fd);
   }
 }
+
 
 int pnd_tcp_connect(pnd_tcp_t *stream, const char *host, int port, void (*onconnect)(pnd_tcp_t*, int))
 {
