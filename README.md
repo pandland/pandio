@@ -1,23 +1,28 @@
 > ⚠️ Early stage of development.
 
-# luxio
+<img src="https://github.com/user-attachments/assets/cf70d4ac-9cef-4c66-8295-04946abdafd2" alt="banner" />
 
-Simple async io library for C (it will be in the future, for now it's just HTTP server) - it will be used across my personal projects.
+# Pandio
+
+Simple library for non-blocking I/O operations. Developed mainly for my PandJS project (JavaScript runtime).
 
 ### TODO:
 
 - [x] Timers using heap data structure (works like `setTimeout`, `setInterval`).
 - [x] Non-blocking IO for sockets using epoll.
 - [x] Basic networking abstraction to handle TCP.
-- [ ] HTTP module.
-- [ ] WebSockets module.
-- [ ] TLS support.
 - [ ] Thread pool and files handling.
 - [ ] Support many platforms: Windows, MacOS and FreeBSD.
 
+### Build static library
+
+Make sure you have `make` utility installed. Library uses just system calls, so it does not have any external dependencies.
+
 ```sh
-make && ./build/server
+make
 ```
+
+> This command will create `libpandio.a` file inside `build` directory.
 
 ### Running tests
 
@@ -35,10 +40,6 @@ pacaur -S criterion
 make test
 ```
 
-## Resources
-- [Beej's Guide to Network Programming](https://www.beej.us/guide/bgnet/html/split/index.html)
-- [The C10K problem](http://www.kegel.com/c10k.html)
-- [Wikipedia - epoll()](https://en.wikipedia.org/wiki/Epoll)
-- [Such Programming - epoll() In 3 Easy Steps!](https://suchprogramming.com/epoll-in-3-easy-steps/)
-- [Trung Vuong Thien - A simple HTTP server from scratch](https://trungams.github.io/2020-08-23-a-simple-http-server-from-scratch)
-- [HTTP RFC](https://datatracker.ietf.org/doc/html/rfc7230)
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.

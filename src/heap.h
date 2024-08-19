@@ -1,10 +1,5 @@
 #pragma once
-#include <stdlib.h>
 #include "common.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct heap_node {
     struct heap_node *left;
@@ -20,24 +15,30 @@ struct heap {
     heap_comparator_t comparator;
 };
 
-static struct heap heap_init(heap_comparator_t comparator) {
-  struct heap h;
-  h.root = NULL;
-  h.size = 0;
-  h.comparator = comparator;
+static void heap_swap(struct heap *h, struct heap_node *parent, struct heap_node *child);
 
-  return h;
+static void heap_init(struct heap *h, heap_comparator_t comparator) 
+{
+  h->root = NULL;
+  h->size = 0;
+  h->comparator = comparator;;
 }
 
-static void heap_init_node(struct heap_node *node) {
+static void heap_init_node(struct heap_node *node) 
+{
   node->left = NULL;
   node->right = NULL;
   node->parent = NULL;
 }
 
-static void heap_swap(struct heap *h, struct heap_node *parent, struct heap_node *child);
+/* returns min/max node without removing it */ 
+static struct heap_node *heap_peek(struct heap *h)
+{
+    return h->root;
+}
 
-static void heap_insert(struct heap *h, struct heap_node *newnode) {
+static void heap_insert(struct heap *h, struct heap_node *newnode) 
+{
     if (h->root == NULL) {
         h->root = newnode;
         h->size++;
@@ -92,7 +93,8 @@ static void heap_insert(struct heap *h, struct heap_node *newnode) {
     }
 }
 
-static struct heap_node *heap_remove(struct heap *h, struct heap_node *rnode) {
+static struct heap_node *heap_remove(struct heap *h, struct heap_node *rnode) 
+{
     if (h->root == NULL) {
         return NULL;
     }
@@ -187,11 +189,14 @@ static struct heap_node *heap_remove(struct heap *h, struct heap_node *rnode) {
     return rnode;
 }
 
-static struct heap_node *heap_pop(struct heap *h) {
+/* returns min/max node and removes it from the heap */
+static struct heap_node *heap_pop(struct heap *h) 
+{
   return heap_remove(h, h->root);
 }
 
-static void heap_swap(struct heap *h, struct heap_node *child, struct heap_node *parent) {
+static void heap_swap(struct heap *h, struct heap_node *child, struct heap_node *parent) 
+{
     struct heap_node tmp = *parent;
     struct heap_node *grandparent = parent->parent;
 
@@ -236,7 +241,3 @@ static void heap_swap(struct heap *h, struct heap_node *child, struct heap_node 
     if (!child->parent)
         h->root = child;
 }
-
-#ifdef __cplusplus
-} // extern "C"
-#endif // __cplusplus

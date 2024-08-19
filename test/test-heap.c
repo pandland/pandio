@@ -51,7 +51,8 @@ void print_heap(struct heap *h) {
 }
 
 Test(heap, problem_of_4) {
-  struct heap h = heap_init(timer_comparator);
+  struct heap h;
+  heap_init(&h, timer_comparator);
   ttimer_t timer1 = init_timer(200);
   ttimer_t timer2 = init_timer(400);
   ttimer_t timer3 = init_timer(500);
@@ -71,7 +72,8 @@ Test(heap, problem_of_4) {
 }
 
 Test(heap, remove) {
-  struct heap h = heap_init(timer_comparator);
+  struct heap h;
+  heap_init(&h, timer_comparator);
   
   ttimer_t timer1 = init_timer(200);
   ttimer_t timer2 = init_timer(10);

@@ -5,32 +5,53 @@ SRC_DIR=src
 BUILD_DIR=build
 TEST_DIR=test
 TEST_BUILD_DIR=$(TEST_DIR)/build
+SAMPLES_DIR=samples
 TARGET=server
-LIBRARY=libluxio.a
+LIBRARY=libpandio.a
 
-SRCS=$(shell find $(SRC_DIR) -name '*.c')
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S),Linux)
+    PLATFORM_SRC=$(SRC_DIR)/unix
+else ifeq ($(UNAME_S),Darwin)  # Dodane wsparcie dla macOS
+    PLATFORM_SRC=$(SRC_DIR)/unix
+else ifeq ($(UNAME_S),Windows_NT)
+    PLATFORM_SRC=$(SRC_DIR)/win32
+else
+    $(error Platform not supported)
+endif
+
+SRCS=$(shell find $(SRC_DIR) -name '*.c' -not -path "$(SRC_DIR)/unix/*" -not -path "$(SRC_DIR)/win32/*") \
+     $(shell find $(PLATFORM_SRC) -name '*.c')
 TEST_SRCS=$(shell find $(TEST_DIR) -name '*.c')
+SAMPLES_SRCS=$(shell find $(SAMPLES_DIR) -name '*.c')
 
 OBJECTS=$(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
 TEST_OBJECTS=$(patsubst $(TEST_DIR)/%.c,$(TEST_BUILD_DIR)/%.o,$(TEST_SRCS))
+SAMPLES_OBJECTS=$(patsubst $(SAMPLES_DIR)/%.c,$(BUILD_DIR)/samples/%.o,$(SAMPLES_SRCS))
 
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -o $(BUILD_DIR)/$(TARGET)
+	ar rcs $(BUILD_DIR)/$(LIBRARY) $(OBJECTS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-lib: $(OBJECTS)
-	ar rcs $(BUILD_DIR)/$(LIBRARY) $(OBJECTS)
+	$(CC) $(CFLAGS) -c $< -o $@	
 
 test: $(TARGET) $(TEST_OBJECTS)
 	$(CC) $(CFLAGS) $(TEST_OBJECTS) -o $(TEST_BUILD_DIR)/test -lcriterion
 	$(TEST_BUILD_DIR)/test
 
 $(TEST_BUILD_DIR)/%.o: $(TEST_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+samples: $(SAMPLES_OBJECTS)
+	@mkdir -p $(BUILD_DIR)/samples
+	$(CC) $(CFLAGS) $(SAMPLES_OBJECTS) -L$(BUILD_DIR) -lpandio -lrt -o $(BUILD_DIR)/samples/tcp_echo
+
+$(BUILD_DIR)/samples/%.o: $(SAMPLES_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 

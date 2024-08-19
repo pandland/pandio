@@ -11,6 +11,14 @@
     "internet": "c",
     "string_view": "c",
     "sstream": "c",
-    "random": "c"
-  }
+    "random": "c",
+    "chrono": "c",
+    "compare": "c",
+    "functional": "c",
+    "ratio": "c",
+    "tuple": "c",
+    "type_traits": "c",
+    "utility": "c"
+  },
+  "C_Cpp.errorSquiggles": "enabled"
 }
