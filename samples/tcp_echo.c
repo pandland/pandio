@@ -98,17 +98,36 @@ void handle_connect(pnd_tcp_t *client, pnd_fd_t fd) {
   pnd_tcp_write(client, write_op);
 }
 
+void long_task() {
+  printf("Long task started...\n");
+  sleep(3);
+}
+
+void after_task() {
+  printf("Long task done, but from main thread...\n");
+}
+
 int main() {
   printf("Starting client, pid is: %d\n", getpid());
-  pnd_io_t ctx;
-  pnd_io_init(&ctx);
+  pnd_io_t *ctx = malloc(sizeof(pnd_io_t));
+  pnd_io_init(ctx);
+
+  pnd_task_t *task = malloc(sizeof(pnd_task_t));
+  task->work = long_task;
+  task->done = after_task;
+  pnd_work_submit(ctx, task);
+
+  pnd_task_t *task2 = malloc(sizeof(pnd_task_t));
+  task2->work = long_task;
+  task2->done = after_task;
+  pnd_work_submit(ctx, task2);
 
   pnd_tcp_t *client = malloc(sizeof(pnd_tcp_t));
-  pnd_tcp_init(&ctx, client);
+  pnd_tcp_init(ctx, client);
   int status = pnd_tcp_connect(client, "127.0.0.1", 3000, handle_connect);
   printf("Connect status: %d\n", status);
 
-  pnd_io_run(&ctx);
+  pnd_io_run(ctx);
   
   return 0;
 }

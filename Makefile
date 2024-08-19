@@ -47,7 +47,7 @@ $(TEST_BUILD_DIR)/%.o: $(TEST_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-samples: lib $(SAMPLES_OBJECTS)
+samples: $(SAMPLES_OBJECTS)
 	@mkdir -p $(BUILD_DIR)/samples
 	$(CC) $(CFLAGS) $(SAMPLES_OBJECTS) -L$(BUILD_DIR) -lpandio -lrt -o $(BUILD_DIR)/samples/tcp_echo
 

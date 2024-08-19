@@ -19,43 +19,28 @@
  * SOFTWARE.
  */
 
+
 #pragma once
-#include <stdint.h>
-#include "common.h"
-#include "heap.h"
+#include <pthread.h>
+#include <stdlib.h>
 #include "queue.h"
+#include "poll.h"
+#include <sys/eventfd.h>
 
-struct pnd_io {
-  pnd_fd_t poll_handle;
-  pnd_fd_t task_signal;
-  size_t handles;
-  uint64_t now;
-  struct heap timers;
-  struct queue pending_closes;
-  struct queue tasks_done;
-};
+#define THREAD_POOL_SIZE 4
 
-typedef struct pnd_io pnd_io_t;
-
-enum {
-  PND_READABLE = 1,
-  PND_WRITABLE = 2,
-  PND_CLOSE = 4
-};
-
-struct pnd_event {
-  unsigned flags;
+struct pnd_task {
   pnd_io_t *ctx;
-  void (*callback)(struct pnd_event*, unsigned events);
+  void (*work)(struct pnd_task*);
+  void (*done)(struct pnd_task*);
+  void *data;
+  struct queue_node qnode;
 };
 
-typedef struct pnd_event pnd_event_t;
+typedef struct pnd_task pnd_task_t;
 
-// exports
-#include "tcp_stream.h"
-#include "timers.h"
-#include "unix/threadpool.h"
+void pnd_work_done_io(pnd_event_t *ev, unsigned events);
 
-void pnd_io_init(pnd_io_t *ctx);
+void pnd_work_submit(pnd_io_t *ctx, pnd_task_t *task);
 
-void pnd_io_run(pnd_io_t *ctx);
+void pnd_workers_init();
