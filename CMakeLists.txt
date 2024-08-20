@@ -14,4 +14,6 @@ add_executable(pandio
         src/sys/event_iocp.c
         src/core.h
         src/timers.h
-        src/timers.c)
+        src/timers.c
+        src/sys/tcp_win32.c
+        src/pandio.h)

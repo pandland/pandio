@@ -43,28 +43,38 @@ void pd_io_init(pd_io_t *ctx) {
             0, 0);
 
     ctx->now = 0;
-    pnd_timers_heap_init(ctx);
+    pd_timers_heap_init(ctx);
+}
+
+void pd_event_init(pd_event_t *event) {
+    event->handler = NULL;
+    event->data = NULL;
+    event->flags = 0;
+    ZeroMemory(&event->overlapped, sizeof(event->overlapped));
 }
 
 void pd_io_run(pd_io_t *ctx) {
     DWORD bytesTransferred;
     ULONG_PTR completionKey;
-    OVERLAPPED *pOverlapped;
+    pd_event_t *ev = NULL;
 
     while (TRUE) {
         BOOL result = GetQueuedCompletionStatus(
                 ctx->poll_fd,
                 &bytesTransferred,
                 &completionKey,
-                &pOverlapped,
+                (LPOVERLAPPED *)&ev,
                 INFINITE);
 
-        if (!result) {
+        printf("We got something\n");
+        if (!result || !ev) {
             // TODO: handle errors in better way
             printf("GetQueueCompletionStatus failed\n");
             break;
         }
 
-        // TODO: handle actual events
+        printf("Received event\n");
+        if (ev->handler)
+            ev->handler(ev);
     }
 }
