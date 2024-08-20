@@ -9,7 +9,6 @@
                 "__USE_POSIX199309",
                 "CLOCK_MONOTONIC"
             ],
-            "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
             "cppStandard": "gnu++17"
         }

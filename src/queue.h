@@ -13,15 +13,18 @@ struct queue {
     struct queue_node *tail;
 };
 
+
 static void queue_init(struct queue *q) {
     q->head = NULL;
     q->tail = NULL;
 }
 
+
 static void queue_init_node(struct queue_node *node) {
     node->next = NULL;
     node->prev = NULL;
 }
+
 
 static void queue_push(struct queue *q, struct queue_node *node) {
     if (q->head == NULL) {
@@ -33,9 +36,11 @@ static void queue_push(struct queue *q, struct queue_node *node) {
     q->tail = node;
 }
 
+
 static struct queue_node *queue_peek(struct queue *q) {
     return q->head;
 }
+
 
 static struct queue_node *queue_pop(struct queue *q) {
     if (q->head == NULL) {
@@ -43,14 +48,14 @@ static struct queue_node *queue_pop(struct queue *q) {
     }
 
     struct queue_node *found = q->head;
-    
+
     if (q->head == q->tail) {
         q->head = NULL;
         q->tail = NULL;
 
         found->next = NULL;
         found->prev = NULL;
-        
+
         return found;
     }
 

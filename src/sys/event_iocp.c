@@ -19,28 +19,52 @@
  * SOFTWARE.
  */
 
+#include <stdio.h>
+#include "core.h"
+#include "timers.h"
 
-#pragma once
-#include <pthread.h>
-#include <stdlib.h>
-#include "queue.h"
-#include "poll.h"
-#include <sys/eventfd.h>
+uint64_t pd_now() {
+    FILETIME ft;
+    ULARGE_INTEGER li;
 
-#define THREAD_POOL_SIZE 4
+    GetSystemTimeAsFileTime(&ft);
+    li.LowPart = ft.dwLowDateTime;
+    li.HighPart = ft.dwHighDateTime;
 
-struct pnd_task {
-  pnd_io_t *ctx;
-  void (*work)(struct pnd_task*);
-  void (*done)(struct pnd_task*);
-  void *data;
-  struct queue_node qnode;
-};
+    return li.QuadPart / 10000ULL;
+}
 
-typedef struct pnd_task pnd_task_t;
+void pd_io_init(pd_io_t *ctx) {
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
 
-void pnd_work_done_io(pnd_event_t *ev, unsigned events);
+    ctx->poll_fd = CreateIoCompletionPort(
+            INVALID_HANDLE_VALUE,NULL,
+            0, 0);
 
-void pnd_work_submit(pnd_io_t *ctx, pnd_task_t *task);
+    ctx->now = 0;
+    pnd_timers_heap_init(ctx);
+}
 
-void pnd_workers_init();
+void pd_io_run(pd_io_t *ctx) {
+    DWORD bytesTransferred;
+    ULONG_PTR completionKey;
+    OVERLAPPED *pOverlapped;
+
+    while (TRUE) {
+        BOOL result = GetQueuedCompletionStatus(
+                ctx->poll_fd,
+                &bytesTransferred,
+                &completionKey,
+                &pOverlapped,
+                INFINITE);
+
+        if (!result) {
+            // TODO: handle errors in better way
+            printf("GetQueueCompletionStatus failed\n");
+            break;
+        }
+
+        // TODO: handle actual events
+    }
+}

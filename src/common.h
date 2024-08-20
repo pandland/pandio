@@ -1,3 +1,4 @@
+/* Common internal functions / helpers */
 #pragma once
 
 #include <stdlib.h>
@@ -8,7 +9,3 @@
 
 #define container_of(ptr, type, member) \
     ((type *)((char *)(ptr) - offsetof(type, member)))
-
-#if defined(__linux__)
-typedef int pnd_fd_t;
-#endif

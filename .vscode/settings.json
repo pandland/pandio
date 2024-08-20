@@ -20,5 +20,6 @@
     "type_traits": "c",
     "utility": "c"
   },
-  "C_Cpp.errorSquiggles": "enabled"
+  "C_Cpp.errorSquiggles": "enabled",
+  "C_Cpp.default.compilerPath": "cl.exe"
 }

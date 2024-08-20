@@ -55,3 +55,4 @@ build/
 server
 old.c
 test.c
+cmake-build-debug
