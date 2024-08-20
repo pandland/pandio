@@ -44,7 +44,7 @@ void pd_timer_init(pd_io_t*, pd_timer_t*);
 
 void pd_timer_start(pd_timer_t*, pd_timer_callback_t, uint64_t);
 
-void pnd_timer_repeat(pd_timer_t*, pd_timer_callback_t, uint64_t);
+void pd_timer_repeat(pd_timer_t*, pd_timer_callback_t, uint64_t);
 
 /* safe to call many times */
 void pd_timer_stop(pd_timer_t*);

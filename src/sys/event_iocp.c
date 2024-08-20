@@ -42,7 +42,7 @@ void pd_io_init(pd_io_t *ctx) {
             INVALID_HANDLE_VALUE,NULL,
             0, 0);
 
-    ctx->now = 0;
+    ctx->now = pd_now();
     pd_timers_heap_init(ctx);
 }
 
@@ -53,28 +53,45 @@ void pd_event_init(pd_event_t *event) {
     ZeroMemory(&event->overlapped, sizeof(event->overlapped));
 }
 
+#define ENTRIES_MAX 128
+
 void pd_io_run(pd_io_t *ctx) {
-    DWORD bytesTransferred;
-    ULONG_PTR completionKey;
     pd_event_t *ev = NULL;
+    OVERLAPPED_ENTRY entries[ENTRIES_MAX];
+    ULONG count;
+    BOOL result;
+    int timeout = pd_timers_next(ctx);
 
+    // TODO: break loop if there is no active handles
     while (TRUE) {
-        BOOL result = GetQueuedCompletionStatus(
+        result = GetQueuedCompletionStatusEx(
                 ctx->poll_fd,
-                &bytesTransferred,
-                &completionKey,
-                (LPOVERLAPPED *)&ev,
-                INFINITE);
+                entries,
+                ENTRIES_MAX,
+                &count,
+                (timeout == -1) ? INFINITE : timeout,
+                FALSE);
 
-        printf("We got something\n");
-        if (!result || !ev) {
-            // TODO: handle errors in better way
-            printf("GetQueueCompletionStatus failed\n");
-            break;
-        }
+        ctx->now = pd_now();
 
-        printf("Received event\n");
-        if (ev->handler)
-            ev->handler(ev);
+        if (result) {
+           for (int i = 0; i < count; ++i) {
+               LPOVERLAPPED overlapped = entries[i].lpOverlapped;
+               if (!overlapped) {
+                   continue;
+               }
+
+               // OVERLAPPED is first member of pd_event_t, so we can cast to it.
+               ev = (pd_event_t *)overlapped;
+               if (ev->handler)
+                   ev->handler(ev);
+           }
+       } else if (GetLastError() != WAIT_TIMEOUT) {
+           printf("Something went wrong\n");
+           abort();
+       }
+
+        pd_timers_run(ctx);
+        timeout = pd_timers_next(ctx);
     }
 }

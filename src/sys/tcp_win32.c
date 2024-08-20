@@ -31,7 +31,7 @@ struct pd__accept_op_s {
     pd_event_t event;
     pd_tcp_server_t *server;
     char buf[(sizeof(struct sockaddr_storage) + 16) * 2];
-    struct queue_node qnode; // we hold pool of accept requests as a queue (it is just a linked list)
+    struct queue_node qnode; // we hold pool of accept requests as linked-list
 };
 typedef struct pd__accept_op_s pd__accept_op_t;
 
@@ -52,6 +52,7 @@ void pd__tcp_accept_io(pd_event_t *event) {
     if (server->on_connection)
         server->on_connection(server);
 }
+
 
 int pd_tcp_listen(pd_tcp_server_t *server,
                    int port,
@@ -121,6 +122,7 @@ int pd_tcp_listen(pd_tcp_server_t *server,
 
         DWORD ret;
 
+        // TODO: check server->accept error
         server->accept(
                 server->fd, op->socket, op->buf, 0,
                 sizeof(struct sockaddr_storage) + 16, sizeof(struct sockaddr_storage) + 16,
