@@ -1,19 +1,27 @@
-cmake_minimum_required(VERSION 3.26)
+cmake_minimum_required(VERSION 3.22)
 project(pandio C)
 
 set(CMAKE_C_STANDARD 11)
 
 include_directories(src)
 
-add_executable(pandio
+set (SRC_FILES
         src/main.c
         src/tcp.h
         src/common.h
         src/queue.h
         src/heap.h
-        src/sys/event_iocp.c
         src/core.h
         src/timers.h
         src/timers.c
-        src/sys/tcp_win32.c
-        src/pandio.h)
+        src/pandio.h
+)
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    list(APPEND SRC_FILES
+            src/sys/event_iocp.c
+            src/sys/tcp_win32.c
+    )
+endif ()
+
+add_executable(pandio ${SRC_FILES})
