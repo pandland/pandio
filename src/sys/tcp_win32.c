@@ -35,6 +35,8 @@ struct pd__accept_op_s {
 };
 typedef struct pd__accept_op_s pd__accept_op_t;
 
+void pd__tcp_post_accept(pd_tcp_server_t *server, pd__accept_op_t *op);
+
 
 void pd_tcp_server_init(pd_io_t *ctx, pd_tcp_server_t *server) {
     server->ctx = ctx;
@@ -51,6 +53,25 @@ void pd__tcp_accept_io(pd_event_t *event) {
 
     if (server->on_connection)
         server->on_connection(server);
+
+    pd__tcp_post_accept(server, op);
+}
+
+
+void pd__tcp_post_accept(pd_tcp_server_t *server, pd__accept_op_t *op) {
+    op->socket = socket(AF_INET, SOCK_STREAM, 0);
+    op->server = server;
+    queue_init_node(&op->qnode);
+    pd_event_init(&op->event);
+    op->event.handler = pd__tcp_accept_io;
+    op->event.data = op;
+    DWORD ret;
+
+    // TODO: check server->accept error
+    server->accept(
+            server->fd, op->socket, op->buf, 0,
+            sizeof(struct sockaddr_storage) + 16, sizeof(struct sockaddr_storage) + 16,
+            &ret, &op->event.overlapped);
 }
 
 
@@ -73,17 +94,17 @@ int pd_tcp_listen(pd_tcp_server_t *server,
 
     const char opt = 1;
     if (setsockopt(server->fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        // TODO: close socket
+        closesocket(server->fd);
         return -1;
     }
 
     if (bind(server->fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        // TODO: close socket
+        closesocket(server->fd);
         return -1;
     }
 
     if (listen(server->fd, 1024) < 0) {
-        // TODO: close socket
+        closesocket(server->fd);
         return -1;
     }
 
@@ -100,33 +121,20 @@ int pd_tcp_listen(pd_tcp_server_t *server,
 
         if (res == SOCKET_ERROR) {
             printf("Unable to load AcceptEx function\n");
-            // TODO: close socket
+            closesocket(server->fd);
             return -1;
         }
     }
 
     if (CreateIoCompletionPort((HANDLE)server->fd, server->ctx->poll_fd, 0, 0) == NULL) {
         printf("CreateIoCompletionPort failed with error: %lu\n", GetLastError());
-        // TODO: close socket
+        closesocket(server->fd);
         return -1;
     }
 
     for (int i = 0; i < PENDING_ACCEPTS; ++i) {
         pd__accept_op_t *op = malloc(sizeof(pd__accept_op_t));
-        op->socket = socket(AF_INET, SOCK_STREAM, 0);
-        op->server = server;
-        queue_init_node(&op->qnode);
-        pd_event_init(&op->event);
-        op->event.handler = pd__tcp_accept_io;
-        op->event.data = op;
-
-        DWORD ret;
-
-        // TODO: check server->accept error
-        server->accept(
-                server->fd, op->socket, op->buf, 0,
-                sizeof(struct sockaddr_storage) + 16, sizeof(struct sockaddr_storage) + 16,
-                &ret, &op->event.overlapped);
+        pd__tcp_post_accept(server, op);
     }
 
     return 0;

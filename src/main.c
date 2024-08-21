@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include "pandio.h"
 
+int counter = 1;
+
 void handle_connection(pd_tcp_server_t *server) {
-    printf("Received connection\n");
+    printf("Received connection #%d\n", counter++);
 }
 
 void handle_interval(pd_timer_t *timer) {
@@ -15,7 +17,7 @@ int main() {
 
     pd_timer_t timer;
     pd_timer_init(ctx, &timer);
-    pd_timer_repeat(&timer, handle_interval, 2000);
+    pd_timer_repeat(&timer, handle_interval, 50000);
 
     pd_tcp_server_t *server = malloc(sizeof(pd_tcp_server_t));
     pd_tcp_server_init(ctx, server);

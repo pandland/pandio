@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include "core.h"
 #include "timers.h"
+#define ENTRIES_MAX 128
+
 
 uint64_t pd_now() {
     FILETIME ft;
@@ -33,6 +35,7 @@ uint64_t pd_now() {
 
     return li.QuadPart / 10000ULL;
 }
+
 
 void pd_io_init(pd_io_t *ctx) {
     WSADATA wsaData;
@@ -46,6 +49,7 @@ void pd_io_init(pd_io_t *ctx) {
     pd_timers_heap_init(ctx);
 }
 
+
 void pd_event_init(pd_event_t *event) {
     event->handler = NULL;
     event->data = NULL;
@@ -53,7 +57,6 @@ void pd_event_init(pd_event_t *event) {
     ZeroMemory(&event->overlapped, sizeof(event->overlapped));
 }
 
-#define ENTRIES_MAX 128
 
 void pd_io_run(pd_io_t *ctx) {
     pd_event_t *ev = NULL;
