@@ -42,7 +42,7 @@ void pd_tcp_server_init(pd_io_t *ctx, pd_tcp_server_t *server) {
     server->ctx = ctx;
     server->fd = INVALID_SOCKET;
     server->on_connection = NULL;
-    server->accept = NULL;
+    server->acceptex = NULL;
 }
 
 
@@ -52,7 +52,7 @@ void pd__tcp_accept_io(pd_event_t *event) {
     pd_tcp_server_t *server = op->server;
 
     if (server->on_connection)
-        server->on_connection(server);
+        server->on_connection(server, op->socket, 0);
 
     pd__tcp_post_accept(server, op);
 }
@@ -68,7 +68,7 @@ void pd__tcp_post_accept(pd_tcp_server_t *server, pd__accept_op_t *op) {
     DWORD ret;
 
     // TODO: check server->accept error
-    server->accept(
+    server->acceptex(
             server->fd, op->socket, op->buf, 0,
             sizeof(struct sockaddr_storage) + 16, sizeof(struct sockaddr_storage) + 16,
             &ret, &op->event.overlapped);
@@ -109,14 +109,14 @@ int pd_tcp_listen(pd_tcp_server_t *server,
     }
 
     /* we need to load dynamically MS extension to get AcceptEx function */
-    if (!server->accept) {
+    if (!server->acceptex) {
         GUID guid = WSAID_ACCEPTEX;
         DWORD ret;
         BOOL res = WSAIoctl(
                 server->fd,
                 SIO_GET_EXTENSION_FUNCTION_POINTER,
                 &guid, sizeof(guid),
-                &server->accept, sizeof(server->accept),
+                &server->acceptex, sizeof(server->acceptex),
                 &ret, NULL, NULL);
 
         if (res == SOCKET_ERROR) {
@@ -138,4 +138,50 @@ int pd_tcp_listen(pd_tcp_server_t *server,
     }
 
     return 0;
+}
+
+
+void pd_tcp_init(pd_io_t *ctx, pd_tcp_t *stream) {
+    stream->fd = INVALID_SOCKET;
+    stream->ctx = ctx;
+    stream->on_close = NULL;
+    stream->on_data = NULL;
+}
+
+
+void pd_tcp_accept(pd_tcp_t *stream, pd_socket_t socket) {
+    stream->fd = socket;
+    CreateIoCompletionPort((HANDLE)stream->fd,
+                           stream->ctx->poll_fd, 0, 0);
+}
+
+
+// Completion callback from IOCP for write operation
+void pd_tcp_write_io(pd_event_t *event) {
+    printf("IO CALLBACK\n");
+    pd_write_t *write_op = event->data;
+
+    if (write_op->cb)
+        write_op->cb(write_op, 0);
+}
+
+
+void pd_write_init(pd_write_t *write_op,
+                   char *buf, size_t size,
+                   pd_write_cb cb) {
+    write_op->cb = cb;
+    write_op->data.buf = buf;
+    write_op->data.len = size;
+    pd_event_init(&write_op->event);
+    write_op->event.data = write_op;
+    write_op->event.handler = pd_tcp_write_io;
+}
+
+void pd_tcp_write(pd_tcp_t *stream, pd_write_t *write_op) {
+    DWORD bytes;
+
+    // TODO: enqueue write operations
+    WSASend(stream->fd,
+            &write_op->data, 1, &bytes, 0,
+            &write_op->event.overlapped, NULL);
 }
