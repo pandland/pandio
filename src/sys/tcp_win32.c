@@ -67,11 +67,14 @@ void pd__tcp_post_accept(pd_tcp_server_t *server, pd__accept_op_t *op) {
     op->event.data = op;
     DWORD ret;
 
-    // TODO: check server->accept error
-    server->acceptex(
+    BOOL success = server->acceptex(
             server->fd, op->socket, op->buf, 0,
             sizeof(struct sockaddr_storage) + 16, sizeof(struct sockaddr_storage) + 16,
             &ret, &op->event.overlapped);
+
+    if (!success && WSAGetLastError() != ERROR_IO_PENDING) {
+        closesocket(op->socket);
+    }
 }
 
 
@@ -152,17 +155,20 @@ void pd_tcp_init(pd_io_t *ctx, pd_tcp_t *stream) {
 void pd_tcp_accept(pd_tcp_t *stream, pd_socket_t socket) {
     stream->fd = socket;
     CreateIoCompletionPort((HANDLE)stream->fd,
-                           stream->ctx->poll_fd, 0, 0);
+                           stream->ctx->poll_fd, (ULONG_PTR)stream, 0);
 }
 
 
 // Completion callback from IOCP for write operation
-void pd_tcp_write_io(pd_event_t *event) {
-    printf("IO CALLBACK\n");
+void pd__tcp_write_io(pd_event_t *event) {
     pd_write_t *write_op = event->data;
+    pd_tcp_t *stream = write_op->handle;
 
     if (write_op->cb)
+        // TODO: detect errors
         write_op->cb(write_op, 0);
+
+    stream->pending_ops--;
 }
 
 
@@ -174,14 +180,30 @@ void pd_write_init(pd_write_t *write_op,
     write_op->data.len = size;
     pd_event_init(&write_op->event);
     write_op->event.data = write_op;
-    write_op->event.handler = pd_tcp_write_io;
+    write_op->event.handler = pd__tcp_write_io;
 }
 
 void pd_tcp_write(pd_tcp_t *stream, pd_write_t *write_op) {
     DWORD bytes;
 
-    // TODO: enqueue write operations
-    WSASend(stream->fd,
+    int status = WSASend(stream->fd,
             &write_op->data, 1, &bytes, 0,
             &write_op->event.overlapped, NULL);
+
+    write_op->handle = stream;
+
+    if (status == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
+        //  TODO: map system error codes to library specific codes
+        write_op->cb(write_op, -1);
+        return;
+    } else {
+        stream->pending_ops++;
+    }
 }
+
+
+void pd_tcp_shutdown() {}
+
+
+void pd_tcp_destroy() {}
+

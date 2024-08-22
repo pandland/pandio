@@ -50,6 +50,12 @@ struct pd_tcp_s {
     pd_socket_t fd;
     void (*on_data)(struct pd_tcp_s *);
     void (*on_close)(struct pd_tcp_s *);
+#ifndef _WIN32
+    struct queue writes;
+    size_t writes_size;
+#else
+    size_t pending_ops;
+#endif
 };
 
 typedef struct pd_tcp_s pd_tcp_t;
@@ -78,6 +84,7 @@ struct pd_write_s {
 #ifdef _WIN32
     WSABUF data;
     pd_event_t event;
+    pd_tcp_t *handle;
 #else
     char *buf;
     size_t size;

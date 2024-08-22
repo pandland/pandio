@@ -6,9 +6,11 @@ int counter = 1;
 
 void handle_write(pd_write_t *write_op, int status) {
     printf("Written successfully with status: %d\n", status);
+    fflush(stdout);
     free(write_op->data.buf);
     free(write_op);
 }
+
 
 void handle_connection(pd_tcp_server_t *server, pd_socket_t socket, int status) {
     pd_tcp_t *client = malloc(sizeof(pd_tcp_t));
@@ -18,7 +20,7 @@ void handle_connection(pd_tcp_server_t *server, pd_socket_t socket, int status) 
 
     const char *response = "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello";
     pd_write_t *write_op = malloc(sizeof(pd_write_t));
-    pd_write_init(write_op, _strdup(response), strlen(response), handle_write);
+    pd_write_init(write_op, strdup(response), strlen(response), handle_write);
 
     pd_tcp_write(client, write_op);
     // TODO: close connection
@@ -40,8 +42,5 @@ int main() {
     pd_tcp_server_init(ctx, server);
     printf("Starting to listen...\n");
     pd_tcp_listen(server, 5000, handle_connection);
-
-    printf("Running event loop\n");
-    fflush(stdout);
     pd_io_run(ctx);
 }

@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include "core.h"
 #include "timers.h"
+#include <winsock2.h>
+
 #define ENTRIES_MAX 128
 
 
