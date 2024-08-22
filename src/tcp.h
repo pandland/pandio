@@ -44,17 +44,30 @@ typedef int pd_socket_t;
 #include "core.h"
 #include "queue.h"
 
+enum pd_tcp_status {
+    PD_TCP_NONE,
+    PD_TCP_ACTIVE,
+    PD_TCP_SHUTDOWN,
+    PD_TCP_CLOSED
+};
+
+enum pd_stream_flags {
+    PD_WRITABLE = 1 << 0,
+    PD_READABLE = 1 << 1
+};
+
 /* struct that represents TCP connection and stream */
 struct pd_tcp_s {
     pd_io_t *ctx;
     pd_socket_t fd;
     void (*on_data)(struct pd_tcp_s *);
     void (*on_close)(struct pd_tcp_s *);
+    enum pd_tcp_status status;
+    unsigned flags;
+    void *data; // pointer for user's data
+    size_t writes_size; // amount of pending writes
 #ifndef _WIN32
     struct queue writes;
-    size_t writes_size;
-#else
-    size_t pending_ops;
 #endif
 };
 
@@ -68,6 +81,7 @@ struct pd_tcp_server_s {
     pd_io_t *ctx;
     pd_socket_t fd;
     pd_on_connection_cb on_connection;
+    void *data; // pointer for user's data
 #ifdef _WIN32
     LPFN_ACCEPTEX acceptex;
     struct queue accept_ops;
@@ -106,3 +120,9 @@ void pd_tcp_accept(pd_tcp_t*, pd_socket_t);
 void pd_write_init(pd_write_t*, char*, size_t, pd_write_cb);
 
 void pd_tcp_write(pd_tcp_t*, pd_write_t*);
+
+/* Forcefully closes connection - useful for timeouts / error disconnects. */
+void pd_tcp_close(pd_tcp_t*);
+
+/* Graceful connection shutdown. Ensures that incoming data from the peer will be read. */
+void pd_tcp_shutdown(pd_tcp_t*);

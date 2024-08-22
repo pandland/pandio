@@ -11,7 +11,6 @@ void handle_write(pd_write_t *write_op, int status) {
     free(write_op);
 }
 
-
 void handle_connection(pd_tcp_server_t *server, pd_socket_t socket, int status) {
     pd_tcp_t *client = malloc(sizeof(pd_tcp_t));
     pd_tcp_init(server->ctx, client);
@@ -24,6 +23,7 @@ void handle_connection(pd_tcp_server_t *server, pd_socket_t socket, int status) 
 
     pd_tcp_write(client, write_op);
     // TODO: close connection
+    pd_tcp_close(client);
 }
 
 void handle_interval(pd_timer_t *timer) {

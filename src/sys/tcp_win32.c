@@ -146,16 +146,32 @@ int pd_tcp_listen(pd_tcp_server_t *server,
 
 void pd_tcp_init(pd_io_t *ctx, pd_tcp_t *stream) {
     stream->fd = INVALID_SOCKET;
+    stream->status = PD_TCP_NONE;
     stream->ctx = ctx;
     stream->on_close = NULL;
     stream->on_data = NULL;
+    stream->writes_size = 0;
+    stream->flags = 0;
 }
 
 
 void pd_tcp_accept(pd_tcp_t *stream, pd_socket_t socket) {
+    stream->status = PD_TCP_ACTIVE;
     stream->fd = socket;
     CreateIoCompletionPort((HANDLE)stream->fd,
                            stream->ctx->poll_fd, (ULONG_PTR)stream, 0);
+}
+
+
+void pd__tcp_try_close(pd_tcp_t *stream) {
+    if (stream->writes_size > 0) {
+        return;
+    }
+
+    // TODO: detect if reading is pending once I implement reads
+
+    closesocket(stream->fd);
+    CloseHandle((HANDLE)stream->fd);
 }
 
 
@@ -168,7 +184,16 @@ void pd__tcp_write_io(pd_event_t *event) {
         // TODO: detect errors
         write_op->cb(write_op, 0);
 
-    stream->pending_ops--;
+    stream->writes_size--;
+
+    if (stream->writes_size == 0) {
+        // stream is not writable because have no data to write anymore
+        stream->flags &= ~PD_WRITABLE;
+    }
+
+    if (stream->status == PD_TCP_CLOSED) {
+        pd__tcp_try_close(stream);
+    }
 }
 
 
@@ -183,9 +208,14 @@ void pd_write_init(pd_write_t *write_op,
     write_op->event.handler = pd__tcp_write_io;
 }
 
-void pd_tcp_write(pd_tcp_t *stream, pd_write_t *write_op) {
-    DWORD bytes;
 
+void pd_tcp_write(pd_tcp_t *stream, pd_write_t *write_op) {
+    if (stream->status != PD_TCP_ACTIVE) {
+        write_op->cb(write_op, -1);
+        return;
+    }
+
+    DWORD bytes;
     int status = WSASend(stream->fd,
             &write_op->data, 1, &bytes, 0,
             &write_op->event.overlapped, NULL);
@@ -197,13 +227,28 @@ void pd_tcp_write(pd_tcp_t *stream, pd_write_t *write_op) {
         write_op->cb(write_op, -1);
         return;
     } else {
-        stream->pending_ops++;
+        stream->writes_size++;
+        stream->flags |= PD_WRITABLE;
     }
 }
 
+void pd_tcp_close(pd_tcp_t *stream) {
+    if (stream->status != PD_TCP_ACTIVE)
+        return;
 
-void pd_tcp_shutdown() {}
+    stream->status = PD_TCP_CLOSED;
 
+    // if stream is writable, that means we have pending write operations
+    if (stream->flags & PD_WRITABLE) {
+        CancelIo((HANDLE)stream->fd);
+    }
 
-void pd_tcp_destroy() {}
+    if (stream->flags & PD_READABLE) {
+        // TODO: we have no reads implemented yet...so I pass NULL to lpOverlapped.
+        CancelIoEx((HANDLE)stream->fd, NULL);
+    }
 
+    stream->flags &= ~(PD_READABLE | PD_WRITABLE);
+
+    pd__tcp_try_close(stream);
+}
