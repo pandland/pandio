@@ -35,7 +35,8 @@ struct pd__accept_op_s {
 };
 typedef struct pd__accept_op_s pd__accept_op_t;
 
-void pd__tcp_post_accept(pd_tcp_server_t *server, pd__accept_op_t *op);
+void pd__tcp_post_acceptex(pd_tcp_server_t *server, pd__accept_op_t *op);
+void pd__tcp_post_recv(pd_tcp_t *stream);
 
 
 void pd_tcp_server_init(pd_io_t *ctx, pd_tcp_server_t *server) {
@@ -54,11 +55,11 @@ void pd__tcp_accept_io(pd_event_t *event) {
     if (server->on_connection)
         server->on_connection(server, op->socket, 0);
 
-    pd__tcp_post_accept(server, op);
+    pd__tcp_post_acceptex(server, op);
 }
 
 
-void pd__tcp_post_accept(pd_tcp_server_t *server, pd__accept_op_t *op) {
+void pd__tcp_post_acceptex(pd_tcp_server_t *server, pd__accept_op_t *op) {
     op->socket = socket(AF_INET, SOCK_STREAM, 0);
     op->server = server;
     queue_init_node(&op->qnode);
@@ -137,7 +138,7 @@ int pd_tcp_listen(pd_tcp_server_t *server,
 
     for (int i = 0; i < PENDING_ACCEPTS; ++i) {
         pd__accept_op_t *op = malloc(sizeof(pd__accept_op_t));
-        pd__tcp_post_accept(server, op);
+        pd__tcp_post_acceptex(server, op);
     }
 
     return 0;
@@ -160,6 +161,7 @@ void pd_tcp_accept(pd_tcp_t *stream, pd_socket_t socket) {
     stream->fd = socket;
     CreateIoCompletionPort((HANDLE)stream->fd,
                            stream->ctx->poll_fd, (ULONG_PTR)stream, 0);
+    pd__tcp_post_recv(stream);
 }
 
 
@@ -169,7 +171,6 @@ void pd__tcp_try_close(pd_tcp_t *stream) {
     }
 
     // TODO: detect if reading is pending once I implement reads
-
     closesocket(stream->fd);
     CloseHandle((HANDLE)stream->fd);
 }
@@ -232,6 +233,7 @@ void pd_tcp_write(pd_tcp_t *stream, pd_write_t *write_op) {
     }
 }
 
+
 void pd_tcp_close(pd_tcp_t *stream) {
     if (stream->status != PD_TCP_ACTIVE)
         return;
@@ -251,4 +253,49 @@ void pd_tcp_close(pd_tcp_t *stream) {
     stream->flags &= ~(PD_READABLE | PD_WRITABLE);
 
     pd__tcp_try_close(stream);
+}
+
+
+void pd__tcp_read_io(pd_event_t *event) {
+    printf("Received READ event\n");
+    pd_tcp_t *stream = event->data;
+
+    if (event->bytes > 0) {
+        stream->on_data(stream, stream->read_buf.buf, event->bytes);
+    } else {
+        pd_tcp_close(stream);
+    }
+
+    if (stream->flags & PD_READABLE) {
+        pd__tcp_post_recv(stream);
+    }
+}
+
+
+void pd__tcp_post_recv(pd_tcp_t *stream) {
+    // alloc new read buf
+    pd_event_init(&stream->revent);
+    stream->revent.data = stream;
+    stream->revent.handler = pd__tcp_read_io;
+
+    size_t alloc_size = 8 * 1024;
+    stream->read_buf.buf = malloc(alloc_size);
+    stream->read_buf.len = alloc_size;
+
+    assert(stream->fd != INVALID_SOCKET);
+
+    DWORD bytes;
+    DWORD flags = 0;
+
+    int status = WSARecv(stream->fd,
+            &stream->read_buf, 1,
+            &bytes, &flags,
+            &stream->revent.overlapped, NULL);
+
+    if (status == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
+        printf("Serious issue with recv: %d\n", WSAGetLastError());
+        return;
+    } else {
+        stream->flags |= PD_READABLE;
+    }
 }

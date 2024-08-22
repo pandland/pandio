@@ -60,15 +60,18 @@ enum pd_stream_flags {
 struct pd_tcp_s {
     pd_io_t *ctx;
     pd_socket_t fd;
-    void (*on_data)(struct pd_tcp_s *);
+#ifdef _WIN32
+    WSABUF read_buf;
+    pd_event_t revent;
+#else
+    struct queue writes;
+#endif
+    void (*on_data)(struct pd_tcp_s *, char *buf, size_t size);
     void (*on_close)(struct pd_tcp_s *);
     enum pd_tcp_status status;
     unsigned flags;
     void *data; // pointer for user's data
     size_t writes_size; // amount of pending writes
-#ifndef _WIN32
-    struct queue writes;
-#endif
 };
 
 typedef struct pd_tcp_s pd_tcp_t;
@@ -123,6 +126,6 @@ void pd_tcp_write(pd_tcp_t*, pd_write_t*);
 
 /* Forcefully closes connection - useful for timeouts / error disconnects. */
 void pd_tcp_close(pd_tcp_t*);
-
+void pd__tcp_post_recv(pd_tcp_t *stream);
 /* Graceful connection shutdown. Ensures that incoming data from the peer will be read. */
 void pd_tcp_shutdown(pd_tcp_t*);

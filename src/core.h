@@ -27,6 +27,7 @@ struct pd_event_s {
 #ifdef _WIN32
     /* must be a first member, because we will cast OVERLAPPED to the pd_event_t */
     OVERLAPPED overlapped;
+    size_t bytes;   // bytes transferred
 #endif
     void (*handler)(struct pd_event_s*);
     void *data;

@@ -56,6 +56,7 @@ void pd_event_init(pd_event_t *event) {
     event->handler = NULL;
     event->data = NULL;
     event->flags = 0;
+    event->bytes = 0;
     ZeroMemory(&event->overlapped, sizeof(event->overlapped));
 }
 
@@ -88,6 +89,8 @@ void pd_io_run(pd_io_t *ctx) {
 
                // OVERLAPPED is first member of pd_event_t, so we can cast to it.
                ev = (pd_event_t *)overlapped;
+               ev->bytes = entries[i].dwNumberOfBytesTransferred;
+
                if (ev->handler)
                    ev->handler(ev);
            }

@@ -11,9 +11,16 @@ void handle_write(pd_write_t *write_op, int status) {
     free(write_op);
 }
 
+void handle_read(pd_tcp_t *client, char *buf, size_t len) {
+    printf("Received data with len: %ld\n", len);
+    pd_tcp_close(client);
+}
+
 void handle_connection(pd_tcp_server_t *server, pd_socket_t socket, int status) {
     pd_tcp_t *client = malloc(sizeof(pd_tcp_t));
     pd_tcp_init(server->ctx, client);
+    client->on_data = handle_read;
+
     pd_tcp_accept(client, socket);
     printf("Received connection #%d\n", counter++);
 
@@ -22,8 +29,6 @@ void handle_connection(pd_tcp_server_t *server, pd_socket_t socket, int status) 
     pd_write_init(write_op, strdup(response), strlen(response), handle_write);
 
     pd_tcp_write(client, write_op);
-    // TODO: close connection
-    pd_tcp_close(client);
 }
 
 void handle_interval(pd_timer_t *timer) {
