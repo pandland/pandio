@@ -23,7 +23,7 @@
 #include <stdio.h>
 
 // how many times issue AcceptEx?
-#define PENDING_ACCEPTS 10
+#define SIMULTANEOUS_ACCEPTS 10
 
 /* private and Windows-specific structure to hold async accept requests */
 struct pd__accept_op_s {
@@ -37,7 +37,6 @@ typedef struct pd__accept_op_s pd__accept_op_t;
 
 void pd__tcp_post_acceptex(pd_tcp_server_t *server, pd__accept_op_t *op);
 void pd__tcp_post_recv(pd_tcp_t *stream);
-
 
 void pd_tcp_server_init(pd_io_t *ctx, pd_tcp_server_t *server) {
     server->ctx = ctx;
@@ -73,7 +72,7 @@ void pd__tcp_post_acceptex(pd_tcp_server_t *server, pd__accept_op_t *op) {
             sizeof(struct sockaddr_storage) + 16, sizeof(struct sockaddr_storage) + 16,
             &ret, &op->event.overlapped);
 
-    if (!success && WSAGetLastError() != ERROR_IO_PENDING) {
+    if (!success && WSAGetLastError() != WSA_IO_PENDING) {
         closesocket(op->socket);
     }
 }
@@ -124,19 +123,17 @@ int pd_tcp_listen(pd_tcp_server_t *server,
                 &ret, NULL, NULL);
 
         if (res == SOCKET_ERROR) {
-            printf("Unable to load AcceptEx function\n");
             closesocket(server->fd);
             return -1;
         }
     }
 
     if (CreateIoCompletionPort((HANDLE)server->fd, server->ctx->poll_fd, 0, 0) == NULL) {
-        printf("CreateIoCompletionPort failed with error: %lu\n", GetLastError());
         closesocket(server->fd);
         return -1;
     }
 
-    for (int i = 0; i < PENDING_ACCEPTS; ++i) {
+    for (int i = 0; i < SIMULTANEOUS_ACCEPTS; ++i) {
         pd__accept_op_t *op = malloc(sizeof(pd__accept_op_t));
         pd__tcp_post_acceptex(server, op);
     }
@@ -171,6 +168,10 @@ void pd__tcp_try_close(pd_tcp_t *stream) {
     }
 
     // TODO: detect if reading is pending once I implement reads
+    if (stream->flags & PD_PENDING_READ) {
+        return;
+    }
+
     closesocket(stream->fd);
     CloseHandle((HANDLE)stream->fd);
 }
@@ -189,7 +190,7 @@ void pd__tcp_write_io(pd_event_t *event) {
 
     if (stream->writes_size == 0) {
         // stream is not writable because have no data to write anymore
-        stream->flags &= ~PD_WRITABLE;
+        stream->flags &= ~PD_WRITING;
     }
 
     if (stream->status == PD_TCP_CLOSED) {
@@ -229,36 +230,34 @@ void pd_tcp_write(pd_tcp_t *stream, pd_write_t *write_op) {
         return;
     } else {
         stream->writes_size++;
-        stream->flags |= PD_WRITABLE;
+        stream->flags |= PD_WRITING;
     }
 }
 
 
 void pd_tcp_close(pd_tcp_t *stream) {
-    if (stream->status != PD_TCP_ACTIVE)
+    if (stream->status == PD_TCP_CLOSED)
         return;
 
     stream->status = PD_TCP_CLOSED;
 
-    // if stream is writable, that means we have pending write operations
-    if (stream->flags & PD_WRITABLE) {
+    if (stream->writes_size > 0) {
         CancelIo((HANDLE)stream->fd);
     }
 
-    if (stream->flags & PD_READABLE) {
-        // TODO: we have no reads implemented yet...so I pass NULL to lpOverlapped.
-        CancelIoEx((HANDLE)stream->fd, NULL);
+    if (stream->flags & PD_PENDING_READ) {
+        CancelIoEx((HANDLE)stream->fd, &stream->revent.overlapped);
     }
 
-    stream->flags &= ~(PD_READABLE | PD_WRITABLE);
+    stream->flags &= ~(PD_READING | PD_WRITING);
 
     pd__tcp_try_close(stream);
 }
 
 
 void pd__tcp_read_io(pd_event_t *event) {
-    printf("Received READ event\n");
     pd_tcp_t *stream = event->data;
+    stream->flags &= ~PD_PENDING_READ;
 
     if (event->bytes > 0) {
         stream->on_data(stream, stream->read_buf.buf, event->bytes);
@@ -266,14 +265,15 @@ void pd__tcp_read_io(pd_event_t *event) {
         pd_tcp_close(stream);
     }
 
-    if (stream->flags & PD_READABLE) {
+    if (stream->flags & PD_READING) {
         pd__tcp_post_recv(stream);
     }
 }
 
 
 void pd__tcp_post_recv(pd_tcp_t *stream) {
-    // alloc new read buf
+    assert(stream->fd != INVALID_SOCKET);
+
     pd_event_init(&stream->revent);
     stream->revent.data = stream;
     stream->revent.handler = pd__tcp_read_io;
@@ -282,20 +282,18 @@ void pd__tcp_post_recv(pd_tcp_t *stream) {
     stream->read_buf.buf = malloc(alloc_size);
     stream->read_buf.len = alloc_size;
 
-    assert(stream->fd != INVALID_SOCKET);
-
     DWORD bytes;
     DWORD flags = 0;
-
     int status = WSARecv(stream->fd,
             &stream->read_buf, 1,
             &bytes, &flags,
             &stream->revent.overlapped, NULL);
 
     if (status == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
-        printf("Serious issue with recv: %d\n", WSAGetLastError());
+        // TODO: handle this error
         return;
     } else {
-        stream->flags |= PD_READABLE;
+        stream->flags |= PD_READING;
+        stream->flags |= PD_PENDING_READ;
     }
 }

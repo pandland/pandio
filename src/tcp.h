@@ -52,8 +52,9 @@ enum pd_tcp_status {
 };
 
 enum pd_stream_flags {
-    PD_WRITABLE = 1 << 0,
-    PD_READABLE = 1 << 1
+    PD_WRITING = 1 << 0,
+    PD_READING = 1 << 1,
+    PD_PENDING_READ = 1 << 2
 };
 
 /* struct that represents TCP connection and stream */
@@ -126,6 +127,6 @@ void pd_tcp_write(pd_tcp_t*, pd_write_t*);
 
 /* Forcefully closes connection - useful for timeouts / error disconnects. */
 void pd_tcp_close(pd_tcp_t*);
-void pd__tcp_post_recv(pd_tcp_t *stream);
+
 /* Graceful connection shutdown. Ensures that incoming data from the peer will be read. */
 void pd_tcp_shutdown(pd_tcp_t*);

@@ -12,8 +12,9 @@ Simple library for non-blocking I/O operations. Developed mainly for my PandJS p
 - [x] Non-blocking IO for sockets using epoll.
 - [x] Basic networking abstraction to handle TCP.
 - [x] Thread pool
+- [x] Support Windows
 - [ ] Async files operations
-- [ ] Support many platforms: Windows, MacOS and FreeBSD.
+- [ ] Support FreeBSD/MacOS (`kqueue` + posix threads).
 - [ ] Better error handling and error reporting to the end-user.
 
 ### Build static library
