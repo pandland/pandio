@@ -167,7 +167,6 @@ void pd__tcp_try_close(pd_tcp_t *stream) {
         return;
     }
 
-    // TODO: detect if reading is pending once I implement reads
     if (stream->flags & PD_PENDING_READ) {
         return;
     }
@@ -263,6 +262,12 @@ void pd__tcp_read_io(pd_event_t *event) {
         stream->on_data(stream, stream->read_buf.buf, event->bytes);
     } else {
         pd_tcp_close(stream);
+        return;
+    }
+
+    if (stream->status == PD_TCP_CLOSED) {
+        pd__tcp_try_close(stream);
+        return;
     }
 
     if (stream->flags & PD_READING) {
@@ -295,5 +300,24 @@ void pd__tcp_post_recv(pd_tcp_t *stream) {
     } else {
         stream->flags |= PD_READING;
         stream->flags |= PD_PENDING_READ;
+    }
+}
+
+
+void pd_tcp_pause(pd_tcp_t *stream) {
+    // it will prevent requesting more data
+    stream->flags &= ~PD_READING;
+
+    if (stream->flags & PD_PENDING_READ) {
+        CancelIoEx((HANDLE)stream->fd, &stream->revent.overlapped);
+    }
+}
+
+
+void pd_tcp_resume(pd_tcp_t *stream) {
+    stream->flags |= PD_READING;
+
+    if ((stream->flags & PD_PENDING_READ) == 0) {
+        pd__tcp_post_recv(stream);
     }
 }
