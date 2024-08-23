@@ -10,6 +10,7 @@ typedef HANDLE pd_fd_t;
 
 typedef CRITICAL_SECTION pd_mutex_t;
 typedef CONDITION_VARIABLE pd_cond_t;
+typedef HANDLE pd_thread_t;
 
 #else
 #include <pthread.h>
@@ -17,6 +18,7 @@ typedef int pd_fd_t;
 
 typedef pthread_mutex_t pd_mutex_t;
 typedef pthread_cond_t pd_cond_t;
+typedef pthread_t pd_thread_t;
 #endif
 
 void pd_mutex_init(pd_mutex_t*);
@@ -34,6 +36,8 @@ void pd_cond_wait(pd_cond_t*, pd_mutex_t*);
 void pd_cond_signal(pd_cond_t*);
 
 void pd_cond_destroy(pd_cond_t*);
+
+void pd_thread_create(pd_thread_t*, void* (*)(void*), void *);
 
 struct pd_io_s {
     pd_fd_t poll_fd;

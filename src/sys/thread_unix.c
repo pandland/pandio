@@ -56,7 +56,11 @@ void pd_cond_signal(pd_cond_t *cond) {
 }
 
 
-// On Windows it is not necessary.
 void pd_cond_destroy(pd_cond_t *cond) {
     pthread_cond_destroy(cond);
+}
+
+
+void pd_thread_create(pd_thread_t *thread, void* (func)(void*), void *args) {
+    pthread_create(thread, NULL, func, args);
 }

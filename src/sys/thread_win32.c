@@ -20,6 +20,7 @@
  */
 
 #include "core.h"
+#include <process.h>
 
 void pd_mutex_init(pd_mutex_t *mux) {
     InitializeCriticalSection(mux);
@@ -56,5 +57,31 @@ void pd_cond_signal(pd_cond_t *cond) {
 }
 
 
+unsigned long *func(void *arg) {
+    return NULL;
+}
+
 // On Windows it is not necessary.
 void pd_cond_destroy(pd_cond_t *cond) {}
+
+
+struct pd__thread_runner {
+    void*(*func)(void*);
+    void *args;
+};
+
+unsigned __stdcall pd__thread_run(void *args) {
+    struct pd__thread_runner *runner = args;
+    runner->func(runner->args);
+
+    return 0;
+}
+
+void pd_thread_create(pd_thread_t *thread, void* (func)(void*), void *args) {
+    struct pd__thread_runner *runner = malloc(sizeof (struct pd__thread_runner));
+    runner->func = func;
+    runner->args = args;
+
+    // TODO: handle error
+    thread = (HANDLE)_beginthreadex(NULL, 0, pd__thread_run, runner, 0, NULL);
+}
