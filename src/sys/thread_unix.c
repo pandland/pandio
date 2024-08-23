@@ -22,39 +22,41 @@
 #include "core.h"
 
 void pd_mutex_init(pd_mutex_t *mux) {
-    InitializeCriticalSection(mux);
+    pthread_mutex_init(mux);
 }
 
 
 void pd_mutex_lock(pd_mutex_t *mux) {
-    EnterCriticalSection(mux);
+    pthread_mutex_lock(mux);
 }
 
 
 void pd_mutex_unlock(pd_mutex_t *mux) {
-    LeaveCriticalSection(mux);
+    pthread_mutex_unlock(mux);
 }
 
 
 void pd_mutex_destroy(pd_mutex_t *mux) {
-    DeleteCriticalSection(mux);
+    pthread_mutex_destroy(mux);
 }
 
 
 void pd_cond_init(pd_cond_t *cond) {
-    InitializeConditionVariable(cond);
+    pthread_cond_init(cond);
 }
 
 
 void pd_cond_wait(pd_cond_t *cond, pd_mutex_t *mux) {
-    SleepConditionVariableCS(cond, mux, INFINITE);
+    pthread_cond_wait(cond, mux);
 }
 
 
 void pd_cond_signal(pd_cond_t *cond) {
-    WakeConditionVariable(cond);
+    pthread_cond_signal(cond);
 }
 
 
 // On Windows it is not necessary.
-void pd_cond_destroy(pd_cond_t *cond) {}
+void pd_cond_destroy(pd_cond_t *cond) {
+    pthread_cond_destroy(cond);
+}

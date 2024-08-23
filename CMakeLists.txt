@@ -15,13 +15,13 @@ set (SRC_FILES
         src/timers.h
         src/timers.c
         src/pandio.h
-        src/sys/thread_win32.c
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND SRC_FILES
             src/sys/event_epoll.c
             src/sys/tcp_unix.c
+            src/sys/thread_unix.c
     )
 endif ()
 
@@ -31,6 +31,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     list(APPEND SRC_FILES
             src/sys/event_iocp.c
             src/sys/tcp_win32.c
+            src/sys/thread_win32.c
     )
 endif ()
 
