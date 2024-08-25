@@ -20,7 +20,6 @@ set (SRC_FILES
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND SRC_FILES
             src/sys/event_epoll.c
-            src/sys/tcp_unix.c
             src/sys/thread_unix.c
     )
 endif ()

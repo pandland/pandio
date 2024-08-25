@@ -22,7 +22,7 @@
 #include "core.h"
 
 void pd_mutex_init(pd_mutex_t *mux) {
-    pthread_mutex_init(mux);
+    pthread_mutex_init(mux, NULL);
 }
 
 
@@ -42,7 +42,7 @@ void pd_mutex_destroy(pd_mutex_t *mux) {
 
 
 void pd_cond_init(pd_cond_t *cond) {
-    pthread_cond_init(cond);
+    pthread_cond_init(cond, NULL);
 }
 
 
