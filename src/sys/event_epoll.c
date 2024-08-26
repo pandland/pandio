@@ -85,6 +85,28 @@ void pd_event_read_stop(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
 }
 
 
+/* remove WRITE interest and set only READ interest via single system call.
+ * equal to calling: pd_event_write_stop and pd_event_read_start
+ */
+void pd_event_read_only(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
+    event->flags |= EPOLLIN;
+    event->flags &= ~EPOLLOUT;
+    pd_event_modify(ctx, event, fd, EPOLL_CTL_MOD, event->flags);
+}
+
+
+void pd_event_write_start(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
+    event->flags |= EPOLLOUT;
+    pd_event_modify(ctx, event, fd, EPOLL_CTL_MOD, event->flags);
+}
+
+
+void pd_event_write_stop(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
+    event->flags &= ~EPOLLOUT;
+    pd_event_modify(ctx, event, fd, EPOLL_CTL_MOD, event->flags);
+}
+
+
 int pd_set_nonblocking(pd_fd_t fd) {
     int flags = fcntl(fd, F_GETFL, 0);
     if (flags == -1) {

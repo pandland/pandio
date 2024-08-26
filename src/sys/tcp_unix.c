@@ -38,7 +38,6 @@ void pd_tcp_init(pd_io_t *ctx, pd_tcp_t *stream) {
 }
 
 
-// over time, we will probably make shared function across unixes called pd__close
 int pd__closesocket(pd_socket_t fd){
     int status;
     do {
@@ -102,7 +101,6 @@ int pd_tcp_listen(pd_tcp_server_t *server,
 
     pd_socket_t lfd = socket(AF_INET, SOCK_STREAM, 0);
     if (lfd <= 0) {
-        perror("socket");
         return -1;
     }
 
@@ -114,13 +112,11 @@ int pd_tcp_listen(pd_tcp_server_t *server,
     int opt = 1;
 
     if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        perror("setsockopt");
         pd__closesocket(lfd);
         return -1;
     }
 
-    if (bind(lfd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        perror("bind");
+    if (bind(lfd, (struct sockaddr*)&address, sizeof(address)) < 0) {
         pd__closesocket(lfd);
         return -1;
     }
@@ -131,7 +127,6 @@ int pd_tcp_listen(pd_tcp_server_t *server,
     }
 
     if (listen(lfd, SOMAXCONN) < 0) {
-        perror("listen");
         pd__closesocket(lfd);
         return -1;
     }
@@ -166,6 +161,10 @@ void pd__tcp_read(pd_tcp_t *stream) {
         nread = read(stream->fd, buf, read_size);
     } while (nread == -1 && errno == EINTR);
 
+    if (nread == 0) {
+        // TODO: close connection
+    }
+
     if (nread < 0) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             // it's not error, but we have to report it in callback, because user should call free() on buf
@@ -181,19 +180,15 @@ void pd__tcp_read(pd_tcp_t *stream) {
 
 
 /* handler for I/O events from epoll/kqueue */
-void pnd__tcp_client_io(pd_event_t *event, unsigned events)
-{
+void pd__tcp_client_io(pd_event_t *event, unsigned events) {
     pd_tcp_t *stream = container_of(event, pd_tcp_t, event);
 
-    if (events & PD_CLOSE) {
-        printf("Detected PND_CLOSE\n");
-        // TODO: pd_tcp_close(stream);
-        return;
+    if (events & PD_POLLIN) {
+        pd__tcp_read(stream);
     }
 
-    if (events & PD_POLLIN) {
-        // TODO: actually read data and pass chunk to the on_data callback, instead
-        pd__tcp_read(stream);
+    if (events & PD_CLOSE) {
+        // TODO: end tcp stream
     }
 
     if (events & PD_POLLOUT) {
@@ -205,6 +200,60 @@ void pnd__tcp_client_io(pd_event_t *event, unsigned events)
 void pd_tcp_accept(pd_tcp_t *peer, pd_socket_t fd) {
     peer->fd = fd;
     peer->status = PD_TCP_ACTIVE;
-    peer->event.handler = pnd__tcp_client_io;
+    peer->event.handler = pd__tcp_client_io;
     pd_event_read_start(peer->ctx, &peer->event, peer->fd);
+}
+
+
+
+void pd_tcp_connect_io(pd_event_t *event, unsigned events)
+{
+    pd_tcp_t *stream = container_of(event, pd_tcp_t, event);
+
+    if (events & PD_CLOSE) {
+        // TODO: close connection
+    }
+
+    if (events & PD_POLLOUT) {
+        stream->status = PD_TCP_ACTIVE;
+        event->handler = pd__tcp_client_io;
+
+        pd_event_read_only(stream->ctx, event, stream->fd);
+
+        if (stream->on_connect != NULL)
+            stream->on_connect(stream);
+    }
+}
+
+
+int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_connect)(pd_tcp_t*)) {
+    pd_socket_t fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd < 0) {
+        perror("socket");
+        return -1;
+    }
+
+    if (pd_set_nonblocking(fd) < 0) {
+        pd__closesocket(fd);
+        return -1;
+    }
+
+    struct sockaddr_in address;
+    address.sin_family = AF_INET;
+    address.sin_port = htons(port);
+    address.sin_addr.s_addr = inet_addr(host);
+
+    stream->fd = fd;
+    stream->on_connect = on_connect;
+    stream->event.handler = pd_tcp_connect_io;
+
+    if (connect(fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+        if (errno != EINPROGRESS) {
+            pd__closesocket(fd);
+            return -1;
+        }
+    }
+
+    pd_event_write_start(stream->ctx, &stream->event, fd);
+    return 0;
 }

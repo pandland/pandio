@@ -89,4 +89,10 @@ void pd_event_read_stop(pd_io_t*, pd_event_t*, pd_fd_t);
 
 int pd_set_nonblocking(pd_fd_t);
 
+void pd_event_read_only(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd);
+
+void pd_event_write_start(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd);
+
+void pd_event_write_stop(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd);
+
 #endif

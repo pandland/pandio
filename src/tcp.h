@@ -78,6 +78,7 @@ struct pd_tcp_s {
 #endif
     void (*on_data)(struct pd_tcp_s *, char *buf, size_t size);
     void (*on_close)(struct pd_tcp_s *);
+    void (*on_connect)(struct pd_tcp_s *);
     enum pd_tcp_status status;
     unsigned flags;
     void *data; // pointer for user's data
