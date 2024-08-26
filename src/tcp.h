@@ -66,6 +66,7 @@ struct pd_tcp_s {
     pd_event_t revent;
 #else
     struct queue writes;
+    pd_event_t event;
 #endif
     void (*on_data)(struct pd_tcp_s *, char *buf, size_t size);
     void (*on_close)(struct pd_tcp_s *);
@@ -85,10 +86,13 @@ struct pd_tcp_server_s {
     pd_io_t *ctx;
     pd_socket_t fd;
     pd_on_connection_cb on_connection;
+    enum pd_tcp_status status;
     void *data; // pointer for user's data
 #ifdef _WIN32
     LPFN_ACCEPTEX acceptex;
     struct queue accept_ops;
+#else
+    pd_event_t event;
 #endif
 };
 

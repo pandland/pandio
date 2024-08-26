@@ -20,6 +20,7 @@ set (SRC_FILES
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND SRC_FILES
             src/sys/event_epoll.c
+            src/sys/tcp_unix.c
             src/sys/thread_unix.c
     )
 endif ()
@@ -29,6 +30,7 @@ set(KQUEUE_SYSTEMS "Darwin;FreeBSD;OpenBSD;NetBSD;DragonFly")
 if (CMAKE_SYSTEM_NAME IN_LIST KQUEUE_SYSTEMS)
     list(APPEND SRC_FILES
             src/sys/event_kqueue.c
+            src/sys/tcp_unix.c
             src/sys/thread_unix.c
     )
 endif ()

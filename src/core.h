@@ -47,10 +47,6 @@ struct pd_io_s {
 
 typedef struct pd_io_s pd_io_t;
 
-void pd_io_init(pd_io_t*);
-
-void pd_io_run(pd_io_t*);
-
 enum pd_event_flags {
     PD_POLLIN = 1 << 0,
     PD_POLLOUT = 1 << 1,
@@ -75,4 +71,22 @@ struct pd_event_s {
 
 typedef struct pd_event_s pd_event_t;
 
+
+void pd_io_init(pd_io_t*);
+
+void pd_io_run(pd_io_t*);
+
 void pd_event_init(pd_event_t*);
+
+// TODO: make unix declarations INTERNAL
+#ifndef _WIN32
+
+void pd_event_del(pd_io_t*, pd_event_t*, pd_fd_t);
+
+void pd_event_read_start(pd_io_t*, pd_event_t*, pd_fd_t);
+
+void pd_event_read_stop(pd_io_t*, pd_event_t*, pd_fd_t);
+
+int pd_set_nonblocking(pd_fd_t);
+
+#endif
