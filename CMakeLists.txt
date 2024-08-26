@@ -24,6 +24,15 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     )
 endif ()
 
+set(KQUEUE_SYSTEMS "Darwin;FreeBSD;OpenBSD;NetBSD;DragonFly")
+
+if (CMAKE_SYSTEM_NAME IN_LIST KQUEUE_SYSTEMS)
+    list(APPEND SRC_FILES
+            src/sys/event_kqueue.c
+            src/sys/thread_unix.c
+    )
+endif ()
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_definitions(-DWIN32_LEAN_AND_MEAN)
 
