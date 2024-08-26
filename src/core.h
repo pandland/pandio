@@ -51,15 +51,26 @@ void pd_io_init(pd_io_t*);
 
 void pd_io_run(pd_io_t*);
 
+enum pd_event_flags {
+    PD_POLLIN = 1 << 0,
+    PD_POLLOUT = 1 << 1,
+    PD_POLLHUP = 1 << 2,
+    PD_POLLRDHUP = 1 << 3,
+    PD_POLLERR = 1 << 4,
+    PD_CLOSE = 1 << 5
+};
+
 struct pd_event_s {
 #ifdef _WIN32
     /* must be a first member, because we will cast OVERLAPPED to the pd_event_t */
     OVERLAPPED overlapped;
     size_t bytes;   // bytes transferred
-#endif
     void (*handler)(struct pd_event_s*);
-    void *data;
+#else
     unsigned flags;
+    void (*handler)(struct pd_event_s*, unsigned);
+#endif
+    void *data;
 };
 
 typedef struct pd_event_s pd_event_t;
