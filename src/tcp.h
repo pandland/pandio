@@ -57,6 +57,14 @@ enum pd_stream_flags {
     PD_PENDING_READ = 1 << 2
 };
 
+// WSABUF compatible structure
+struct pd_buf_s {
+    size_t len;
+    char *buf;
+};
+
+typedef struct pd_buf_s pd_buf_t;
+
 /* struct that represents TCP connection and stream */
 struct pd_tcp_s {
     pd_io_t *ctx;
@@ -108,7 +116,7 @@ struct pd_write_s {
     pd_event_t event;
     pd_tcp_t *handle;
 #else
-    char *buf;
+    pd_buf_t data;
     size_t size;
 #endif
     pd_write_cb cb;

@@ -38,7 +38,7 @@ void pd_tcp_init(pd_io_t *ctx, pd_tcp_t *stream) {
 }
 
 
-// over time, we will probably make shared function across unixes called pd__close_fd
+// over time, we will probably make shared function across unixes called pd__close
 int pd__closesocket(pd_socket_t fd){
     int status;
     do {
@@ -60,7 +60,7 @@ void pd_tcp_server_init(pd_io_t *ctx, pd_tcp_server_t *server) {
 
 
 /* handler for I/O events from epoll/kqueue */
-void pnd_tcp_listener_io(pd_event_t *event, unsigned events) {
+void pnd__tcp_listener_io(pd_event_t *event, unsigned events) {
     assert(events & PD_POLLOUT);
 
     pd_tcp_server_t *listener = container_of(event, pd_tcp_server_t, event);
@@ -137,7 +137,7 @@ int pd_tcp_listen(pd_tcp_server_t *server,
     }
 
     server->fd = lfd;
-    server->event.handler = pnd_tcp_listener_io;
+    server->event.handler = pnd__tcp_listener_io;
     server->status = PD_TCP_ACTIVE;
     server->on_connection = on_connection;
 
@@ -147,8 +147,41 @@ int pd_tcp_listen(pd_tcp_server_t *server,
 }
 
 
+// handler for read event from epoll/kqueue
+void pd__tcp_read(pd_tcp_t *stream) {
+    if (!stream->on_data) {
+        return;
+    }
+
+    size_t read_size = 6 * 1024;
+    ssize_t nread;
+
+    // TODO: make callback for own allocations/providing own buffer
+    char *buf = malloc(read_size);
+    if (buf == NULL) {
+        stream->on_data(stream, buf, -1); // in this scenario - we have no memory for new buffer
+    }
+
+    do {
+        nread = read(stream->fd, buf, read_size);
+    } while (nread == -1 && errno == EINTR);
+
+    if (nread < 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // it's not error, but we have to report it in callback, because user should call free() on buf
+            stream->on_data(stream, buf, 0);
+            return;
+        } else {
+            stream->on_data(stream, buf, -1);
+        }
+    } else {
+        stream->on_data(stream, buf, nread);
+    }
+}
+
+
 /* handler for I/O events from epoll/kqueue */
-void pnd_tcp_client_io(pd_event_t *event, unsigned events)
+void pnd__tcp_client_io(pd_event_t *event, unsigned events)
 {
     pd_tcp_t *stream = container_of(event, pd_tcp_t, event);
 
@@ -160,7 +193,7 @@ void pnd_tcp_client_io(pd_event_t *event, unsigned events)
 
     if (events & PD_POLLIN) {
         // TODO: actually read data and pass chunk to the on_data callback, instead
-        stream->on_data(stream, NULL, 0);
+        pd__tcp_read(stream);
     }
 
     if (events & PD_POLLOUT) {
@@ -172,6 +205,6 @@ void pnd_tcp_client_io(pd_event_t *event, unsigned events)
 void pd_tcp_accept(pd_tcp_t *peer, pd_socket_t fd) {
     peer->fd = fd;
     peer->status = PD_TCP_ACTIVE;
-    peer->event.handler = pnd_tcp_client_io;
+    peer->event.handler = pnd__tcp_client_io;
     pd_event_read_start(peer->ctx, &peer->event, peer->fd);
 }
