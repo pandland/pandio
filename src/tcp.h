@@ -27,6 +27,7 @@
 #include <windows.h>
 #include <ws2def.h>
 #include <mswsock.h>
+#include <ws2tcpip.h>
 
 typedef SOCKET pd_socket_t;
 

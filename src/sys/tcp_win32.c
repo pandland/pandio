@@ -38,6 +38,7 @@ typedef struct pd__accept_op_s pd__accept_op_t;
 void pd__tcp_post_acceptex(pd_tcp_server_t *server, pd__accept_op_t *op);
 void pd__tcp_post_recv(pd_tcp_t *stream);
 
+
 void pd_tcp_server_init(pd_io_t *ctx, pd_tcp_server_t *server) {
     server->ctx = ctx;
     server->fd = INVALID_SOCKET;
@@ -323,4 +324,43 @@ void pd_tcp_resume(pd_tcp_t *stream) {
     if ((stream->flags & PD_PENDING_READ) == 0) {
         pd__tcp_post_recv(stream);
     }
+}
+
+
+// callback for IOCP
+void pd__tcp_connect_io(pd_event_t *event) {
+    pd_tcp_t *stream = event->data;
+    free(event); // after successful connection, we do not need event object
+
+    stream->on_connect(stream);
+}
+
+
+int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_connect)(pd_tcp_t*)) {
+    pd_socket_t fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd == INVALID_SOCKET) {
+        return -1;
+    }
+
+    struct sockaddr_in address;
+    address.sin_family = AF_INET;
+    address.sin_port = htons(port);
+    inet_pton(AF_INET, host, &address.sin_addr);
+
+    stream->fd = fd;
+    stream->on_connect = on_connect;
+
+    pd_event_t *connect_ev = malloc(sizeof(pd_event_t));
+    pd_event_init(connect_ev);
+    connect_ev->data = stream;
+    connect_ev->handler = pd__tcp_connect_io;
+
+    int status = WSAConnect(fd, (struct sockaddr)&address, sizeof(struct sockaddr_in),
+            NULL, NULL, NULL, &connect_ev->overlapped);
+
+    if (status == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
+        return -1;
+    }
+
+    return 0;
 }
