@@ -179,6 +179,54 @@ void pd__tcp_read(pd_tcp_t *stream) {
 }
 
 
+/* Actually writes enqueued writes */
+void pd__tcp_write(pd_tcp_t *stream)
+{
+    // sometimes we get stale event when stream was closed in the same iteration
+    if (stream->status == PD_TCP_CLOSED)
+        return;
+
+    while (!queue_empty(&stream->writes)) {
+        struct queue_node *next = queue_peek(&stream->writes);
+        pd_write_t *write_op = container_of(next, pd_write_t, qnode);
+
+        size_t to_write = write_op->data.len - write_op->written;
+        const char *buf = write_op->data.buf + write_op->written;
+        ssize_t written;
+
+        do {
+            written = write(stream->fd, buf, to_write);
+        } while (written < 0 && errno == EINTR);
+
+        if (written < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                return;
+            } else {
+                perror("write");
+                queue_pop(&stream->writes);
+                write_op->cb(write_op, -1);
+                return;
+            }
+        }
+
+        write_op->written += written;
+
+        if (write_op->written == write_op->data.len) {
+            queue_pop(&stream->writes);
+            if (write_op->cb)
+                write_op->cb(write_op, 0);
+        }
+    }
+
+    if (queue_empty(&stream->writes)) {
+        pd_event_write_stop(stream->ctx, &stream->event, stream->fd);
+
+        if (stream->status == PD_TCP_SHUTDOWN)
+            shutdown(stream->fd, SHUT_WR);
+    }
+}
+
+
 /* handler for I/O events from epoll/kqueue */
 void pd__tcp_client_io(pd_event_t *event, unsigned events) {
     pd_tcp_t *stream = container_of(event, pd_tcp_t, event);
@@ -192,7 +240,7 @@ void pd__tcp_client_io(pd_event_t *event, unsigned events) {
     }
 
     if (events & PD_POLLOUT) {
-        // TODO: pd_tcp_write_io(stream);
+        pd__tcp_write(stream);
     }
 }
 
@@ -205,9 +253,7 @@ void pd_tcp_accept(pd_tcp_t *peer, pd_socket_t fd) {
 }
 
 
-
-void pd_tcp_connect_io(pd_event_t *event, unsigned events)
-{
+void pd__tcp_connect_io(pd_event_t *event, unsigned events) {
     pd_tcp_t *stream = container_of(event, pd_tcp_t, event);
 
     if (events & PD_CLOSE) {
@@ -245,7 +291,7 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
 
     stream->fd = fd;
     stream->on_connect = on_connect;
-    stream->event.handler = pd_tcp_connect_io;
+    stream->event.handler = pd__tcp_connect_io;
 
     if (connect(fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         if (errno != EINPROGRESS) {
@@ -255,5 +301,75 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
     }
 
     pd_event_write_start(stream->ctx, &stream->event, fd);
+
     return 0;
+}
+
+
+void pd_tcp_pause(pd_tcp_t *stream) {
+    pd_event_read_stop(stream->ctx, &stream->event, stream->fd);
+}
+
+
+void pd_tcp_resume(pd_tcp_t *stream) {
+    pd_event_read_start(stream->ctx, &stream->event, stream->fd);
+}
+
+
+void pd_write_init(pd_write_t *write_op, char *buf, size_t size, pd_write_cb cb) {
+    write_op->data.buf = buf;
+    write_op->data.len = size;
+    write_op->written = 0;
+    write_op->cb = cb;
+    //write_op->data = NULL;
+    queue_init_node(&write_op->qnode);
+}
+
+
+/* Enqueue write operation and do it asynchronously.
+ * Usually requires copying data to the new structure
+ */
+void pd_tcp_write_async(pd_tcp_t *stream, pd_write_t *write_op) {
+    if (stream->status != PD_TCP_ACTIVE) {
+        write_op->cb(write_op, -1);
+        return;
+    }
+
+    queue_init_node(&write_op->qnode);
+    queue_push(&stream->writes, &write_op->qnode);
+}
+
+
+void pd_tcp_write(pd_tcp_t *stream, pd_write_t *write_op) {
+    if (stream->status != PD_TCP_ACTIVE) {
+        write_op->cb(write_op, -1);
+        return;
+    }
+
+    if (queue_empty(&stream->writes)) {
+        ssize_t written;
+        do {
+            written = write(stream->fd, write_op->data.buf, write_op->data.len);
+        } while (written < 0 && errno == EINTR);
+
+        if (written < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                pd_tcp_write_async(stream, write_op);
+                return;
+            }
+
+            write_op->cb(write_op, -1);
+            return;
+        }
+
+        // partial writes:
+        if (written < write_op->data.len) {
+            write_op->written += written;
+            pd_tcp_write_async(stream, write_op);
+        } else {
+            write_op->cb(write_op, 0);
+        }
+    } else {
+        pd_tcp_write_async(stream, write_op);
+    }
 }

@@ -118,7 +118,8 @@ struct pd_write_s {
     pd_tcp_t *handle;
 #else
     pd_buf_t data;
-    size_t size;
+    struct queue_node qnode;
+    size_t written;
 #endif
     pd_write_cb cb;
 };
@@ -141,5 +142,11 @@ void pd_tcp_write(pd_tcp_t*, pd_write_t*);
 /* Forcefully closes connection - useful for timeouts / error disconnects. */
 void pd_tcp_close(pd_tcp_t*);
 
+void pd_tcp_pause(pd_tcp_t*);
+
+void pd_tcp_resume(pd_tcp_t*);
+
 /* Graceful connection shutdown. Ensures that incoming data from the peer will be read. */
 void pd_tcp_shutdown(pd_tcp_t*);
+
+int pd_tcp_connect(pd_tcp_t*, const char*, int, void (*on_connect)(pd_tcp_t*));
