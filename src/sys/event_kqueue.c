@@ -55,6 +55,41 @@ int pd_set_nonblocking(pd_fd_t fd) {
     return 0;
 }
 
+
+void pd_event_modify(pd_io_t *ctx, pd_event_t *event, int fd, int operation, unsigned flags) {
+    struct kevent kev;
+    event->flags = flags;
+
+    EV_SET(&kev, fd, event->flags, operation, 0, 0, event);
+    if (kevent(ctx->poll_fd, &kev, 1, NULL, 0, NULL) == -1) {
+        perror("pd_event_modify");
+    }
+}
+
+
+void pd_event_del(pd_io_t *ctx, pd_event_t *event, int fd) {
+    struct kevent kev;
+
+    EV_SET(&kev, fd, event->flags, EV_DELETE, 0, 0, NULL);
+    if (kevent(ctx->poll_fd, &kev, 1, NULL, 0, NULL) == -1) {
+        perror("pd_event_del");
+    }
+}
+
+
+void pd_event_add_readable(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
+    event->flags |= EVFILT_READ;
+    //event->ctx->handles++;
+    pd_event_modify(ctx, event, fd, EV_ADD, event->flags);
+}
+
+
+void pd_event_read_start(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
+    event->flags |= EVFILT_READ;
+    pd_event_modify(ctx, event, fd, EV_ADD | EV_ENABLE, event->flags);
+}
+
+
 #define MAX_EVENTS 1024
 
 void pd_io_run(pd_io_t *ctx) {

@@ -23,6 +23,7 @@
 #include "core.h"
 #include "timers.h"
 #include <winsock2.h>
+#include "internal.h"
 
 #define ENTRIES_MAX 128
 
@@ -48,6 +49,7 @@ void pd_io_init(pd_io_t *ctx) {
             0, 0);
 
     ctx->now = pd_now();
+    queue_init(&ctx->pending_closes);
     pd_timers_heap_init(ctx);
 }
 
@@ -55,7 +57,6 @@ void pd_io_init(pd_io_t *ctx) {
 void pd_event_init(pd_event_t *event) {
     event->handler = NULL;
     event->data = NULL;
-    event->flags = 0;
     event->bytes = 0;
     ZeroMemory(&event->overlapped, sizeof(event->overlapped));
 }
@@ -101,5 +102,6 @@ void pd_io_run(pd_io_t *ctx) {
 
         pd_timers_run(ctx);
         timeout = pd_timers_next(ctx);
+        pd_tcp_pending_close(ctx);
     }
 }

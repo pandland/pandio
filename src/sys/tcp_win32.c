@@ -173,6 +173,9 @@ void pd__tcp_try_close(pd_tcp_t *stream) {
 
     closesocket(stream->fd);
     CloseHandle((HANDLE)stream->fd);
+
+    queue_init_node(&stream->close_qnode);
+    queue_push(&stream->ctx->pending_closes, &stream->close_qnode);
 }
 
 
