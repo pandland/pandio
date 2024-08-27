@@ -46,6 +46,6 @@ int main() {
     pd_tcp_server_t *server = malloc(sizeof(pd_tcp_server_t));
     pd_tcp_server_init(ctx, server);
     printf("Starting to listen...\n");
-    pd_tcp_listen(server, 5000, handle_connection);
+    pd_tcp_listen(server, 8000, handle_connection);
     pd_io_run(ctx);
 }

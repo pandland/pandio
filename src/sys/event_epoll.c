@@ -46,8 +46,7 @@ void pd_io_init(pd_io_t *ctx) {
 }
 
 
-void pd_event_init(pd_event_t *event)
-{
+void pd_event_init(pd_event_t *event) {
     event->handler = NULL;
     event->flags = 0;
     event->data = NULL;
@@ -66,12 +65,27 @@ void pd_event_modify(pd_io_t *ctx, pd_event_t *event, int fd, int operation, uns
 }
 
 
+void pd_event_add_readable(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
+    event->flags |= EPOLLIN;
+    //event->ctx->handles++;
+    pd_event_modify(ctx, event, fd, EPOLL_CTL_ADD, event->flags);
+}
+
+
+void pd_event_add_writable(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
+    event->flags |= EPOLLOUT;
+    //event->ctx->handles++;
+    pd_event_modify(ctx, event, fd, EPOLL_CTL_ADD, event->flags);
+}
+
+
 void pd_event_del(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
     //ctx->handles--;
     if (epoll_ctl(ctx->poll_fd, EPOLL_CTL_DEL, fd, NULL) == -1) {
         perror("pnd_remove_event");
     }
 }
+
 
 void pd_event_read_start(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
     event->flags |= EPOLLIN;

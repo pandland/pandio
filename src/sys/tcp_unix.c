@@ -60,7 +60,7 @@ void pd_tcp_server_init(pd_io_t *ctx, pd_tcp_server_t *server) {
 
 /* handler for I/O events from epoll/kqueue */
 void pnd__tcp_listener_io(pd_event_t *event, unsigned events) {
-    assert(events & PD_POLLOUT);
+    assert(events & PD_POLLIN);
 
     pd_tcp_server_t *listener = container_of(event, pd_tcp_server_t, event);
 
@@ -136,7 +136,8 @@ int pd_tcp_listen(pd_tcp_server_t *server,
     server->status = PD_TCP_ACTIVE;
     server->on_connection = on_connection;
 
-    pd_event_read_start(server->ctx, &server->event, lfd);
+    assert(server->fd > 0);
+    pd_event_add_readable(server->ctx, &server->event, lfd);
 
     return 0;
 }
@@ -289,7 +290,7 @@ void pd_tcp_accept(pd_tcp_t *peer, pd_socket_t fd) {
     peer->fd = fd;
     peer->status = PD_TCP_ACTIVE;
     peer->event.handler = pd__tcp_client_io;
-    pd_event_read_start(peer->ctx, &peer->event, peer->fd);
+    pd_event_add_readable(peer->ctx, &peer->event, peer->fd);
 }
 
 
@@ -342,7 +343,7 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
         }
     }
 
-    pd_event_write_start(stream->ctx, &stream->event, fd);
+    pd_event_add_writable(stream->ctx, &stream->event, fd);
 
     return 0;
 }

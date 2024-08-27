@@ -81,6 +81,10 @@ void pd_event_init(pd_event_t*);
 // TODO: make unix declarations INTERNAL
 #ifndef _WIN32
 
+void pd_event_add_readable(pd_io_t*, pd_event_t*, pd_fd_t);
+
+void pd_event_add_writable(pd_io_t*, pd_event_t*, pd_fd_t);
+
 void pd_event_del(pd_io_t*, pd_event_t*, pd_fd_t);
 
 void pd_event_read_start(pd_io_t*, pd_event_t*, pd_fd_t);
