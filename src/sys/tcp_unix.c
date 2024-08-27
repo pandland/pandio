@@ -142,6 +142,44 @@ int pd_tcp_listen(pd_tcp_server_t *server,
 }
 
 
+/* close connection without waiting for all data */
+void pd_tcp_close(pd_tcp_t *stream) {
+    if (stream->status == PD_TCP_CLOSED)
+        return;
+
+    stream->status = PD_TCP_CLOSED;
+    pd_event_del(stream->ctx, &stream->event, stream->fd);
+    pd__closesocket(stream->fd);
+
+    // cancel pending writes with failure status
+    while (!queue_empty(&stream->writes)) {
+        struct queue_node *next = queue_pop(&stream->writes);
+        pd_write_t *write_op = container_of(next, pd_write_t, qnode);
+        write_op->cb(write_op, -1);
+    }
+
+    queue_init_node(&stream->close_qnode);
+    // TODO: push to the close queue
+}
+
+
+/* gracefully closes tcp stream */
+void pd_tcp_shutdown(pd_tcp_t *stream) {
+    if (stream->status != PD_TCP_ACTIVE)
+        return;
+
+    stream->status = PD_TCP_SHUTDOWN;
+
+    if (queue_empty(&stream->writes)) {
+        /* call shutdown and continue to read until EOF */
+        shutdown(stream->fd, SHUT_WR);
+    } else {
+        // wait for all writes to finish
+        pd_event_write_start(stream->ctx, &stream->event, stream->fd);
+    }
+}
+
+
 // handler for read event from epoll/kqueue
 void pd__tcp_read(pd_tcp_t *stream) {
     if (!stream->on_data) {
@@ -162,7 +200,8 @@ void pd__tcp_read(pd_tcp_t *stream) {
     } while (nread == -1 && errno == EINTR);
 
     if (nread == 0) {
-        // TODO: close connection
+        pd_tcp_close(stream);
+        return;
     }
 
     if (nread < 0) {
@@ -236,7 +275,8 @@ void pd__tcp_client_io(pd_event_t *event, unsigned events) {
     }
 
     if (events & PD_CLOSE) {
-        // TODO: end tcp stream
+        pd_tcp_close(stream);
+        return;
     }
 
     if (events & PD_POLLOUT) {
@@ -258,6 +298,8 @@ void pd__tcp_connect_io(pd_event_t *event, unsigned events) {
 
     if (events & PD_CLOSE) {
         // TODO: close connection
+        pd_tcp_close(stream);
+        return;
     }
 
     if (events & PD_POLLOUT) {

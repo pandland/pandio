@@ -83,6 +83,7 @@ struct pd_tcp_s {
     unsigned flags;
     void *data; // pointer for user's data
     size_t writes_size; // amount of pending writes
+    struct queue_node close_qnode;
 };
 
 typedef struct pd_tcp_s pd_tcp_t;
