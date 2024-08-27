@@ -20,13 +20,13 @@
  */
 
 #include "timers.h"
+#include "internal.h"
 
 /* get timer struct pointer from the heap node */
 #define pd_timer_unwrap(ptr) \
   (ptr == NULL) ? NULL : container_of(ptr, pd_timer_t, hnode)
 
 
-/* answers question: should swap? */
 int pd_timers_comparator(struct heap_node *a,
                           struct heap_node *b) {
     pd_timer_t *child = pd_timer_unwrap(a);
@@ -72,6 +72,7 @@ void pd_timer_repeat(pd_timer_t *timer,
     timer->interval = interval;
     pd_timer_start(timer, cb, interval);
 }
+
 
 void pd_timer_stop(pd_timer_t *timer) {
     if (!timer->active) {

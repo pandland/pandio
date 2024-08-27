@@ -20,7 +20,7 @@
  */
 
 #include "tcp.h"
-#include "common.h"
+#include "internal.h"
 #include <stdio.h>
 
 
@@ -159,8 +159,9 @@ void pd_tcp_close(pd_tcp_t *stream) {
         write_op->cb(write_op, -1);
     }
 
+    // schedule close callback to the next event loop iteration.
     queue_init_node(&stream->close_qnode);
-    // TODO: push to the close queue
+    queue_push(&stream->ctx->pending_closes, &stream->close_qnode);
 }
 
 
@@ -298,7 +299,6 @@ void pd__tcp_connect_io(pd_event_t *event, unsigned events) {
     pd_tcp_t *stream = container_of(event, pd_tcp_t, event);
 
     if (events & PD_CLOSE) {
-        // TODO: close connection
         pd_tcp_close(stream);
         return;
     }
@@ -369,9 +369,6 @@ void pd_write_init(pd_write_t *write_op, char *buf, size_t size, pd_write_cb cb)
 }
 
 
-/* Enqueue write operation and do it asynchronously.
- * Usually requires copying data to the new structure
- */
 void pd_tcp_write_async(pd_tcp_t *stream, pd_write_t *write_op) {
     if (stream->status != PD_TCP_ACTIVE) {
         write_op->cb(write_op, -1);

@@ -1,5 +1,5 @@
 #pragma once
-#include "common.h"
+#include <stddef.h>
 
 #define queue_empty(qptr) (((qptr)->head == NULL) && ((qptr)->tail == NULL))
 

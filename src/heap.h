@@ -1,5 +1,6 @@
 #pragma once
-#include "common.h"
+#include <stdbool.h>
+#include <stddef.h>
 
 struct heap_node {
     struct heap_node *left;

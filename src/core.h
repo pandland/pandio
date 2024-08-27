@@ -1,7 +1,9 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdlib.h>
 #include "heap.h"
+#include "queue.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -43,6 +45,7 @@ struct pd_io_s {
     pd_fd_t poll_fd;
     uint64_t now;
     struct heap timers;
+    struct queue pending_closes;
 };
 
 typedef struct pd_io_s pd_io_t;

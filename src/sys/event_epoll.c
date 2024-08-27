@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include "timers.h"
 #include <stdio.h>
+#include "internal.h"
 
 
 uint64_t pd_now() {
@@ -188,5 +189,6 @@ void pd_io_run(pd_io_t *ctx) {
 
         pd_timers_run(ctx);
         timeout = pd_timers_next(ctx);
+        pd_tcp_pending_close(ctx);
     }
 }

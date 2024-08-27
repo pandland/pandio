@@ -22,10 +22,16 @@ void handle_read(pd_tcp_t *client, char *buf, size_t len) {
     pd_tcp_close(client);
 }
 
+void handle_close(pd_tcp_t *client) {
+    printf("Connection closed\n");
+    free(client);
+}
+
 void handle_connection(pd_tcp_server_t *server, pd_socket_t socket, int status) {
     pd_tcp_t *client = malloc(sizeof(pd_tcp_t));
     pd_tcp_init(server->ctx, client);
     client->on_data = handle_read;
+    client->on_close = handle_close;
 
     pd_tcp_accept(client, socket);
     printf("Received connection #%d\n", counter++);

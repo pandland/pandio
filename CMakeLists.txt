@@ -7,14 +7,15 @@ include(CTest)
 include_directories(src)
 
 set (SRC_FILES
+        src/core.h
+        src/internal.h
         src/tcp.h
-        src/common.h
         src/queue.h
         src/heap.h
-        src/core.h
         src/timers.h
         src/timers.c
         src/pandio.h
+        src/internal.c
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
