@@ -309,13 +309,13 @@ void pd__tcp_connect_io(pd_event_t *event, unsigned events) {
 
         pd_event_read_only(stream->ctx, event, stream->fd);
 
-        if (stream->on_connect != NULL)
-            stream->on_connect(stream);
+        if (stream->on_connect)
+            stream->on_connect(stream, 0);
     }
 }
 
 
-int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_connect)(pd_tcp_t*)) {
+int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_connect)(pd_tcp_t*, int)) {
     pd_socket_t fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0) {
         perror("socket");

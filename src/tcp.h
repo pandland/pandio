@@ -79,7 +79,7 @@ struct pd_tcp_s {
 #endif
     void (*on_data)(struct pd_tcp_s *, char *buf, size_t size);
     void (*on_close)(struct pd_tcp_s *);
-    void (*on_connect)(struct pd_tcp_s *);
+    void (*on_connect)(struct pd_tcp_s *, int);
     enum pd_tcp_status status;
     unsigned flags;
     void *data; // pointer for user's data
@@ -151,4 +151,4 @@ void pd_tcp_resume(pd_tcp_t*);
 /* Graceful connection shutdown. Ensures that incoming data from the peer will be read. */
 void pd_tcp_shutdown(pd_tcp_t*);
 
-int pd_tcp_connect(pd_tcp_t*, const char*, int, void (*on_connect)(pd_tcp_t*));
+int pd_tcp_connect(pd_tcp_t*, const char*, int, void (*on_connect)(pd_tcp_t*, int));

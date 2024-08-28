@@ -19,7 +19,13 @@ void handle_read(pd_tcp_t *stream, char *buf, size_t len) {
     pd_tcp_close(stream);
 }
 
-void handle_connect(pd_tcp_t *stream) {
+void handle_connect(pd_tcp_t *stream, int status) {
+    if (status < 0) {
+        pd_tcp_close(stream);
+        printf("Connect failed.\n");
+        return;
+    }
+
     printf("Connected.\n");
     const char *req = "Hello World";
     pd_write_t *write_op = malloc(sizeof(pd_write_t));

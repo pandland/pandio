@@ -107,7 +107,7 @@ int pd_tcp_listen(pd_tcp_server_t *server,
         return -1;
     }
 
-    if (listen(server->fd, 1024) < 0) {
+    if (listen(server->fd, SOMAXCONN) < 0) {
         closesocket(server->fd);
         return -1;
     }
@@ -331,18 +331,33 @@ void pd_tcp_resume(pd_tcp_t *stream) {
 // callback for IOCP
 void pd__tcp_connect_io(pd_event_t *event) {
     pd_tcp_t *stream = event->data;
-    free(event); // after successful connection, we do not need event object
+    int status = 0;
+    DWORD bytes = 0;
+    /*
+     *  GetQueuedCompletionStatusEx in event loop does not return result for single operation.
+     *  Alternative to GetOverlappedResult is checking event->overlapped.Internal using NT_STATUS macros.
+     *  But Internal is RESERVED field and AFAIK GetOverlapped does something similar under the hood anyway.
+     */
+    BOOL success = GetOverlappedResult((HANDLE)stream->fd, &event->overlapped, &bytes, FALSE);
+    free(event);
 
-    pd__tcp_post_recv(stream);
-    stream->status = PD_TCP_ACTIVE;
+    if (success) {
+        pd__tcp_post_recv(stream);
+        stream->status = PD_TCP_ACTIVE;
+    } else {
+        DWORD err = GetLastError();
+        assert(err != ERROR_IO_PENDING);  // if we got this function called, then operation should be completed, right?
+        status = -1;
+    }
+
     if (stream->on_connect)
-        stream->on_connect(stream);
+        stream->on_connect(stream, status);
 }
 
 
 static LPFN_CONNECTEX pd__connectex = NULL;
 
-int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_connect)(pd_tcp_t*)) {
+int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_connect)(pd_tcp_t*, int)) {
     pd_socket_t fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd == INVALID_SOCKET) {
         return -1;

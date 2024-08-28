@@ -63,10 +63,6 @@ void pd_cond_signal(pd_cond_t *cond) {
 }
 
 
-unsigned long *func(void *arg) {
-    return NULL;
-}
-
 // On Windows it is not necessary.
 void pd_cond_destroy(pd_cond_t *cond) {}
 
@@ -76,18 +72,28 @@ struct pd__thread_runner {
     void *args;
 };
 
-unsigned __stdcall pd__thread_run(void *args) {
-    struct pd__thread_runner *runner = args;
+unsigned __stdcall pd__thread_run(void *arg) {
+    struct pd__thread_runner *runner = arg;
     runner->func(runner->args);
-
+    free(runner);
     return 0;
 }
 
-void pd_thread_create(pd_thread_t *thread, void* (func)(void*), void *args) {
+void pd_thread_create(pd_thread_t *thread, void* (func)(void*), void *arg) {
     struct pd__thread_runner *runner = malloc(sizeof (struct pd__thread_runner));
-    runner->func = func;
-    runner->args = args;
+    if (runner == NULL) {
+        *thread = NULL;
+        return;
+    }
 
-    // TODO: handle error
-    thread = (HANDLE)_beginthreadex(NULL, 0, pd__thread_run, runner, 0, NULL);
+    runner->func = func;
+    runner->args = arg;
+
+    HANDLE _thread;
+    _thread = (HANDLE)_beginthreadex(NULL, 0, pd__thread_run, runner, 0, NULL);
+    if (_thread == NULL) {
+        free(runner);
+    }
+
+    *thread = _thread;
 }
