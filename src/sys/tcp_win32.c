@@ -332,8 +332,11 @@ void pd__tcp_connect_io(pd_event_t *event) {
     pd_tcp_t *stream = event->data;
     free(event); // after successful connection, we do not need event object
 
+    pd__tcp_post_recv(stream);
+    stream->status = PD_TCP_ACTIVE;
     stream->on_connect(stream);
 }
+
 
 static LPFN_CONNECTEX pd_connectex = NULL;
 
@@ -363,7 +366,6 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
         closesocket(fd);
         return -1;
     }
-
     // load ConnectEx function only once
     if (!pd_connectex) {
         GUID guid = WSAID_CONNECTEX;
@@ -385,16 +387,21 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
         return -1;
     }
 
+    if (CreateIoCompletionPort((HANDLE)fd, stream->ctx->poll_fd, 0, 0) == NULL) {
+        closesocket(fd);
+        return -1;
+    }
+
     pd_event_init(connect_ev);
     connect_ev->data = stream;
     connect_ev->handler = pd__tcp_connect_io;
-
     int status = pd_connectex(fd, (struct sockaddr*)&address, sizeof(struct sockaddr_in),
             NULL, 0, NULL, &connect_ev->overlapped);
 
     if (status == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
         free(connect_ev);
         closesocket(fd);
+        CloseHandle((HANDLE)fd);
         return -1;
     }
 

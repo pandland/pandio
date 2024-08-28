@@ -48,7 +48,12 @@ endif ()
 
 add_library(pandio STATIC ${SRC_FILES})
 
-add_executable(samples
+add_executable(sample_server
         samples/server.c
 )
-target_link_libraries(samples PRIVATE pandio)
+target_link_libraries(sample_server PRIVATE pandio)
+
+add_executable(sample_client
+        samples/client.c
+)
+target_link_libraries(sample_client PRIVATE pandio)
