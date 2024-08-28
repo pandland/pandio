@@ -330,7 +330,10 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
     struct sockaddr_in address;
     address.sin_family = AF_INET;
     address.sin_port = htons(port);
-    address.sin_addr.s_addr = inet_addr(host);
+    if (inet_pton(AF_INET, host, &address.sin_addr) <= 0) {
+        pd__closesocket(fd);
+        return -1;
+    }
 
     stream->fd = fd;
     stream->on_connect = on_connect;
