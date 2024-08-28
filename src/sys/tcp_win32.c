@@ -335,6 +335,7 @@ void pd__tcp_connect_io(pd_event_t *event) {
     stream->on_connect(stream);
 }
 
+static LPFN_CONNECTEX pd_connectex = NULL;
 
 int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_connect)(pd_tcp_t*)) {
     pd_socket_t fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -342,23 +343,58 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
         return -1;
     }
 
-    struct sockaddr_in address;
-    address.sin_family = AF_INET;
-    address.sin_port = htons(port);
-    inet_pton(AF_INET, host, &address.sin_addr);
-
     stream->fd = fd;
     stream->on_connect = on_connect;
 
+    struct sockaddr_in address;
+    address.sin_family = AF_INET;
+    address.sin_port = htons(port);
+    if (inet_pton(AF_INET, host, &address.sin_addr) <= 0) {
+        closesocket(fd);
+        return -1;
+    }
+
+    struct sockaddr_in local_addr = { 0 };
+    local_addr.sin_family = AF_INET;
+    local_addr.sin_addr.s_addr = INADDR_ANY;
+    local_addr.sin_port = 0;
+
+    if (bind(fd, (struct sockaddr*)&local_addr, sizeof(local_addr)) == SOCKET_ERROR) {
+        closesocket(fd);
+        return -1;
+    }
+
+    // load ConnectEx function only once
+    if (!pd_connectex) {
+        GUID guid = WSAID_CONNECTEX;
+        DWORD bytes = 0;
+
+        int loaded = WSAIoctl(fd, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid),
+                     &pd_connectex, sizeof(pd_connectex), &bytes, NULL, NULL);
+
+        if (loaded == SOCKET_ERROR) {
+            closesocket(fd);
+            return -1;
+        }
+    }
+
     pd_event_t *connect_ev = malloc(sizeof(pd_event_t));
+    // not enough memory:
+    if (!connect_ev) {
+        closesocket(fd);
+        return -1;
+    }
+
     pd_event_init(connect_ev);
     connect_ev->data = stream;
     connect_ev->handler = pd__tcp_connect_io;
 
-    int status = WSAConnect(fd, (struct sockaddr)&address, sizeof(struct sockaddr_in),
-            NULL, NULL, NULL, &connect_ev->overlapped);
+    int status = pd_connectex(fd, (struct sockaddr*)&address, sizeof(struct sockaddr_in),
+            NULL, 0, NULL, &connect_ev->overlapped);
 
     if (status == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
+        free(connect_ev);
+        closesocket(fd);
         return -1;
     }
 
