@@ -151,6 +151,11 @@ void pd_io_run(pd_io_t *ctx) {
         int events_count =
                 epoll_wait(ctx->poll_fd, events, MAX_EVENTS, timeout);
 
+        if (events_count == -1 && errno == EINTR) {
+            // interrupted by signal
+            continue;
+        }
+
         if (events_count == -1) {
             perror("epoll_wait");
             exit(EXIT_FAILURE);

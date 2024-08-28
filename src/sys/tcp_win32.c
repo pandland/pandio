@@ -149,6 +149,7 @@ void pd_tcp_init(pd_io_t *ctx, pd_tcp_t *stream) {
     stream->ctx = ctx;
     stream->on_close = NULL;
     stream->on_data = NULL;
+    stream->on_connect = NULL;
     stream->writes_size = 0;
     stream->flags = 0;
 }
@@ -334,11 +335,12 @@ void pd__tcp_connect_io(pd_event_t *event) {
 
     pd__tcp_post_recv(stream);
     stream->status = PD_TCP_ACTIVE;
-    stream->on_connect(stream);
+    if (stream->on_connect)
+        stream->on_connect(stream);
 }
 
 
-static LPFN_CONNECTEX pd_connectex = NULL;
+static LPFN_CONNECTEX pd__connectex = NULL;
 
 int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_connect)(pd_tcp_t*)) {
     pd_socket_t fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -367,12 +369,12 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
         return -1;
     }
     // load ConnectEx function only once
-    if (!pd_connectex) {
+    if (!pd__connectex) {
         GUID guid = WSAID_CONNECTEX;
         DWORD bytes = 0;
 
         int loaded = WSAIoctl(fd, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid),
-                     &pd_connectex, sizeof(pd_connectex), &bytes, NULL, NULL);
+                     &pd__connectex, sizeof(pd__connectex), &bytes, NULL, NULL);
 
         if (loaded == SOCKET_ERROR) {
             closesocket(fd);
@@ -388,6 +390,7 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
     }
 
     if (CreateIoCompletionPort((HANDLE)fd, stream->ctx->poll_fd, 0, 0) == NULL) {
+        free(connect_ev);
         closesocket(fd);
         return -1;
     }
@@ -395,7 +398,7 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
     pd_event_init(connect_ev);
     connect_ev->data = stream;
     connect_ev->handler = pd__tcp_connect_io;
-    int status = pd_connectex(fd, (struct sockaddr*)&address, sizeof(struct sockaddr_in),
+    int status = pd__connectex(fd, (struct sockaddr*)&address, sizeof(struct sockaddr_in),
             NULL, 0, NULL, &connect_ev->overlapped);
 
     if (status == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {

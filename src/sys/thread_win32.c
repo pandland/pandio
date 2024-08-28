@@ -22,6 +22,12 @@
 #include "core.h"
 #include <process.h>
 
+
+void pd_sleep(unsigned msec) {
+    Sleep(msec);
+}
+
+
 void pd_mutex_init(pd_mutex_t *mux) {
     InitializeCriticalSection(mux);
 }

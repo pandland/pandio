@@ -24,6 +24,8 @@ typedef pthread_cond_t pd_cond_t;
 typedef pthread_t pd_thread_t;
 #endif
 
+void pd_sleep(unsigned);
+
 void pd_mutex_init(pd_mutex_t*);
 
 void pd_mutex_lock(pd_mutex_t*);

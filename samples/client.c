@@ -27,7 +27,6 @@ void handle_connect(pd_tcp_t *stream) {
 
     stream->on_close = handle_close;
     stream->on_data = handle_read;
-    Sleep(3 * 1000);
     pd_tcp_write(stream, write_op);
 }
 

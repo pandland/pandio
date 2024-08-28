@@ -20,6 +20,19 @@
  */
 
 #include "core.h"
+#include <unistd.h>
+
+void pd_sleep(unsigned msec) {
+    struct timespec timeout;
+    timeout.tv_sec = msec / 1000;
+    timeout.tv_nsec = (msec % 1000) * 1000000;
+
+    int status;
+    do {
+        status = nanosleep(&timeout, &timeout);
+    } while (status == -1 && errno == EINTR);
+}
+
 
 void pd_mutex_init(pd_mutex_t *mux) {
     pthread_mutex_init(mux, NULL);
