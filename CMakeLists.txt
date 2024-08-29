@@ -16,6 +16,8 @@ set (SRC_FILES
         src/timers.c
         src/pandio.h
         src/internal.c
+        src/threadpool.c
+        src/threadpool.h
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")

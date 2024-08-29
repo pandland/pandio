@@ -39,9 +39,21 @@ void handle_connection(pd_tcp_server_t *server, pd_socket_t socket, int status) 
     //printf("Received connection #%d\n", counter++);
 }
 
+void expensive_task(pd_task_t *task) {
+    printf("Job started\n");
+    pd_sleep(15000);
+    printf("Job finished\n");
+}
+
+
 int main() {
     pd_io_t *ctx = malloc(sizeof(pd_io_t));
     pd_io_init(ctx);
+
+    pd_threadpool_init(4);
+    pd_task_t *task = malloc(sizeof(pd_task_t));
+    task->work = expensive_task;
+    pd_task_submit(ctx, task);
 
     pd_tcp_server_t *server = malloc(sizeof(pd_tcp_server_t));
     pd_tcp_server_init(ctx, server);
