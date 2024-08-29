@@ -37,6 +37,7 @@ typedef SOCKET pd_socket_t;
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <unistd.h>
 typedef int pd_socket_t;
 
@@ -141,7 +142,7 @@ void pd_write_init(pd_write_t*, char*, size_t, pd_write_cb);
 
 void pd_tcp_write(pd_tcp_t*, pd_write_t*);
 
-/* Forcefully closes connection - useful for timeouts / error disconnects. */
+/* Forcefully closes connection - useful for timeouts/error disconnects. */
 void pd_tcp_close(pd_tcp_t*);
 
 void pd_tcp_pause(pd_tcp_t*);
@@ -153,7 +154,8 @@ void pd_tcp_shutdown(pd_tcp_t*);
 
 int pd_tcp_connect(pd_tcp_t*, const char*, int, void (*on_connect)(pd_tcp_t*, int));
 
+/* Enable/disable keep-alive functionality and set initial delay */
 int pd_tcp_keepalive(pd_tcp_t*, int, int);
 
-/* Disable/enable Nagle's algorithm */
+/* Enable/disable Nagle's algorithm */
 int pd_tcp_nodelay(pd_tcp_t*, int);

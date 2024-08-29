@@ -416,3 +416,44 @@ void pd_tcp_write(pd_tcp_t *stream, pd_write_t *write_op) {
         pd_tcp_write_async(stream, write_op);
     }
 }
+
+
+int pd_tcp_nodelay(pd_tcp_t *stream, int enable) {
+    if (setsockopt(stream->fd,IPPROTO_TCP,TCP_NODELAY,&enable,sizeof(enable)) < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+
+int pd_tcp_keepalive(pd_tcp_t *stream, int enable, int delay) {
+    if(setsockopt(stream->fd,SOL_SOCKET,SO_KEEPALIVE,&enable, sizeof(enable)) < 0)
+        return -1;
+
+    if (!enable)
+        return 0;
+
+// TCP_KEEPIDLE is used by Linux, TCP_KEEPALIVE is used by BSDs and macOS.
+#ifdef TCP_KEEPIDLE
+    if (setsockopt(stream->fd, IPPROTO_TCP, TCP_KEEPIDLE, &delay, sizeof(delay)) < 0)
+        return -1;
+#elif TCP_KEEPALIVE
+    if (setsockopt(stream->fd, IPPROTO_TCP, TCP_KEEPALIVE, &delay, sizeof (delay)) < 0)
+        return -1;
+#endif
+
+#ifdef TCP_KEEPCNT
+    int cnt = 10;
+    if (setsockopt(stream->fd, IPPROTO_TCP, TCP_KEEPCNT, &cnt, sizeof(cnt)) < 0)
+        return -1;
+#endif
+
+#ifdef TCP_KEEPINTVL
+    int interval = 1;
+    if (setsockopt(stream->fd, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(interval)) < 0)
+        return -1;
+#endif
+
+    return 0;
+}

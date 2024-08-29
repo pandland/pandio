@@ -34,7 +34,7 @@ void handle_connection(pd_tcp_server_t *server, pd_socket_t socket, int status) 
     client->on_close = handle_close;
 
     pd_tcp_accept(client, socket);
-    int stat = pd_tcp_keepalive(client, true, 10);
+    int stat = pd_tcp_keepalive(client, true, 1);
     printf("Keep alive result: %d\n", stat);
     //printf("Received connection #%d\n", counter++);
 }
