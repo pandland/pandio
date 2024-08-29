@@ -23,7 +23,7 @@
 #include <stdio.h>
 
 // how many times issue AcceptEx?
-#define SIMULTANEOUS_ACCEPTS 10
+#define SIMULTANEOUS_ACCEPTS 32
 
 /* private and Windows-specific structure to hold async accept requests */
 struct pd__accept_op_s {
@@ -52,8 +52,26 @@ void pd__tcp_accept_io(pd_event_t *event) {
     pd__accept_op_t *op = event->data;
     pd_tcp_server_t *server = op->server;
 
-    if (server->on_connection)
-        server->on_connection(server, op->socket, 0);
+    DWORD bytes;
+    BOOL success = GetOverlappedResult((HANDLE)op->socket, &event->overlapped, &bytes, FALSE);
+
+    if (success) {
+        /* Important option to set:
+         * https://groups.google.com/g/alt.winsock.programming/c/BCza51BZ9B4
+         */
+        setsockopt(op->socket,
+                   SOL_SOCKET,
+                   SO_UPDATE_ACCEPT_CONTEXT,
+                   (char*)&op->socket,
+                   sizeof(op->socket));
+        if (server->on_connection)
+            server->on_connection(server, op->socket, 0);
+    } else {
+        DWORD err = GetLastError();
+        assert(err != ERROR_IO_PENDING);  // if we got this function called, then operation should be completed, right?
+        closesocket(op->socket);
+        // TODO: pass maybe actual status to the server->on_connection?
+    }
 
     pd__tcp_post_acceptex(server, op);
 }
@@ -195,6 +213,10 @@ void pd__tcp_write_io(pd_event_t *event) {
     if (stream->writes_size == 0) {
         // stream is not writable because have no data to write anymore
         stream->flags &= ~PD_WRITING;
+
+        if (stream->status == PD_TCP_SHUTDOWN) {
+            shutdown(stream->fd, SD_SEND);
+        }
     }
 
     if (stream->status == PD_TCP_CLOSED) {
@@ -424,4 +446,16 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
     }
 
     return 0;
+}
+
+
+void pd_tcp_shutdown(pd_tcp_t *stream) {
+    if (stream->status != PD_TCP_ACTIVE)
+        return;
+
+    stream->status = PD_TCP_SHUTDOWN;
+
+    if (stream->writes_size == 0) {
+        shutdown(stream->fd, SD_SEND);
+    }
 }

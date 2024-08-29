@@ -17,6 +17,8 @@ typedef HANDLE pd_thread_t;
 
 #else
 #include <pthread.h>
+#include <errno.h>
+
 typedef int pd_fd_t;
 
 typedef pthread_mutex_t pd_mutex_t;
