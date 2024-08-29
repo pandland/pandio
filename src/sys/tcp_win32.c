@@ -459,3 +459,40 @@ void pd_tcp_shutdown(pd_tcp_t *stream) {
         shutdown(stream->fd, SD_SEND);
     }
 }
+
+
+int pd_tcp_keepalive(pd_tcp_t *stream, int enable, int delay) {
+    if (setsockopt(stream->fd,
+                   SOL_SOCKET,
+                   SO_KEEPALIVE,
+                   (const char*) &enable,
+                   sizeof(enable)) < 0) {
+        return -1;
+    }
+
+    if (!enable)
+        return 0;
+
+    if (setsockopt(stream->fd,
+                   IPPROTO_TCP,
+                   TCP_KEEPALIVE,
+                   (const char*) &delay,
+                   sizeof (delay)) < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+
+int pd_tcp_nodelay(pd_tcp_t *stream, int enable) {
+    if (setsockopt(stream->fd,
+                   IPPROTO_TCP,
+                   TCP_NODELAY,
+                   (const char *) &enable,
+                   sizeof(enable)) < 0) {
+        return -1;
+    }
+
+    return 0;
+}

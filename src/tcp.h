@@ -152,3 +152,8 @@ void pd_tcp_resume(pd_tcp_t*);
 void pd_tcp_shutdown(pd_tcp_t*);
 
 int pd_tcp_connect(pd_tcp_t*, const char*, int, void (*on_connect)(pd_tcp_t*, int));
+
+int pd_tcp_keepalive(pd_tcp_t*, int, int);
+
+/* Disable/enable Nagle's algorithm */
+int pd_tcp_nodelay(pd_tcp_t*, int);
