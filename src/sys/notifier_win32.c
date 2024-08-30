@@ -21,37 +21,29 @@
 
 #include "core.h"
 #include "internal.h"
-#include <sys/eventfd.h>
-#include <unistd.h>
 
 
-void pd__notifier_io(pd_event_t *event, unsigned events) {
+void pd__notifier_io(pd_event_t *event) {
     pd_notifier_t *notifier = event->data;
 
-    if ((events & PD_POLLIN) && (notifier->handler)) {
+    if (notifier->handler)
         notifier->handler(notifier);
-    }
 }
 
 
 void pd_notifier_init(pd_io_t *ctx, pd_notifier_t *notifier) {
     notifier->ctx = ctx;
-    notifier->fd = eventfd(0, 0);
     notifier->handler = NULL;
-    notifier->udata = NULL;
-    pd_set_nonblocking(notifier->fd);
     pd_event_init(&notifier->event);
     notifier->event.data = notifier;
     notifier->event.handler = pd__notifier_io;
-    pd_event_add_readable(ctx, &notifier->event, notifier->fd);
 }
 
 
 void pd_notifier_send(pd_notifier_t *notifier) {
-    int64_t u = 1;
-    ssize_t ret;
-
-    do {
-        ret = write(notifier->fd, &u, sizeof(int64_t));
-    } while (ret == -1 && errno == EINTR);
+    BOOL success = PostQueuedCompletionStatus(notifier->ctx->poll_fd,
+                                              0, 0, &notifier->event.overlapped);
+    if (!success) {
+        return;
+    }
 }

@@ -45,6 +45,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     list(APPEND SRC_FILES
             src/sys/event_iocp.c
             src/sys/tcp_win32.c
+            src/sys/notifier_win32.c
             src/sys/thread_win32.c
     )
 endif ()

@@ -24,6 +24,7 @@
 #include "timers.h"
 #include <winsock2.h>
 #include "internal.h"
+#include "threadpool.h"
 
 #define ENTRIES_MAX 128
 
@@ -51,6 +52,12 @@ void pd_io_init(pd_io_t *ctx) {
     ctx->now = pd_now();
     queue_init(&ctx->pending_closes);
     pd_timers_heap_init(ctx);
+
+    ctx->task_signal = malloc(sizeof(pd_notifier_t));
+    pd_notifier_init(ctx, ctx->task_signal);
+    ctx->task_signal->handler = pd__task_done;
+
+    queue_init(&ctx->finished_tasks);
 }
 
 

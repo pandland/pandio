@@ -41,7 +41,7 @@ void handle_connection(pd_tcp_server_t *server, pd_socket_t socket, int status) 
 
 void expensive_task(pd_task_t *task) {
     printf("Job started\n");
-    pd_sleep(15000);
+    pd_sleep(3 * 1000);
     printf("Job finished\n");
 }
 
