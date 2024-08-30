@@ -46,11 +46,15 @@ void pd_cond_destroy(pd_cond_t*);
 
 void pd_thread_create(pd_thread_t*, void* (*)(void*), void *);
 
+struct pd_notifier_s;
+
 struct pd_io_s {
     pd_fd_t poll_fd;
     uint64_t now;
     struct heap timers;
     struct queue pending_closes;
+    struct queue finished_tasks;
+    struct pd_notifier_s *task_signal;
 };
 
 typedef struct pd_io_s pd_io_t;
@@ -85,6 +89,19 @@ void pd_io_init(pd_io_t*);
 void pd_io_run(pd_io_t*);
 
 void pd_event_init(pd_event_t*);
+
+struct pd_notifier_s {
+    pd_io_t *ctx;
+    pd_fd_t fd;
+    void (*handler)(struct pd_notifier_s*);
+    void *udata;
+    pd_event_t event;
+};
+typedef struct pd_notifier_s pd_notifier_t;
+
+void pd_notifier_init(pd_io_t*, pd_notifier_t*);
+
+void pd_notifier_send(pd_notifier_t*);
 
 // TODO: make unix declarations INTERNAL
 #ifndef _WIN32

@@ -25,6 +25,7 @@
 #include "timers.h"
 #include <stdio.h>
 #include "internal.h"
+#include "threadpool.h"
 
 
 uint64_t pd_now() {
@@ -44,6 +45,12 @@ void pd_io_init(pd_io_t *ctx) {
 
     ctx->now = pd_now();
     pd_timers_heap_init(ctx);
+
+    ctx->task_signal = malloc(sizeof(pd_notifier_t));
+    pd_notifier_init(ctx, ctx->task_signal);
+    ctx->task_signal->handler = pd__task_done;
+
+    queue_init(&ctx->finished_tasks);
 }
 
 

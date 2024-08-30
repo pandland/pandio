@@ -31,26 +31,37 @@ static pd_cond_t cond;
 static struct queue tasks = { .head = NULL, .tail = NULL };
 static size_t ntasks = 0;
 
+static bool abort_threads = false;
 
-void pd_task_submit(pd_io_t *ctx, pd_task_t *task) {
+
+int pd_task_submit(pd_io_t *ctx, pd_task_t *task) {
+    if (abort_threads) {
+        return -1;
+    }
+
     task->ctx = ctx;
-
     queue_init_node(&task->qnode);
     pd_mutex_lock(&mux);
     queue_push(&tasks, &task->qnode);
     ntasks++;
     pd_cond_signal(&cond);
     pd_mutex_unlock(&mux);
+
+    return 0;
 }
 
 
-void* pd_threadpool_exec(void *arg) {
+void* pd__threadpool_exec(void *arg) {
     while (true) {
         pd_mutex_lock(&mux);
         assert(ntasks >= 0);
 
         while (ntasks == 0) {
             pd_cond_wait(&cond, &mux);
+        }
+
+        if (abort_threads) {
+            break;
         }
 
         struct queue_node *node = queue_pop(&tasks);
@@ -63,14 +74,53 @@ void* pd_threadpool_exec(void *arg) {
             task->work(task);
 
         queue_init_node(&task->qnode);
-        // TODO: push it to the "done queue" inside event loop
-        //  pd_mutex_lock(&mux);
-        //  queue_push(&task->ctx->tasks_done, &task->qnode);
-        //  we need to signal somehow finished task
-        //  pd_mutex_unlock(&mux);
+        pd_mutex_lock(&mux);
+        queue_push(&task->ctx->finished_tasks, &task->qnode);
+        pd_notifier_send(task->ctx->task_signal);
+        pd_mutex_unlock(&mux);
     }
 
     return 0;
+}
+
+
+void pd__task_done(pd_notifier_t *notifier) {
+    pd_io_t *ctx = notifier->ctx;
+
+    struct queue tasks_done;
+    queue_init(&tasks_done);
+
+    pd_mutex_lock(&mux);
+
+    // copy data from synchronized queue to the local queue
+    // because we do not want to execute callbacks under mutex section.
+    while (!queue_empty(&ctx->finished_tasks)) {
+        struct queue_node *node = queue_pop(&ctx->finished_tasks);
+        queue_push(&tasks_done, node);
+    }
+
+    pd_mutex_unlock(&mux);
+
+    // execute done callbacks in the main thread
+    while (!queue_empty(&tasks_done)) {
+        struct queue_node *node = queue_pop(&tasks_done);
+        pd_task_t *task = container_of(node, pd_task_t, qnode);
+
+        if (task->done)
+            task->done(task);
+    }
+}
+
+
+/* Function to stop IDE complaining about infinite loop inside the thread.
+ * Actual threadpool END will be more complicated:
+ *  - we need cancel mechanism
+ *  - we need pd_thread_join() function
+ */
+void pd_threadpool_end() {
+    abort_threads = true;
+    // TODO: we need to cancel remaining operations
+    // TODO: we need something like to pd_thread_join()
 }
 
 
@@ -86,6 +136,6 @@ void pd_threadpool_init(size_t n) {
     pd_cond_init(&cond);
 
     for (int i = 0; i < nthreads; ++i) {
-        pd_thread_create(&threads[i], pd_threadpool_exec, NULL);
+        pd_thread_create(&threads[i], pd__threadpool_exec, NULL);
     }
 }

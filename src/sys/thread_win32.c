@@ -76,6 +76,7 @@ unsigned __stdcall pd__thread_run(void *arg) {
     struct pd__thread_runner *runner = arg;
     runner->func(runner->args);
     free(runner);
+
     return 0;
 }
 

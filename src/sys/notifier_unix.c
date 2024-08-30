@@ -19,24 +19,40 @@
  * SOFTWARE.
  */
 
-#pragma once
 #include "core.h"
+#include "internal.h"
+#include <sys/eventfd.h>
+#include <unistd.h>
+#include <stdio.h>
 
-#define PD_THREADPOOL_SIZE 4
 
-struct pd_task_s {
-    pd_io_t *ctx;
-    void (*work)(struct pd_task_s*);  // work executed inside the thread pool.
-    void (*done)(struct pd_task_s*); // callback executed by the main thread.
-    void *udata;                    // pointer to some user's data.
-    struct queue_node qnode;
-};
+void pd__notifier_io(pd_event_t *event, unsigned events) {
+    pd_notifier_t *notifier = event->data;
 
-typedef struct pd_task_s pd_task_t;
+    if (events & PD_POLLIN) {
+        notifier->handler(notifier);
+    }
+}
 
-void pd_threadpool_init(size_t);
 
-/* Submit a task to the thread pool */
-int pd_task_submit(pd_io_t*, pd_task_t*);
+void pd_notifier_init(pd_io_t *ctx, pd_notifier_t *notifier) {
+    notifier->ctx = ctx;
+    notifier->fd = eventfd(0, 0);
+    notifier->handler = NULL;
+    notifier->udata = NULL;
+    pd_set_nonblocking(notifier->fd);
+    pd_event_init(&notifier->event);
+    notifier->event.data = notifier;
+    notifier->event.handler = pd__notifier_io;
+    pd_event_add_readable(ctx, &notifier->event, notifier->fd);
+}
 
-void pd__task_done(pd_notifier_t*);
+
+void pd_notifier_send(pd_notifier_t *notifier) {
+    int64_t u = 1;
+    ssize_t ret;
+
+    do {
+        ret = write(notifier->fd, &u, sizeof(int64_t));
+    } while (ret == -1 && errno == EINTR);
+}

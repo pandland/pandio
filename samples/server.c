@@ -45,6 +45,9 @@ void expensive_task(pd_task_t *task) {
     printf("Job finished\n");
 }
 
+void task_done(pd_task_t *task) {
+    printf("Task done and this is a main thread\n");
+}
 
 int main() {
     pd_io_t *ctx = malloc(sizeof(pd_io_t));
@@ -53,6 +56,7 @@ int main() {
     pd_threadpool_init(4);
     pd_task_t *task = malloc(sizeof(pd_task_t));
     task->work = expensive_task;
+    task->done = task_done;
     pd_task_submit(ctx, task);
 
     pd_tcp_server_t *server = malloc(sizeof(pd_tcp_server_t));
