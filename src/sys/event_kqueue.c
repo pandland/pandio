@@ -40,7 +40,7 @@ uint64_t pd_now() {
 }
 
 
-int pd_set_nonblocking(pd_fd_t fd) {
+int pd__set_nonblocking(pd_fd_t fd) {
     int flags = fcntl(fd, F_GETFL, 0);
     if (flags == -1) {
         perror("fcntl");

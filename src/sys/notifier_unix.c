@@ -28,7 +28,16 @@ void pd__notifier_io(pd_event_t *event, unsigned events) {
     pd_notifier_t *notifier = event->data;
 
     if ((events & PD_POLLIN) && (notifier->handler)) {
-        notifier->handler(notifier);
+        char buf[512];
+        ssize_t status;
+
+        do {
+            status = read(notifier->fd, buf, 512);
+        } while (status == -1 && errno == EINTR);
+
+        if (status >= 0) {
+            notifier->handler(notifier);
+        }
     }
 }
 
@@ -38,7 +47,7 @@ void pd_notifier_init(pd_io_t *ctx, pd_notifier_t *notifier) {
     notifier->fd = eventfd(0, 0);
     notifier->handler = NULL;
     notifier->udata = NULL;
-    pd_set_nonblocking(notifier->fd);
+    pd__set_nonblocking(notifier->fd);
     pd_event_init(&notifier->event);
     notifier->event.data = notifier;
     notifier->event.handler = pd__notifier_io;

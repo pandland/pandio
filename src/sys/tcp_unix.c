@@ -81,7 +81,7 @@ void pnd__tcp_listener_io(pd_event_t *event, unsigned events) {
         }
     }
 
-    if (pd_set_nonblocking(peer_fd) < 0) {
+    if (pd__set_nonblocking(peer_fd) < 0) {
         pd__closesocket(peer_fd);
         return;
     }
@@ -121,7 +121,7 @@ int pd_tcp_listen(pd_tcp_server_t *server,
         return -1;
     }
 
-    if (pd_set_nonblocking(lfd) < 0) {
+    if (pd__set_nonblocking(lfd) < 0) {
         pd__closesocket(lfd);
         return -1;
     }
@@ -328,7 +328,7 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
         return -1;
     }
 
-    if (pd_set_nonblocking(fd) < 0) {
+    if (pd__set_nonblocking(fd) < 0) {
         pd__closesocket(fd);
         return -1;
     }

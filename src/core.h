@@ -107,10 +107,3 @@ typedef struct pd_notifier_s pd_notifier_t;
 void pd_notifier_init(pd_io_t*, pd_notifier_t*);
 
 void pd_notifier_send(pd_notifier_t*);
-
-// TODO: make unix declarations INTERNAL
-#ifndef _WIN32
-
-int pd_set_nonblocking(pd_fd_t);
-
-#endif

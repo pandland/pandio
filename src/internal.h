@@ -14,6 +14,8 @@ void pd_tcp_pending_close(pd_io_t*);
 
 #ifndef _WIN32
 
+int pd__set_nonblocking(pd_fd_t);
+
 int pd__event_set(pd_io_t*, pd_event_t*, pd_fd_t);
 
 int pd__event_add(pd_io_t*, pd_event_t*, pd_fd_t);

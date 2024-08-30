@@ -101,7 +101,7 @@ int pd__event_del(pd_io_t *ctx, pd_fd_t fd) {
 }
 
 
-int pd_set_nonblocking(pd_fd_t fd) {
+int pd__set_nonblocking(pd_fd_t fd) {
     int flags = fcntl(fd, F_GETFL, 0);
     if (flags == -1) {
         perror("fcntl");
