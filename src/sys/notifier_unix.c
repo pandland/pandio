@@ -23,7 +23,6 @@
 #include "internal.h"
 #include <sys/eventfd.h>
 #include <unistd.h>
-#include <stdio.h>
 
 void pd__notifier_io(pd_event_t *event, unsigned events) {
     pd_notifier_t *notifier = event->data;
@@ -43,7 +42,8 @@ void pd_notifier_init(pd_io_t *ctx, pd_notifier_t *notifier) {
     pd_event_init(&notifier->event);
     notifier->event.data = notifier;
     notifier->event.handler = pd__notifier_io;
-    pd_event_add_readable(ctx, &notifier->event, notifier->fd);
+    notifier->event.flags |= PD_POLLIN;
+    pd__event_add(ctx, &notifier->event, notifier->fd);
 }
 
 
@@ -52,7 +52,6 @@ void pd_notifier_send(pd_notifier_t *notifier) {
     ssize_t ret;
 
     do {
-        printf("Making syscall write() by notifier\n");
         ret = write(notifier->fd, &u, sizeof(int64_t));
     } while (ret == -1 && errno == EINTR);
 }

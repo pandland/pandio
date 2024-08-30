@@ -137,7 +137,9 @@ int pd_tcp_listen(pd_tcp_server_t *server,
     server->on_connection = on_connection;
 
     assert(server->fd > 0);
-    pd_event_add_readable(server->ctx, &server->event, lfd);
+
+    server->event.flags |= PD_POLLIN;
+    pd__event_add(server->ctx, &server->event, lfd);
 
     return 0;
 }
@@ -149,7 +151,7 @@ void pd_tcp_close(pd_tcp_t *stream) {
         return;
 
     stream->status = PD_TCP_CLOSED;
-    pd_event_del(stream->ctx, &stream->event, stream->fd);
+    pd__event_del(stream->ctx, stream->fd);
     pd__closesocket(stream->fd);
 
     // cancel pending writes with failure status
@@ -177,7 +179,8 @@ void pd_tcp_shutdown(pd_tcp_t *stream) {
         shutdown(stream->fd, SHUT_WR);
     } else {
         // wait for all writes to finish
-        pd_event_write_start(stream->ctx, &stream->event, stream->fd);
+        stream->event.flags |= PD_POLLOUT;
+        pd__event_set(stream->ctx, &stream->event, stream->fd);
     }
 }
 
@@ -260,7 +263,8 @@ void pd__tcp_write(pd_tcp_t *stream)
     }
 
     if (queue_empty(&stream->writes)) {
-        pd_event_write_stop(stream->ctx, &stream->event, stream->fd);
+        stream->event.flags &= ~PD_POLLOUT;     // stop writing
+        pd__event_set(stream->ctx, &stream->event, stream->fd);
 
         if (stream->status == PD_TCP_SHUTDOWN)
             shutdown(stream->fd, SHUT_WR);
@@ -291,7 +295,8 @@ void pd_tcp_accept(pd_tcp_t *peer, pd_socket_t fd) {
     peer->fd = fd;
     peer->status = PD_TCP_ACTIVE;
     peer->event.handler = pd__tcp_client_io;
-    pd_event_add_readable(peer->ctx, &peer->event, peer->fd);
+    peer->event.flags |= PD_POLLIN;
+    pd__event_add(peer->ctx, &peer->event, fd);
 }
 
 
@@ -307,7 +312,8 @@ void pd__tcp_connect_io(pd_event_t *event, unsigned events) {
         stream->status = PD_TCP_ACTIVE;
         event->handler = pd__tcp_client_io;
 
-        pd_event_read_only(stream->ctx, event, stream->fd);
+        stream->event.flags = PD_POLLIN;
+        pd__event_set(stream->ctx, &stream->event, stream->fd);
 
         if (stream->on_connect)
             stream->on_connect(stream, 0);
@@ -338,6 +344,7 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
     stream->fd = fd;
     stream->on_connect = on_connect;
     stream->event.handler = pd__tcp_connect_io;
+    stream->event.flags = PD_POLLOUT;
 
     if (connect(fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         if (errno != EINPROGRESS) {
@@ -346,19 +353,21 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
         }
     }
 
-    pd_event_add_writable(stream->ctx, &stream->event, fd);
+    pd__event_add(stream->ctx, &stream->event, fd);
 
     return 0;
 }
 
 
 void pd_tcp_pause(pd_tcp_t *stream) {
-    pd_event_read_stop(stream->ctx, &stream->event, stream->fd);
+    stream->event.flags &= ~PD_POLLIN;
+    pd__event_set(stream->ctx, &stream->event, stream->fd);
 }
 
 
 void pd_tcp_resume(pd_tcp_t *stream) {
-    pd_event_read_start(stream->ctx, &stream->event, stream->fd);
+    stream->event.flags |= PD_POLLIN;
+    pd__event_set(stream->ctx, &stream->event, stream->fd);
 }
 
 

@@ -62,71 +62,42 @@ void pd_event_init(pd_event_t *event) {
 }
 
 
-void pd_event_modify(pd_io_t *ctx, pd_event_t *event, int fd, int operation, unsigned flags) {
+int pd__event_set(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
+    int unsigned flags = 0;
+
+    if (event->flags & PD_POLLIN)
+        flags |= EPOLLIN;
+
+    if (event->flags & PD_POLLOUT)
+        flags |= EPOLLOUT;
+
     struct epoll_event ev;
-    event->flags = flags;
-
-    ev.events = event->flags;
+    ev.events = flags;
     ev.data.ptr = event;
-    if (epoll_ctl(ctx->poll_fd, operation, fd, &ev) == -1) {
-        perror("pnd_modify_event");
-    }
+
+    return epoll_ctl(ctx->poll_fd, EPOLL_CTL_MOD, fd, &ev);
 }
 
 
-void pd_event_add_readable(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
-    event->flags |= EPOLLIN;
-    //event->ctx->handles++;
-    pd_event_modify(ctx, event, fd, EPOLL_CTL_ADD, event->flags);
+int pd__event_add(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
+    int unsigned flags = 0;
+
+    if (event->flags & PD_POLLIN)
+        flags |= EPOLLIN;
+
+    if (event->flags & PD_POLLOUT)
+        flags |= EPOLLOUT;
+
+    struct epoll_event ev;
+    ev.events = flags;
+    ev.data.ptr = event;
+
+    return epoll_ctl(ctx->poll_fd, EPOLL_CTL_ADD, fd, &ev);
 }
 
 
-void pd_event_add_writable(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
-    event->flags |= EPOLLOUT;
-    //event->ctx->handles++;
-    pd_event_modify(ctx, event, fd, EPOLL_CTL_ADD, event->flags);
-}
-
-
-void pd_event_del(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
-    //ctx->handles--;
-    if (epoll_ctl(ctx->poll_fd, EPOLL_CTL_DEL, fd, NULL) == -1) {
-        perror("pnd_remove_event");
-    }
-}
-
-
-void pd_event_read_start(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
-    event->flags |= EPOLLIN;
-    pd_event_modify(ctx, event, fd, EPOLL_CTL_MOD, event->flags);
-}
-
-
-void pd_event_read_stop(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
-    event->flags &= ~EPOLLIN;
-    pd_event_modify(ctx, event, fd, EPOLL_CTL_MOD, event->flags);
-}
-
-
-/* remove WRITE interest and set only READ interest via single system call.
- * equal to calling: pd_event_write_stop and pd_event_read_start
- */
-void pd_event_read_only(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
-    event->flags |= EPOLLIN;
-    event->flags &= ~EPOLLOUT;
-    pd_event_modify(ctx, event, fd, EPOLL_CTL_MOD, event->flags);
-}
-
-
-void pd_event_write_start(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
-    event->flags |= EPOLLOUT;
-    pd_event_modify(ctx, event, fd, EPOLL_CTL_MOD, event->flags);
-}
-
-
-void pd_event_write_stop(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
-    event->flags &= ~EPOLLOUT;
-    pd_event_modify(ctx, event, fd, EPOLL_CTL_MOD, event->flags);
+int pd__event_del(pd_io_t *ctx, pd_fd_t fd) {
+    return epoll_ctl(ctx->poll_fd, EPOLL_CTL_DEL, fd, NULL);
 }
 
 

@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "threadpool.h"
 
 
 uint64_t pd_now() {
@@ -56,37 +57,51 @@ int pd_set_nonblocking(pd_fd_t fd) {
 }
 
 
-void pd_event_modify(pd_io_t *ctx, pd_event_t *event, int fd, int operation, unsigned flags) {
-    struct kevent kev;
-    event->flags = flags;
+void pd_io_init(pd_io_t *ctx) {
+    ctx->poll_fd = kqueue();
+    if (ctx->poll_fd < 0)
+        abort();
 
-    EV_SET(&kev, fd, event->flags, operation, 0, 0, event);
-    if (kevent(ctx->poll_fd, &kev, 1, NULL, 0, NULL) == -1) {
-        perror("pd_event_modify");
+    ctx->now = pd_now();
+    pd_timers_heap_init(ctx);
+
+    ctx->task_signal = malloc(sizeof(pd_notifier_t));
+    pd_notifier_init(ctx, ctx->task_signal);
+    ctx->task_signal->handler = pd__task_done;
+    ctx->task_signaled = false;
+
+    queue_init(&ctx->finished_tasks);
+}
+
+
+int pd__event_set(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
+    struct kevent ev[2];
+    int n = 0;
+
+    if (event->flags & PD_POLLIN) {
+        EV_SET(&ev[n++], fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, event);
+    } else {
+        EV_SET(&ev[n++], fd, EVFILT_READ, EV_DELETE, 0, 0, event);
     }
-}
 
-
-void pd_event_del(pd_io_t *ctx, pd_event_t *event, int fd) {
-    struct kevent kev;
-
-    EV_SET(&kev, fd, event->flags, EV_DELETE, 0, 0, NULL);
-    if (kevent(ctx->poll_fd, &kev, 1, NULL, 0, NULL) == -1) {
-        perror("pd_event_del");
+    if (event->flags & PD_POLLOUT) {
+        EV_SET(&ev[n++], fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, event);
+    } else {
+        EV_SET(&ev[n++], fd, EVFILT_WRITE, EV_DELETE, 0, 0, event);
     }
+
+    return kevent(ctx->poll_fd, ev, n, NULL, 0, NULL);
 }
 
 
-void pd_event_add_readable(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
-    event->flags |= EVFILT_READ;
-    //event->ctx->handles++;
-    pd_event_modify(ctx, event, fd, EV_ADD, event->flags);
+int pd__event_add(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
+    return pd__event_set(ctx, event, fd);
 }
 
 
-void pd_event_read_start(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
-    event->flags |= EVFILT_READ;
-    pd_event_modify(ctx, event, fd, EV_ADD | EV_ENABLE, event->flags);
+int pd__event_del(pd_io_t *ctx, pd_fd_t fd) {
+    // close() should remove event from kqueue (unlike in epoll).
+    return 0;
 }
 
 

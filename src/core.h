@@ -42,6 +42,8 @@ void pd_cond_wait(pd_cond_t*, pd_mutex_t*);
 
 void pd_cond_signal(pd_cond_t*);
 
+void pd_cond_broadcast(pd_cond_t*);
+
 void pd_cond_destroy(pd_cond_t*);
 
 void pd_thread_create(pd_thread_t*, void* (*)(void*), void *);
@@ -109,22 +111,6 @@ void pd_notifier_send(pd_notifier_t*);
 // TODO: make unix declarations INTERNAL
 #ifndef _WIN32
 
-void pd_event_add_readable(pd_io_t*, pd_event_t*, pd_fd_t);
-
-void pd_event_add_writable(pd_io_t*, pd_event_t*, pd_fd_t);
-
-void pd_event_del(pd_io_t*, pd_event_t*, pd_fd_t);
-
-void pd_event_read_start(pd_io_t*, pd_event_t*, pd_fd_t);
-
-void pd_event_read_stop(pd_io_t*, pd_event_t*, pd_fd_t);
-
 int pd_set_nonblocking(pd_fd_t);
-
-void pd_event_read_only(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd);
-
-void pd_event_write_start(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd);
-
-void pd_event_write_stop(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd);
 
 #endif

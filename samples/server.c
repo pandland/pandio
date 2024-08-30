@@ -45,7 +45,7 @@ void expensive_task(pd_task_t *task) {
 }
 
 void task_done(pd_task_t *task) {
-    //printf("Task done and this is a main thread\n");
+    printf("Task done and this is a main thread\n");
     free(task);
 }
 

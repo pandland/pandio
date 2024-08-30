@@ -1,4 +1,4 @@
-> ⚠️ Early stage of development.
+> ⚠️ Early stage of development. Library is still shaping and is API unstable.
 
 <img src="https://github.com/user-attachments/assets/cf70d4ac-9cef-4c66-8295-04946abdafd2" alt="banner" />
 
@@ -12,8 +12,8 @@ Simple library for non-blocking I/O operations. Developed mainly for my PandJS p
 - [x] Non-blocking IO for sockets using epoll.
 - [x] Basic networking abstraction to handle TCP.
 - [x] Support Windows
-- [x] (Untested) Support BSD/MacOS.
-- [ ] Thread pool
+- [x] Thread pool
+- [ ] Support BSD/MacOS.
 - [ ] Async files operations
 - [ ] Better error handling and error reporting to the end-user.
 

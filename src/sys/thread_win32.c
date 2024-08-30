@@ -63,6 +63,11 @@ void pd_cond_signal(pd_cond_t *cond) {
 }
 
 
+void pd_cond_broadcast(pd_cond_t *cond) {
+    WakeAllConditionVariable(cond);
+}
+
+
 // On Windows it is not necessary.
 void pd_cond_destroy(pd_cond_t *cond) {}
 

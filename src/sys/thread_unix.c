@@ -69,6 +69,11 @@ void pd_cond_signal(pd_cond_t *cond) {
 }
 
 
+void pd_cond_broadcast(pd_cond_t *cond) {
+    pthread_cond_broadcast(cond);
+}
+
+
 void pd_cond_destroy(pd_cond_t *cond) {
     pthread_cond_destroy(cond);
 }
