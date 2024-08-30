@@ -57,6 +57,7 @@ struct pd_io_s {
     struct queue pending_closes;
     struct queue finished_tasks;
     struct pd_notifier_s *task_signal;
+    bool task_signaled;
 };
 
 typedef struct pd_io_s pd_io_t;

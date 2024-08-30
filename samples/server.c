@@ -41,13 +41,12 @@ void handle_connection(pd_tcp_server_t *server, pd_socket_t socket, int status) 
 }
 
 void expensive_task(pd_task_t *task) {
-    printf("Job started\n");
-    pd_sleep(5 * 1000);
     printf("Job finished\n");
 }
 
 void task_done(pd_task_t *task) {
-    printf("Task done and this is a main thread\n");
+    //printf("Task done and this is a main thread\n");
+    free(task);
 }
 
 int main() {
@@ -55,10 +54,13 @@ int main() {
     pd_io_init(ctx);
 
     pd_threadpool_init(4);
-    pd_task_t *task = malloc(sizeof(pd_task_t));
-    task->work = expensive_task;
-    task->done = task_done;
-    pd_task_submit(ctx, task);
+
+    for (int i = 0; i < 11; ++i) {
+        pd_task_t *task = malloc(sizeof(pd_task_t));
+        task->work = expensive_task;
+        task->done = task_done;
+        pd_task_submit(ctx, task);
+    }
 
     pd_tcp_server_t *server = malloc(sizeof(pd_tcp_server_t));
     pd_tcp_server_init(ctx, server);
@@ -68,7 +70,6 @@ int main() {
     if (status < 0) {
         printf("Listener failed.\n");
     }
-
 
     pd_io_run(ctx);
 }

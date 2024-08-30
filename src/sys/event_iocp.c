@@ -56,6 +56,7 @@ void pd_io_init(pd_io_t *ctx) {
     ctx->task_signal = malloc(sizeof(pd_notifier_t));
     pd_notifier_init(ctx, ctx->task_signal);
     ctx->task_signal->handler = pd__task_done;
+    ctx->task_signaled = false;
 
     queue_init(&ctx->finished_tasks);
 }

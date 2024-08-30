@@ -24,6 +24,7 @@
 
 static size_t nthreads = 0;
 static pd_thread_t *threads = NULL;
+static size_t waiting_threads = 0;
 
 static pd_mutex_t mux;
 static pd_cond_t cond;
@@ -46,7 +47,10 @@ int pd_task_submit(pd_io_t *ctx, pd_task_t *task) {
     pd_mutex_lock(&mux);
     queue_push(&tasks, &task->qnode);
     ntasks++;
-    pd_cond_signal(&cond);
+
+    if (waiting_threads > 0)
+        pd_cond_signal(&cond);
+
     pd_mutex_unlock(&mux);
 
     return 0;
@@ -59,7 +63,9 @@ void* pd__threadpool_exec(void *arg) {
         assert(ntasks >= 0);
 
         while ((ntasks == 0) && (!abort_threads)) {
+            waiting_threads++;
             pd_cond_wait(&cond, &mux);
+            waiting_threads--;
         }
 
         if (abort_threads) {
@@ -80,7 +86,10 @@ void* pd__threadpool_exec(void *arg) {
         queue_init_node(&task->qnode);
         pd_mutex_lock(&mux);
         queue_push(&task->ctx->finished_tasks, &task->qnode);
-        pd_notifier_send(task->ctx->task_signal);
+
+        if (!task->ctx->task_signaled)
+            pd_notifier_send(task->ctx->task_signal);
+
         pd_mutex_unlock(&mux);
     }
 
@@ -103,6 +112,7 @@ void pd__task_done(pd_notifier_t *notifier) {
         queue_push(&tasks_done, node);
     }
 
+    ctx->task_signaled = false;
     pd_mutex_unlock(&mux);
 
     // execute done callbacks in the main thread
