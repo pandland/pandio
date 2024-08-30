@@ -46,6 +46,8 @@ void pd_cond_destroy(pd_cond_t*);
 
 void pd_thread_create(pd_thread_t*, void* (*)(void*), void *);
 
+void pd_thread_join(pd_thread_t*);
+
 struct pd_notifier_s;
 
 struct pd_io_s {

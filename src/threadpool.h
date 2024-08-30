@@ -36,6 +36,8 @@ typedef struct pd_task_s pd_task_t;
 
 void pd_threadpool_init(size_t);
 
+void pd_threadpool_end();
+
 /* Submit a task to the thread pool */
 int pd_task_submit(pd_io_t*, pd_task_t*);
 

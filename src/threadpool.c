@@ -35,9 +35,11 @@ static bool abort_threads = false;
 
 
 int pd_task_submit(pd_io_t *ctx, pd_task_t *task) {
-    if (abort_threads) {
+    if (abort_threads)
         return -1;
-    }
+
+    if (nthreads == 0)
+        return -1;
 
     task->ctx = ctx;
     queue_init_node(&task->qnode);
@@ -56,11 +58,13 @@ void* pd__threadpool_exec(void *arg) {
         pd_mutex_lock(&mux);
         assert(ntasks >= 0);
 
-        while (ntasks == 0) {
+        while ((ntasks == 0) && (!abort_threads)) {
             pd_cond_wait(&cond, &mux);
         }
 
         if (abort_threads) {
+            pd_cond_signal(&cond);
+            pd_mutex_unlock(&mux);
             break;
         }
 
@@ -112,15 +116,25 @@ void pd__task_done(pd_notifier_t *notifier) {
 }
 
 
-/* Function to stop IDE complaining about infinite loop inside the thread.
- * Actual threadpool END will be more complicated:
- *  - we need cancel mechanism
- *  - we need pd_thread_join() function
- */
 void pd_threadpool_end() {
+    if (nthreads == 0)
+        return;
+
+    pd_mutex_lock(&mux);
     abort_threads = true;
-    // TODO: we need to cancel remaining operations
-    // TODO: we need something like to pd_thread_join()
+    pd_cond_signal(&cond);
+    pd_mutex_unlock(&mux);
+
+    for (int i = 0; i < nthreads; ++i) {
+        pd_thread_join(&threads[i]);
+    }
+
+    free(threads);
+    nthreads = 0;
+    threads = NULL;
+
+    pd_mutex_destroy(&mux);
+    pd_cond_destroy(&cond);
 }
 
 
@@ -129,6 +143,7 @@ void pd_threadpool_init(size_t n) {
     if (nthreads != 0)
         return;
 
+    abort_threads = false;
     nthreads = (n > 0) ? n : PD_THREADPOOL_SIZE;
     threads = malloc(nthreads * sizeof(pd_thread_t));
 

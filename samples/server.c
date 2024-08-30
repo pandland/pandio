@@ -20,6 +20,7 @@ void handle_read(pd_tcp_t *client, char *buf, size_t len) {
 
     pd_tcp_write(client, write_op);
     pd_tcp_shutdown(client);
+    //pd_threadpool_end();
 }
 
 void handle_close(pd_tcp_t *client) {
@@ -41,7 +42,7 @@ void handle_connection(pd_tcp_server_t *server, pd_socket_t socket, int status) 
 
 void expensive_task(pd_task_t *task) {
     printf("Job started\n");
-    pd_sleep(3 * 1000);
+    pd_sleep(5 * 1000);
     printf("Job finished\n");
 }
 
@@ -61,11 +62,13 @@ int main() {
 
     pd_tcp_server_t *server = malloc(sizeof(pd_tcp_server_t));
     pd_tcp_server_init(ctx, server);
+    //pd_threadpool_end();
     printf("Starting to listen...\n");
     int status = pd_tcp_listen(server, 8000, handle_connection);
     if (status < 0) {
         printf("Listener failed.\n");
     }
+
 
     pd_io_run(ctx);
 }

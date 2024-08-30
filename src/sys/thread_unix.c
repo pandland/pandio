@@ -77,3 +77,8 @@ void pd_cond_destroy(pd_cond_t *cond) {
 void pd_thread_create(pd_thread_t *thread, void* (func)(void*), void *args) {
     pthread_create(thread, NULL, func, args);
 }
+
+
+void pd_thread_join(pd_thread_t *thread) {
+    pthread_join(*thread, NULL);
+}
