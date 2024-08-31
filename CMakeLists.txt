@@ -27,6 +27,13 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
             src/sys/notifier_unix.c
             src/sys/thread_unix.c
     )
+
+    set (CMAKE_THREAD_PREFER_PTHREAD TRUE)
+    set (THREADS_PREFER_PTHREAD_FLAG TRUE)
+    find_package(Threads REQUIRED)
+
+    add_library(pandio STATIC ${SRC_FILES})
+    target_link_libraries(pandio PRIVATE pthread)
 endif ()
 
 set(KQUEUE_SYSTEMS "Darwin;FreeBSD;OpenBSD;NetBSD;DragonFly")
@@ -35,8 +42,16 @@ if (CMAKE_SYSTEM_NAME IN_LIST KQUEUE_SYSTEMS)
     list(APPEND SRC_FILES
             src/sys/event_kqueue.c
             src/sys/tcp_unix.c
+            src/sys/notifier_unix.c
             src/sys/thread_unix.c
     )
+
+    set (CMAKE_THREAD_PREFER_PTHREAD TRUE)
+    set (THREADS_PREFER_PTHREAD_FLAG TRUE)
+    find_package(Threads REQUIRED)
+
+    add_library(pandio STATIC ${SRC_FILES})
+    target_link_libraries(pandio PRIVATE pthread)
 endif ()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -48,9 +63,10 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
             src/sys/notifier_win32.c
             src/sys/thread_win32.c
     )
+
+    add_library(pandio STATIC ${SRC_FILES})
 endif ()
 
-add_library(pandio STATIC ${SRC_FILES})
 
 add_executable(sample_server
         samples/server.c
