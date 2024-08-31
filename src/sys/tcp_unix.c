@@ -303,6 +303,11 @@ void pd_tcp_accept(pd_tcp_t *peer, pd_socket_t fd) {
 void pd__tcp_connect_io(pd_event_t *event, unsigned events) {
     pd_tcp_t *stream = container_of(event, pd_tcp_t, event);
 
+    // kqueue each filter is reported seperately
+    // and I want to prevent PD_CLOSE to be reported many times with readable state.
+    if (events & PD_POLLIN)
+        return;
+
     if (events & PD_CLOSE) {
         if (stream->on_connect)
             stream->on_connect(stream, -1);
@@ -313,7 +318,6 @@ void pd__tcp_connect_io(pd_event_t *event, unsigned events) {
         stream->status = PD_TCP_ACTIVE;
         event->handler = pd__tcp_client_io;
 
-        stream->event.flags |= PD_POLLIN;
         stream->event.flags &= ~PD_POLLOUT;
         pd__event_set(stream->ctx, &stream->event, stream->fd);
 
@@ -346,7 +350,7 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
     stream->fd = fd;
     stream->on_connect = on_connect;
     stream->event.handler = pd__tcp_connect_io;
-    stream->event.flags = PD_POLLOUT;
+    stream->event.flags = PD_POLLOUT | PD_POLLIN;
 
     if (connect(fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         if (errno != EINPROGRESS) {
