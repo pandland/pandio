@@ -13,8 +13,9 @@ Simple library for non-blocking I/O operations. Developed mainly for my PandJS p
 - [x] Basic networking abstraction to handle TCP.
 - [x] Support Windows
 - [x] Thread pool
-- [ ] Support BSD/MacOS.
-- [ ] Async files operations
+- [x] Support BSD/MacOS (tested only on FreeBSD).
+- [ ] Signals.
+- [ ] Async files operations.
 - [ ] Better error handling and error reporting to the end-user.
 
 
