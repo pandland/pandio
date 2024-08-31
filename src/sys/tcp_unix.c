@@ -304,7 +304,8 @@ void pd__tcp_connect_io(pd_event_t *event, unsigned events) {
     pd_tcp_t *stream = container_of(event, pd_tcp_t, event);
 
     if (events & PD_CLOSE) {
-        pd_tcp_close(stream);
+        if (stream->on_connect)
+            stream->on_connect(stream, -1);
         return;
     }
 
@@ -312,7 +313,8 @@ void pd__tcp_connect_io(pd_event_t *event, unsigned events) {
         stream->status = PD_TCP_ACTIVE;
         event->handler = pd__tcp_client_io;
 
-        stream->event.flags = PD_POLLIN;
+        stream->event.flags |= PD_POLLIN;
+        stream->event.flags &= ~PD_POLLOUT;
         pd__event_set(stream->ctx, &stream->event, stream->fd);
 
         if (stream->on_connect)
