@@ -21,18 +21,27 @@
 
 #include "core.h"
 #include "internal.h"
-#include <sys/eventfd.h>
 #include <unistd.h>
+
+#ifdef __linux__
+#include <sys/eventfd.h>
+#endif
 
 void pd__notifier_io(pd_event_t *event, unsigned events) {
     pd_notifier_t *notifier = event->data;
+#ifdef __linux__
+    pd_fd_t fd = notifier->fd;
+#else
+    pd_fd_t fd = notifier->fd[0];
+#endif
+
 
     if ((events & PD_POLLIN) && (notifier->handler)) {
         char buf[512];
         ssize_t status;
 
         do {
-            status = read(notifier->fd, buf, 512);
+            status = read(fd, buf, 512);
         } while (status == -1 && errno == EINTR);
 
         if (status >= 0) {
@@ -43,24 +52,43 @@ void pd__notifier_io(pd_event_t *event, unsigned events) {
 
 
 void pd_notifier_init(pd_io_t *ctx, pd_notifier_t *notifier) {
-    notifier->ctx = ctx;
+#ifdef __linux__
     notifier->fd = eventfd(0, 0);
+    pd__set_nonblocking(notifier->fd);
+#else
+    pipe(notifier->fd);
+    pd__set_nonblocking(notifier->fd[0]);
+    pd__set_nonblocking(notifier->fd[1]);
+#endif
+    notifier->ctx = ctx;
     notifier->handler = NULL;
     notifier->udata = NULL;
-    pd__set_nonblocking(notifier->fd);
     pd_event_init(&notifier->event);
     notifier->event.data = notifier;
     notifier->event.handler = pd__notifier_io;
     notifier->event.flags |= PD_POLLIN;
+
+#ifdef __linux__
     pd__event_add(ctx, &notifier->event, notifier->fd);
+#else
+    pd__event_add(ctx, &notifier->event, notifier->fd[0]);
+#endif
 }
 
 
 void pd_notifier_send(pd_notifier_t *notifier) {
+    pd_fd_t fd;
+
+#ifdef __linux__
+    fd = notifier->fd;
+#else
+    fd = notifier->fd[1];
+#endif
+
     int64_t u = 1;
     ssize_t ret;
 
     do {
-        ret = write(notifier->fd, &u, sizeof(int64_t));
+        ret = write(fd, &u, sizeof(int64_t));
     } while (ret == -1 && errno == EINTR);
 }

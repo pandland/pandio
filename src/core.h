@@ -97,7 +97,11 @@ void pd_event_init(pd_event_t*);
 
 struct pd_notifier_s {
     pd_io_t *ctx;
-    pd_fd_t fd;
+#ifdef __linux__
+    pd_fd_t fd;  // on Linux we use eventfd
+#else
+    pd_fd_t fd[2]; // on BSD/macOS we use self-pipe
+#endif
     void (*handler)(struct pd_notifier_s*);
     void *udata;
     pd_event_t event;
