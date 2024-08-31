@@ -49,11 +49,20 @@ void task_done(pd_task_t *task) {
     free(task);
 }
 
+void interval_task(pd_timer_t *timer) {
+    printf("Timer callback\n");
+}
+
+
 int main() {
     pd_io_t *ctx = malloc(sizeof(pd_io_t));
     pd_io_init(ctx);
 
     pd_threadpool_init(4);
+
+    pd_timer_t timer;
+    pd_timer_init(ctx, &timer);
+    pd_timer_repeat(&timer, interval_task, 4000);
 
     for (int i = 0; i < 11; ++i) {
         pd_task_t *task = malloc(sizeof(pd_task_t));

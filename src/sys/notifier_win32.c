@@ -34,7 +34,7 @@ void pd__notifier_io(pd_event_t *event) {
 void pd_notifier_init(pd_io_t *ctx, pd_notifier_t *notifier) {
     notifier->ctx = ctx;
     notifier->handler = NULL;
-    pd_event_init(&notifier->event);
+    pd__event_init(&notifier->event);
     notifier->event.data = notifier;
     notifier->event.handler = pd__notifier_io;
 }

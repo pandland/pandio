@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "threadpool.h"
+#include "internal.h"
 
 
 uint64_t pd_now() {
@@ -37,23 +38,6 @@ uint64_t pd_now() {
     clock_gettime(CLOCK_MONOTONIC, &now);
 
     return now.tv_sec * 1000 + now.tv_nsec / 1000000;
-}
-
-
-int pd__set_nonblocking(pd_fd_t fd) {
-    int flags = fcntl(fd, F_GETFL, 0);
-    if (flags == -1) {
-        perror("fcntl");
-        return -1;
-    }
-
-    flags |= O_NONBLOCK;
-    if (fcntl(fd, F_SETFL, flags) == -1) {
-        perror("fcntl");
-        return -1;
-    }
-
-    return 0;
 }
 
 
@@ -71,6 +55,13 @@ void pd_io_init(pd_io_t *ctx) {
     ctx->task_signaled = false;
 
     queue_init(&ctx->finished_tasks);
+}
+
+
+void pd__event_init(pd_event_t *event) {
+    event->handler = NULL;
+    event->flags = 0;
+    event->data = NULL;
 }
 
 
@@ -122,9 +113,12 @@ void pd_io_run(pd_io_t *ctx) {
         }
 
         int nevents = kevent(ctx->poll_fd, NULL, 0, events, MAX_EVENTS, timeout >= 0 ? &ts : NULL);
+        if (nevents == -1 && errno == EINTR) {
+            // interrupted by signal
+            continue;
+        }
 
         if (nevents == -1) {
-            perror("kevent");
             exit(EXIT_FAILURE);
         }
 
@@ -157,5 +151,6 @@ void pd_io_run(pd_io_t *ctx) {
 
         pd_timers_run(ctx);
         timeout = pd_timers_next(ctx);
+        pd__tcp_pending_close(ctx);
     }
 }

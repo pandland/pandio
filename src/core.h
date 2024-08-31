@@ -93,8 +93,6 @@ void pd_io_init(pd_io_t*);
 
 void pd_io_run(pd_io_t*);
 
-void pd_event_init(pd_event_t*);
-
 struct pd_notifier_s {
     pd_io_t *ctx;
     pd_fd_t fd;

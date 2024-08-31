@@ -29,21 +29,20 @@
 #define ENTRIES_MAX 128
 
 
+static LARGE_INTEGER pd__freq;
+
 uint64_t pd_now() {
-    FILETIME ft;
-    ULARGE_INTEGER li;
-
-    GetSystemTimeAsFileTime(&ft);
-    li.LowPart = ft.dwLowDateTime;
-    li.HighPart = ft.dwHighDateTime;
-
-    return li.QuadPart / 10000ULL;
+    LARGE_INTEGER li;
+    QueryPerformanceCounter(&li);
+    return (li.QuadPart * 1000ULL) / pd__freq.QuadPart;
 }
 
 
 void pd_io_init(pd_io_t *ctx) {
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2, 2), &wsaData);
+
+    QueryPerformanceFrequency(&pd__freq);
 
     ctx->poll_fd = CreateIoCompletionPort(
             INVALID_HANDLE_VALUE,NULL,
@@ -62,7 +61,7 @@ void pd_io_init(pd_io_t *ctx) {
 }
 
 
-void pd_event_init(pd_event_t *event) {
+void pd__event_init(pd_event_t *event) {
     event->handler = NULL;
     event->data = NULL;
     event->bytes = 0;
@@ -110,6 +109,6 @@ void pd_io_run(pd_io_t *ctx) {
 
         pd_timers_run(ctx);
         timeout = pd_timers_next(ctx);
-        pd_tcp_pending_close(ctx);
+        pd__tcp_pending_close(ctx);
     }
 }

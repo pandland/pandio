@@ -20,6 +20,7 @@
  */
 
 #include "tcp.h"
+#include "internal.h"
 #include <stdio.h>
 
 // how many times issue AcceptEx?
@@ -81,7 +82,7 @@ void pd__tcp_post_acceptex(pd_tcp_server_t *server, pd__accept_op_t *op) {
     op->socket = socket(AF_INET, SOCK_STREAM, 0);
     op->server = server;
     queue_init_node(&op->qnode);
-    pd_event_init(&op->event);
+    pd__event_init(&op->event);
     op->event.handler = pd__tcp_accept_io;
     op->event.data = op;
     DWORD ret;
@@ -231,7 +232,7 @@ void pd_write_init(pd_write_t *write_op,
     write_op->cb = cb;
     write_op->data.buf = buf;
     write_op->data.len = size;
-    pd_event_init(&write_op->event);
+    pd__event_init(&write_op->event);
     write_op->event.data = write_op;
     write_op->event.handler = pd__tcp_write_io;
 }
@@ -306,7 +307,7 @@ void pd__tcp_read_io(pd_event_t *event) {
 void pd__tcp_post_recv(pd_tcp_t *stream) {
     assert(stream->fd != INVALID_SOCKET);
 
-    pd_event_init(&stream->revent);
+    pd__event_init(&stream->revent);
     stream->revent.data = stream;
     stream->revent.handler = pd__tcp_read_io;
 
@@ -432,7 +433,7 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
         return -1;
     }
 
-    pd_event_init(connect_ev);
+    pd__event_init(connect_ev);
     connect_ev->data = stream;
     connect_ev->handler = pd__tcp_connect_io;
     int status = pd__connectex(fd, (struct sockaddr*)&address, sizeof(struct sockaddr_in),

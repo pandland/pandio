@@ -10,7 +10,9 @@
 #define container_of(ptr, type, member) \
     ((type *)((char *)(ptr) - offsetof(type, member)))
 
-void pd_tcp_pending_close(pd_io_t*);
+void pd__tcp_pending_close(pd_io_t*);
+
+void pd__event_init(pd_event_t*);
 
 #ifndef _WIN32
 

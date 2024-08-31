@@ -34,7 +34,7 @@ void pd_tcp_init(pd_io_t *ctx, pd_tcp_t *stream) {
     stream->writes_size = 0;
 
     queue_init(&stream->writes);
-    pd_event_init(&stream->event);
+    pd__event_init(&stream->event);
 }
 
 
@@ -54,7 +54,7 @@ void pd_tcp_server_init(pd_io_t *ctx, pd_tcp_server_t *server) {
     server->on_connection = NULL;
     server->data = NULL;
     server->status = PD_TCP_NONE;
-    pd_event_init(&server->event);
+    pd__event_init(&server->event);
 }
 
 

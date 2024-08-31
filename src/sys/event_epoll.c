@@ -21,7 +21,6 @@
 
 #include "core.h"
 #include <sys/epoll.h>
-#include <fcntl.h>
 #include "timers.h"
 #include <stdio.h>
 #include "internal.h"
@@ -55,7 +54,7 @@ void pd_io_init(pd_io_t *ctx) {
 }
 
 
-void pd_event_init(pd_event_t *event) {
+void pd__event_init(pd_event_t *event) {
     event->handler = NULL;
     event->flags = 0;
     event->data = NULL;
@@ -100,22 +99,6 @@ int pd__event_del(pd_io_t *ctx, pd_fd_t fd) {
     return epoll_ctl(ctx->poll_fd, EPOLL_CTL_DEL, fd, NULL);
 }
 
-
-int pd__set_nonblocking(pd_fd_t fd) {
-    int flags = fcntl(fd, F_GETFL, 0);
-    if (flags == -1) {
-        perror("fcntl");
-        return -1;
-    }
-
-    flags |= O_NONBLOCK;
-    if (fcntl(fd, F_SETFL, flags) == -1) {
-        perror("fcntl");
-        return -1;
-    }
-
-    return 0;
-}
 
 #define MAX_EVENTS 1024
 
@@ -173,6 +156,6 @@ void pd_io_run(pd_io_t *ctx) {
 
         pd_timers_run(ctx);
         timeout = pd_timers_next(ctx);
-        pd_tcp_pending_close(ctx);
+        pd__tcp_pending_close(ctx);
     }
 }
