@@ -19,7 +19,7 @@
  * SOFTWARE.
  */
 
-#include "threadpool.h"
+#include "pandio/threadpool.h"
 #include "internal.h"
 
 static size_t nthreads = 0;

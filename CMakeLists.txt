@@ -4,20 +4,19 @@ project(pandio C)
 set(CMAKE_C_STANDARD 11)
 include(CTest)
 
-include_directories(src)
+include_directories(src include)
 
 set (SRC_FILES
-        src/core.h
+        include/pandio/core.h
         src/internal.h
-        src/tcp.h
+        include/pandio/tcp.h
         src/queue.h
         src/heap.h
-        src/timers.h
+        include/pandio/timers.h
         src/timers.c
-        src/pandio.h
         src/internal.c
         src/threadpool.c
-        src/threadpool.h
+        include/pandio/threadpool.h
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")

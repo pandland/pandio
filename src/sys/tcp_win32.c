@@ -19,7 +19,7 @@
  * SOFTWARE.
  */
 
-#include "tcp.h"
+#include "pandio/tcp.h"
 #include "internal.h"
 #include <stdio.h>
 

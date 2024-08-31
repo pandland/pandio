@@ -4,10 +4,10 @@
 extern "C" {
 #endif
 
-#include "core.h"
-#include "tcp.h"
-#include "timers.h"
-#include "threadpool.h"
+#include "pandio/core.h"
+#include "pandio/tcp.h"
+#include "pandio/timers.h"
+#include "pandio/threadpool.h"
 
 #ifdef __cplusplus
 } // extern "C"

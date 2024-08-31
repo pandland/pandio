@@ -19,7 +19,7 @@
  * SOFTWARE.
  */
 
-#include "timers.h"
+#include "pandio/timers.h"
 #include "internal.h"
 
 /* get timer struct pointer from the heap node */

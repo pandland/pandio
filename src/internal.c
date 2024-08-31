@@ -1,5 +1,5 @@
-#include "core.h"
-#include "tcp.h"
+#include "pandio/core.h"
+#include "pandio/tcp.h"
 #include "internal.h"
 #include <fcntl.h>
 

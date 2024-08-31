@@ -20,11 +20,11 @@
  */
 
 #include <stdio.h>
-#include "core.h"
-#include "timers.h"
+#include "pandio/core.h"
+#include "pandio/timers.h"
 #include <winsock2.h>
 #include "internal.h"
-#include "threadpool.h"
+#include "pandio/threadpool.h"
 
 #define ENTRIES_MAX 128
 

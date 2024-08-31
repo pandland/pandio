@@ -19,7 +19,7 @@
  * SOFTWARE.
  */
 
-#include "core.h"
+#include "pandio/core.h"
 #include <process.h>
 
 

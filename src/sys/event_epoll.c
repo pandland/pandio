@@ -19,12 +19,12 @@
  * SOFTWARE.
  */
 
-#include "core.h"
+#include "pandio/core.h"
+#include "pandio/timers.h"
+#include "pandio/threadpool.h"
 #include <sys/epoll.h>
-#include "timers.h"
 #include <stdio.h>
 #include "internal.h"
-#include "threadpool.h"
 
 
 uint64_t pd_now() {
