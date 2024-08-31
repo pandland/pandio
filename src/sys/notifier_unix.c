@@ -62,8 +62,6 @@ void pd_notifier_init(pd_io_t *ctx, pd_notifier_t *notifier) {
 #endif
     notifier->ctx = ctx;
     notifier->handler = NULL;
-    notifier->udata = NULL;
-    pd__set_nonblocking(notifier->fd);
     pd__event_init(&notifier->event);
     notifier->event.data = notifier;
     notifier->event.handler = pd__notifier_io;

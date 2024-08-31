@@ -11,10 +11,12 @@ Simple library for non-blocking I/O operations. Developed mainly for my PandJS p
 - [x] Timers using heap data structure (works like `setTimeout`, `setInterval`).
 - [x] Non-blocking IO for sockets using epoll.
 - [x] Basic networking abstraction to handle TCP.
-- [x] Support Windows
-- [x] Thread pool
+- [x] Support Linux.
+- [x] Support Windows.
+- [x] Thread pool.
 - [x] Support BSD/MacOS (tested only on FreeBSD).
 - [ ] Signals.
+- [ ] Fix tests and GitHub workflows.
 - [ ] Async files operations.
 - [ ] Better error handling and error reporting to the end-user.
 
