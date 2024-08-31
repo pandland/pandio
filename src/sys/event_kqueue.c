@@ -74,6 +74,13 @@ void pd_io_init(pd_io_t *ctx) {
 }
 
 
+void pd_event_init(pd_event_t *event) {
+    event->handler = NULL;
+    event->flags = 0;
+    event->data = NULL;
+}
+
+
 int pd__event_set(pd_io_t *ctx, pd_event_t *event, pd_fd_t fd) {
     struct kevent ev[2];
     int n = 0;

@@ -50,7 +50,13 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     )
 endif ()
 
+set (CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set (THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
+
 add_library(pandio STATIC ${SRC_FILES})
+target_link_libraries(pandio PRIVATE pthread)
+
 
 add_executable(sample_server
         samples/server.c
