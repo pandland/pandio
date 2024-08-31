@@ -20,36 +20,37 @@
  */
 
 #pragma once
+#include <limits.h>
 #include <stdint.h>
 #include "heap.h"
-#include "pandio.h"
+#include "core.h"
 
-struct pnd_timer;
-typedef void (*pnd_timer_callback_t)(struct pnd_timer*);
+struct pd_timer_s;
+typedef void (*pd_timer_callback_t)(struct pd_timer_s*);
 
-struct pnd_timer {
-  pnd_io_t *ctx;
-  uint64_t timeout;
-  uint64_t interval;
-  bool active;
-  void *data;       // custom data for callback
-  struct heap_node hnode;
-  pnd_timer_callback_t on_timeout;
+struct pd_timer_s {
+    pd_io_t *ctx;
+    uint64_t timeout;
+    uint64_t interval;
+    bool active;
+    void *data;       // custom data for callback
+    struct heap_node hnode;
+    pd_timer_callback_t on_timeout;
 };
 
-typedef struct pnd_timer pnd_timer_t;
+typedef struct pd_timer_s pd_timer_t;
 
-void pnd_timer_init(pnd_io_t*, pnd_timer_t*);
+void pd_timer_init(pd_io_t*, pd_timer_t*);
 
-void pnd_timer_start(pnd_timer_t*, pnd_timer_callback_t, uint64_t);
+void pd_timer_start(pd_timer_t*, pd_timer_callback_t, uint64_t);
 
-void pnd_timer_repeat(pnd_timer_t*, pnd_timer_callback_t, uint64_t);
+void pd_timer_repeat(pd_timer_t*, pd_timer_callback_t, uint64_t);
 
 /* safe to call many times */
-void pnd_timer_stop(pnd_timer_t*);
+void pd_timer_stop(pd_timer_t*);
 
-void pnd_timers_heap_init(pnd_io_t*);
+void pd_timers_heap_init(pd_io_t*);
 
-void pnd_timers_run(pnd_io_t*);
+void pd_timers_run(pd_io_t*);
 
-int pnd_timers_next(pnd_io_t*);
+int pd_timers_next(pd_io_t*);

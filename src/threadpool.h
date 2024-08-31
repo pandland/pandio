@@ -19,28 +19,26 @@
  * SOFTWARE.
  */
 
-
 #pragma once
-#include <pthread.h>
-#include <stdlib.h>
-#include "queue.h"
-#include "poll.h"
-#include <sys/eventfd.h>
+#include "core.h"
 
-#define THREAD_POOL_SIZE 4
+#define PD_THREADPOOL_SIZE 4
 
-struct pnd_task {
-  pnd_io_t *ctx;
-  void (*work)(struct pnd_task*);
-  void (*done)(struct pnd_task*);
-  void *data;
-  struct queue_node qnode;
+struct pd_task_s {
+    pd_io_t *ctx;
+    void (*work)(struct pd_task_s*);  // work executed inside the thread pool.
+    void (*done)(struct pd_task_s*); // callback executed by the main thread.
+    void *udata;                    // pointer to some user's data.
+    struct queue_node qnode;
 };
 
-typedef struct pnd_task pnd_task_t;
+typedef struct pd_task_s pd_task_t;
 
-void pnd_work_done_io(pnd_event_t *ev, unsigned events);
+void pd_threadpool_init(size_t);
 
-void pnd_work_submit(pnd_io_t *ctx, pnd_task_t *task);
+void pd_threadpool_end();
 
-void pnd_workers_init();
+/* Submit a task to the thread pool */
+int pd_task_submit(pd_io_t*, pd_task_t*);
+
+void pd__task_done(pd_notifier_t*);

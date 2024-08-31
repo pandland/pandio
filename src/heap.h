@@ -1,5 +1,6 @@
 #pragma once
-#include "common.h"
+#include <stdbool.h>
+#include <stddef.h>
 
 struct heap_node {
     struct heap_node *left;
@@ -15,30 +16,30 @@ struct heap {
     heap_comparator_t comparator;
 };
 
-static void heap_swap(struct heap *h, struct heap_node *parent, struct heap_node *child);
+static void heap_swap(struct heap*, struct heap_node*, struct heap_node*);
 
-static void heap_init(struct heap *h, heap_comparator_t comparator) 
-{
-  h->root = NULL;
-  h->size = 0;
-  h->comparator = comparator;;
+
+static void heap_init(struct heap *h, heap_comparator_t comparator) {
+    h->root = NULL;
+    h->size = 0;
+    h->comparator = comparator;;
 }
 
-static void heap_init_node(struct heap_node *node) 
-{
-  node->left = NULL;
-  node->right = NULL;
-  node->parent = NULL;
+
+static void heap_init_node(struct heap_node *node) {
+    node->left = NULL;
+    node->right = NULL;
+    node->parent = NULL;
 }
 
-/* returns min/max node without removing it */ 
-static struct heap_node *heap_peek(struct heap *h)
-{
+
+/* returns min/max node without removing it */
+static struct heap_node *heap_peek(struct heap *h) {
     return h->root;
 }
 
-static void heap_insert(struct heap *h, struct heap_node *newnode) 
-{
+
+static void heap_insert(struct heap *h, struct heap_node *newnode) {
     if (h->root == NULL) {
         h->root = newnode;
         h->size++;
@@ -93,8 +94,8 @@ static void heap_insert(struct heap *h, struct heap_node *newnode)
     }
 }
 
-static struct heap_node *heap_remove(struct heap *h, struct heap_node *rnode) 
-{
+
+static struct heap_node *heap_remove(struct heap *h, struct heap_node *rnode) {
     if (h->root == NULL) {
         return NULL;
     }
@@ -152,7 +153,7 @@ static struct heap_node *heap_remove(struct heap *h, struct heap_node *rnode)
 
     if (rnode->left)
         rnode->left->parent = last;
-    
+
     if (rnode->right)
         rnode->right->parent = last;
 
@@ -189,14 +190,14 @@ static struct heap_node *heap_remove(struct heap *h, struct heap_node *rnode)
     return rnode;
 }
 
+
 /* returns min/max node and removes it from the heap */
-static struct heap_node *heap_pop(struct heap *h) 
-{
-  return heap_remove(h, h->root);
+static struct heap_node *heap_pop(struct heap *h) {
+    return heap_remove(h, h->root);
 }
 
-static void heap_swap(struct heap *h, struct heap_node *child, struct heap_node *parent) 
-{
+
+static void heap_swap(struct heap *h, struct heap_node *child, struct heap_node *parent) {
     struct heap_node tmp = *parent;
     struct heap_node *grandparent = parent->parent;
 
@@ -217,7 +218,7 @@ static void heap_swap(struct heap *h, struct heap_node *child, struct heap_node 
     if (child->left)
         child->left->parent = parent;
 
-    parent->right = child->right;        
+    parent->right = child->right;
     if (child->right)
         child->right->parent = parent;
 
@@ -234,10 +235,10 @@ static void heap_swap(struct heap *h, struct heap_node *child, struct heap_node 
         child->right = parent;
     else
         child->right = tmp.right;
-    
+
     child->parent = tmp.parent;
 
-    // don't forget to set new root..
+    // don't forget to set new root...
     if (!child->parent)
         h->root = child;
 }

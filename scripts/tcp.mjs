@@ -5,6 +5,6 @@ createServer((socket) => {
 
   socket.on('data', (data) => {
     console.log(data.toString());
-    socket.end(`Echo: ${data}`);
+    socket.write("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello");
   });
-}).listen(3000);
+}).listen(8000);

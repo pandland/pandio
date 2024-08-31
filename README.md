@@ -1,4 +1,4 @@
-> ⚠️ Early stage of development.
+> ⚠️ Early stage of development. Library is still shaping and is API unstable.
 
 <img src="https://github.com/user-attachments/assets/cf70d4ac-9cef-4c66-8295-04946abdafd2" alt="banner" />
 
@@ -11,36 +11,13 @@ Simple library for non-blocking I/O operations. Developed mainly for my PandJS p
 - [x] Timers using heap data structure (works like `setTimeout`, `setInterval`).
 - [x] Non-blocking IO for sockets using epoll.
 - [x] Basic networking abstraction to handle TCP.
+- [x] Support Windows
 - [x] Thread pool
-- [ ] Async files operations
-- [ ] Support many platforms: Windows, MacOS and FreeBSD.
+- [x] Support BSD/MacOS (tested only on FreeBSD).
+- [ ] Signals.
+- [ ] Async files operations.
 - [ ] Better error handling and error reporting to the end-user.
 
-### Build static library
-
-Make sure you have `make` utility installed. Library uses just system calls, so it does not have any external dependencies.
-
-```sh
-make
-```
-
-> This command will create `libpandio.a` file inside `build` directory.
-
-### Running tests
-
-Project uses [Criterion](https://github.com/Snaipe/Criterion) for unit testing:
-
-```sh
-# Make sure you have installed criterion on your system
-
-# Ubuntu
-apt-get install libcriterion-dev
-# Arch Linux (AUR)
-pacaur -S criterion
-
-# Running tests:
-make test
-```
 
 ## License
 

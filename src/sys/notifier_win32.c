@@ -19,28 +19,31 @@
  * SOFTWARE.
  */
 
-#include "pandio.h"
+#include "core.h"
+#include "internal.h"
 
-void pnd_poll_init(pnd_io_t * ctx);
 
-void pnd_poll_run(pnd_io_t * ctx, int timeout);
+void pd__notifier_io(pd_event_t *event) {
+    pd_notifier_t *notifier = event->data;
 
-void pnd_init_event(pnd_event_t * event);
+    if (notifier->handler)
+        notifier->handler(notifier);
+}
 
-void pnd_modify_event(pnd_event_t * event, int fd, uint32_t operation, uint32_t flags);
 
-void pnd_add_event_readable(pnd_event_t *event, pnd_fd_t fd);
+void pd_notifier_init(pd_io_t *ctx, pd_notifier_t *notifier) {
+    notifier->ctx = ctx;
+    notifier->handler = NULL;
+    pd__event_init(&notifier->event);
+    notifier->event.data = notifier;
+    notifier->event.handler = pd__notifier_io;
+}
 
-void pnd_add_event_writable(pnd_event_t *event, pnd_fd_t fd);
 
-void pnd_start_reading(pnd_event_t * event, pnd_fd_t fd);
-
-void pnd_stop_reading(pnd_event_t * event, pnd_fd_t fd);
-
-void pnd_start_writing(pnd_event_t * event, pnd_fd_t fd);
-
-void pnd_stop_writing(pnd_event_t * event, pnd_fd_t fd);
-
-void pnd_remove_event(pnd_event_t * event, pnd_fd_t fd);
-
-int pnd_set_nonblocking(pnd_fd_t fd);
+void pd_notifier_send(pd_notifier_t *notifier) {
+    BOOL success = PostQueuedCompletionStatus(notifier->ctx->poll_fd,
+                                              0, 0, &notifier->event.overlapped);
+    if (!success) {
+        return;
+    }
+}
