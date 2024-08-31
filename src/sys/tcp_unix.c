@@ -303,9 +303,8 @@ void pd_tcp_accept(pd_tcp_t *peer, pd_socket_t fd) {
 void pd__tcp_connect_io(pd_event_t *event, unsigned events) {
     pd_tcp_t *stream = container_of(event, pd_tcp_t, event);
 
-    // kqueue each filter is reported seperately
-    // and I want to prevent PD_CLOSE to be reported many times with readable state.
-    if (events & PD_POLLIN)
+    // we got stale event
+    if (stream->status == PD_TCP_CLOSED)
         return;
 
     if (events & PD_CLOSE) {
