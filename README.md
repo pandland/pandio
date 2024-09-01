@@ -9,7 +9,7 @@ Simple library for non-blocking I/O operations. Developed mainly for my PandJS p
 ### TODO:
 
 - [x] Timers using heap data structure (works like `setTimeout`, `setInterval`).
-- [x] Non-blocking IO for sockets using epoll.
+- [x] Non-blocking IO for sockets using epoll/kqueue/iocp.
 - [x] Basic networking abstraction to handle TCP.
 - [x] Support Linux.
 - [x] Support Windows.
