@@ -1,4 +1,5 @@
 /* Auto generated file */
+#pragma once
 #include <errno.h>
 
 /* PANDIO custom errors: */
