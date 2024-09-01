@@ -19,6 +19,7 @@ set (SRC_FILES
         src/internal.c
         src/threadpool.c
         include/pandio/threadpool.h
+        include/pandio/err.h
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")

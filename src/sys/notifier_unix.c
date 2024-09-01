@@ -19,7 +19,7 @@
  * SOFTWARE.
  */
 
-#include "../../include/pandio/core.h"
+#include "pandio/core.h"
 #include "internal.h"
 #include <unistd.h>
 
