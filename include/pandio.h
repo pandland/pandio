@@ -4,6 +4,7 @@
 extern "C" {
 #endif
 
+#include "pandio/err.h"
 #include "pandio/core.h"
 #include "pandio/tcp.h"
 #include "pandio/timers.h"

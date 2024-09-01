@@ -1,6 +1,12 @@
 /* Auto generated file */
 #include <errno.h>
 
+/* PANDIO custom errors: */
+#define PD_OK (-7000)
+#define PD_UNKNOWN (-7001)
+#define PD_EOF (-7002)
+
+/* Unix system error codes: */
 #ifdef EPERM
 #define PD_EPERM (-EPERM)
 #else
@@ -569,6 +575,12 @@
 #define PD_EOPNOTSUPP (-EOPNOTSUPP)
 #else
 #define PD_EOPNOTSUPP (-95)
+#endif
+
+#ifdef ENOTSUP
+#define PD_ENOTSUP (-ENOTSUP)
+#else
+#define PD_ENOTSUP (-95)
 #endif
 
 #ifdef EPFNOSUPPORT

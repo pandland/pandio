@@ -96,6 +96,7 @@ const errcodes = {
     'EPROTONOSUPPORT': 93, // Protocol not supported
     'ESOCKTNOSUPPORT': 94, // Socket type not supported
     'EOPNOTSUPP': 95,   // Operation not supported on transport endpoint
+    "ENOTSUP": 95,
     'EPFNOSUPPORT': 96, // Protocol family not supported
     'EAFNOSUPPORT': 97, // Address family not supported by protocol
     'EADDRINUSE': 98,   // Address already in use
@@ -136,7 +137,20 @@ const errcodes = {
     'EHWPOISON': 133    // Memory page has hardware error
 };
 
+const pandioExtension = {
+    "PD_OK": -7000,
+    "PD_UNKNOWN": -7001,
+    "PD_EOF": -7002,
+}
+
 let file = "/* Auto generated file */\n#include <errno.h>\n";
+
+file += "\n/* PANDIO custom errors: */\n";
+for (const [code, value] of Object.entries(pandioExtension)) {
+    file += `#define ${code} (${value})\n`;
+}
+
+file += "\n/* Unix system error codes: */";
 
 for (const [code, value] of Object.entries(errcodes)) {
     file += `\n#ifdef ${code}\n#define PD_${code} (-${code})\n#else\n#define PD_${code} (-${value})\n#endif\n`;

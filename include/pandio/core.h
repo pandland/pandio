@@ -14,6 +14,7 @@ typedef HANDLE pd_fd_t;
 typedef CRITICAL_SECTION pd_mutex_t;
 typedef CONDITION_VARIABLE pd_cond_t;
 typedef HANDLE pd_thread_t;
+typedef DWORD pd_errno_t;   // system error type
 
 #else
 #include <pthread.h>
@@ -24,6 +25,7 @@ typedef int pd_fd_t;
 typedef pthread_mutex_t pd_mutex_t;
 typedef pthread_cond_t pd_cond_t;
 typedef pthread_t pd_thread_t;
+typedef int pd_errno_t;   // system error type
 #endif
 
 void pd_sleep(unsigned);
@@ -109,3 +111,9 @@ typedef struct pd_notifier_s pd_notifier_t;
 void pd_notifier_init(pd_io_t*, pd_notifier_t*);
 
 void pd_notifier_send(pd_notifier_t*);
+
+
+int pd_errno();
+
+int pd_errmap(pd_errno_t);
+
