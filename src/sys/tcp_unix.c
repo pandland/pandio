@@ -198,7 +198,7 @@ void pd__tcp_read(pd_tcp_t *stream) {
     // TODO: make callback for own allocations/providing own buffer
     char *buf = malloc(read_size);
     if (buf == NULL) {
-        stream->on_data(stream, buf, -1); // in this scenario - we have no memory for new buffer
+        stream->on_data(stream, buf, PD_ENOMEM); // in this scenario - we have no memory for new buffer
     }
 
     do {
@@ -357,7 +357,7 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
     if (connect(fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         if (errno != EINPROGRESS) {
             pd__closesocket(fd);
-            return pd_errno();
+            return pd_errmap(errno);
         }
     }
 
@@ -391,7 +391,7 @@ void pd_write_init(pd_write_t *write_op, char *buf, size_t size, pd_write_cb cb)
 
 void pd_tcp_write_async(pd_tcp_t *stream, pd_write_t *write_op) {
     if (stream->status != PD_TCP_ACTIVE) {
-        write_op->cb(write_op, -1);
+        write_op->cb(write_op, PD_ECANCELED);
         return;
     }
 

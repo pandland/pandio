@@ -316,6 +316,11 @@ void pd__tcp_post_recv(pd_tcp_t *stream) {
 
     size_t alloc_size = 8 * 1024;
     stream->read_buf.buf = malloc(alloc_size);
+    if (stream->read_buf.buf == NULL) {
+        stream->on_data(stream, NULL, PD_ENOMEM);
+        return;
+    }
+
     stream->read_buf.len = alloc_size;
 
     DWORD bytes;
@@ -326,7 +331,7 @@ void pd__tcp_post_recv(pd_tcp_t *stream) {
             &stream->revent.overlapped, NULL);
 
     if (status == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
-        // TODO: handle this error
+        stream->on_data(stream, stream->read_buf.buf, pd_errno());
         return;
     } else {
         stream->flags |= PD_READING;
