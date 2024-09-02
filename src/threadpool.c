@@ -20,6 +20,7 @@
  */
 
 #include "pandio/threadpool.h"
+#include "pandio/err.h"
 #include "internal.h"
 
 static size_t nthreads = 0;
@@ -37,10 +38,10 @@ static bool abort_threads = false;
 
 int pd_task_submit(pd_io_t *ctx, pd_task_t *task) {
     if (abort_threads)
-        return -1;
+        return PD_ECANCELED;
 
     if (nthreads == 0)
-        return -1;
+        return PD_ECANCELED;
 
     task->ctx = ctx;
     queue_init_node(&task->qnode);

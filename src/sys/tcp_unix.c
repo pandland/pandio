@@ -19,6 +19,7 @@
  * SOFTWARE.
  */
 
+#include "pandio/err.h"
 #include "pandio/tcp.h"
 #include "internal.h"
 #include <stdio.h>
@@ -101,7 +102,7 @@ int pd_tcp_listen(pd_tcp_server_t *server,
 
     pd_socket_t lfd = socket(AF_INET, SOCK_STREAM, 0);
     if (lfd <= 0) {
-        return -1;
+        return pd_errno();
     }
 
     struct sockaddr_in address;
@@ -113,22 +114,22 @@ int pd_tcp_listen(pd_tcp_server_t *server,
 
     if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         pd__closesocket(lfd);
-        return -1;
+        return pd_errno();
     }
 
     if (bind(lfd, (struct sockaddr*)&address, sizeof(address)) < 0) {
         pd__closesocket(lfd);
-        return -1;
+        return pd_errno();
     }
 
     if (pd__set_nonblocking(lfd) < 0) {
         pd__closesocket(lfd);
-        return -1;
+        return pd_errno();
     }
 
     if (listen(lfd, SOMAXCONN) < 0) {
         pd__closesocket(lfd);
-        return -1;
+        return pd_errno();
     }
 
     server->fd = lfd;
@@ -158,7 +159,7 @@ void pd_tcp_close(pd_tcp_t *stream) {
     while (!queue_empty(&stream->writes)) {
         struct queue_node *next = queue_pop(&stream->writes);
         pd_write_t *write_op = container_of(next, pd_write_t, qnode);
-        write_op->cb(write_op, -1);
+        write_op->cb(write_op, PD_ECANCELED);
     }
 
     // schedule close callback to the next event loop iteration.
@@ -215,7 +216,7 @@ void pd__tcp_read(pd_tcp_t *stream) {
             stream->on_data(stream, buf, 0);
             return;
         } else {
-            stream->on_data(stream, buf, -1);
+            stream->on_data(stream, buf, pd_errno());
         }
     } else {
         stream->on_data(stream, buf, nread);
@@ -246,9 +247,8 @@ void pd__tcp_write(pd_tcp_t *stream)
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 return;
             } else {
-                perror("write");
                 queue_pop(&stream->writes);
-                write_op->cb(write_op, -1);
+                write_op->cb(write_op, pd_errno());
                 return;
             }
         }
@@ -308,8 +308,12 @@ void pd__tcp_connect_io(pd_event_t *event, unsigned events) {
         return;
 
     if (events & PD_CLOSE) {
+        int err = 0;
+        socklen_t errsize = sizeof(err);
+        getsockopt(stream->fd, SOL_SOCKET, SO_ERROR, &err,  &errsize);
+
         if (stream->on_connect)
-            stream->on_connect(stream, -1);
+            stream->on_connect(stream, pd_errmap(err));
         return;
     }
 
@@ -329,13 +333,12 @@ void pd__tcp_connect_io(pd_event_t *event, unsigned events) {
 int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_connect)(pd_tcp_t*, int)) {
     pd_socket_t fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0) {
-        perror("socket");
-        return -1;
+        return pd_errno();
     }
 
     if (pd__set_nonblocking(fd) < 0) {
         pd__closesocket(fd);
-        return -1;
+        return pd_errno();
     }
 
     struct sockaddr_in address;
@@ -343,7 +346,7 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
     address.sin_port = htons(port);
     if (inet_pton(AF_INET, host, &address.sin_addr) <= 0) {
         pd__closesocket(fd);
-        return -1;
+        return pd_errno();
     }
 
     stream->fd = fd;
@@ -354,7 +357,7 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
     if (connect(fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         if (errno != EINPROGRESS) {
             pd__closesocket(fd);
-            return -1;
+            return pd_errno();
         }
     }
 
@@ -399,7 +402,7 @@ void pd_tcp_write_async(pd_tcp_t *stream, pd_write_t *write_op) {
 
 void pd_tcp_write(pd_tcp_t *stream, pd_write_t *write_op) {
     if (stream->status != PD_TCP_ACTIVE) {
-        write_op->cb(write_op, -1);
+        write_op->cb(write_op, PD_ECANCELED);
         return;
     }
 
@@ -415,7 +418,7 @@ void pd_tcp_write(pd_tcp_t *stream, pd_write_t *write_op) {
                 return;
             }
 
-            write_op->cb(write_op, -1);
+            write_op->cb(write_op, pd_errno());
             return;
         }
 
@@ -434,7 +437,7 @@ void pd_tcp_write(pd_tcp_t *stream, pd_write_t *write_op) {
 
 int pd_tcp_nodelay(pd_tcp_t *stream, int enable) {
     if (setsockopt(stream->fd,IPPROTO_TCP,TCP_NODELAY,&enable,sizeof(enable)) < 0) {
-        return -1;
+        return pd_errno();
     }
 
     return 0;
@@ -443,7 +446,7 @@ int pd_tcp_nodelay(pd_tcp_t *stream, int enable) {
 
 int pd_tcp_keepalive(pd_tcp_t *stream, int enable, int delay) {
     if(setsockopt(stream->fd,SOL_SOCKET,SO_KEEPALIVE,&enable, sizeof(enable)) < 0)
-        return -1;
+        return pd_errno();
 
     if (!enable)
         return 0;
@@ -451,7 +454,7 @@ int pd_tcp_keepalive(pd_tcp_t *stream, int enable, int delay) {
 // TCP_KEEPIDLE is used by Linux, TCP_KEEPALIVE is used by BSDs and macOS.
 #ifdef TCP_KEEPIDLE
     if (setsockopt(stream->fd, IPPROTO_TCP, TCP_KEEPIDLE, &delay, sizeof(delay)) < 0)
-        return -1;
+        return pd_errno();
 #elif TCP_KEEPALIVE
     if (setsockopt(stream->fd, IPPROTO_TCP, TCP_KEEPALIVE, &delay, sizeof (delay)) < 0)
         return -1;
@@ -460,13 +463,13 @@ int pd_tcp_keepalive(pd_tcp_t *stream, int enable, int delay) {
 #ifdef TCP_KEEPCNT
     int cnt = 10;
     if (setsockopt(stream->fd, IPPROTO_TCP, TCP_KEEPCNT, &cnt, sizeof(cnt)) < 0)
-        return -1;
+        return pd_errno();
 #endif
 
 #ifdef TCP_KEEPINTVL
     int interval = 1;
     if (setsockopt(stream->fd, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(interval)) < 0)
-        return -1;
+        return pd_errno();
 #endif
 
     return 0;

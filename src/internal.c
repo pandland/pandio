@@ -150,8 +150,7 @@ int pd_errmap(pd_errno_t err) {
 }
 
 int pd_errno() {
-    int sys_err = errno();
-    return pd_errmap(sys_err);
+    return pd_errmap(errno);
 }
 
 int pd__set_nonblocking(pd_fd_t fd) {

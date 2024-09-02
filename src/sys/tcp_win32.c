@@ -20,8 +20,8 @@
  */
 
 #include "pandio/tcp.h"
+#include "pandio/err.h"
 #include "internal.h"
-#include <stdio.h>
 
 // how many times issue AcceptEx?
 #define SIMULTANEOUS_ACCEPTS 32
@@ -106,8 +106,7 @@ int pd_tcp_listen(pd_tcp_server_t *server,
     server->on_connection = on_connection;
 
     if (server->fd == INVALID_SOCKET) {
-        printf("Unable to initialize socket\n");
-        return -1;
+        return pd_errno();
     }
 
     struct sockaddr_in address;
@@ -118,17 +117,17 @@ int pd_tcp_listen(pd_tcp_server_t *server,
     const char opt = 1;
     if (setsockopt(server->fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         closesocket(server->fd);
-        return -1;
+        return pd_errno();
     }
 
     if (bind(server->fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         closesocket(server->fd);
-        return -1;
+        return pd_errno();
     }
 
     if (listen(server->fd, SOMAXCONN) < 0) {
         closesocket(server->fd);
-        return -1;
+        return pd_errno();
     }
 
     /* we need to load dynamically MS extension to get AcceptEx function */
@@ -144,7 +143,7 @@ int pd_tcp_listen(pd_tcp_server_t *server,
 
         if (res == SOCKET_ERROR) {
             closesocket(server->fd);
-            return -1;
+            return pd_errno();
         }
     }
 
@@ -155,6 +154,10 @@ int pd_tcp_listen(pd_tcp_server_t *server,
 
     for (int i = 0; i < SIMULTANEOUS_ACCEPTS; ++i) {
         pd__accept_op_t *op = malloc(sizeof(pd__accept_op_t));
+        if (op == NULL) {
+            return PD_ENOMEM;
+        }
+
         pd__tcp_post_acceptex(server, op);
     }
 
@@ -240,7 +243,7 @@ void pd_write_init(pd_write_t *write_op,
 
 void pd_tcp_write(pd_tcp_t *stream, pd_write_t *write_op) {
     if (stream->status != PD_TCP_ACTIVE) {
-        write_op->cb(write_op, -1);
+        write_op->cb(write_op, PD_ECANCELED);
         return;
     }
 
@@ -251,9 +254,9 @@ void pd_tcp_write(pd_tcp_t *stream, pd_write_t *write_op) {
 
     write_op->handle = stream;
 
-    if (status == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
-        //  TODO: map system error codes to library specific codes
-        write_op->cb(write_op, -1);
+    int err;
+    if (status == SOCKET_ERROR && (err = WSAGetLastError()) != WSA_IO_PENDING) {
+        write_op->cb(write_op, pd_errmap(err));
         return;
     } else {
         stream->writes_size++;
@@ -368,9 +371,9 @@ void pd__tcp_connect_io(pd_event_t *event) {
         pd__tcp_post_recv(stream);
         stream->status = PD_TCP_ACTIVE;
     } else {
-        DWORD err = GetLastError();
-        assert(err != ERROR_IO_PENDING);  // if we got this function called, then operation should be completed, right?
-        status = -1;
+        DWORD err = WSAGetLastError();
+        assert(err != WSA_IO_PENDING);  // if we got this function called, then operation should be completed, right?
+        status = pd_errmap(err);
     }
 
     if (stream->on_connect)
@@ -394,7 +397,7 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
     address.sin_port = htons(port);
     if (inet_pton(AF_INET, host, &address.sin_addr) <= 0) {
         closesocket(fd);
-        return -1;
+        return pd_errno();
     }
 
     struct sockaddr_in local_addr = { 0 };
@@ -404,7 +407,7 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
 
     if (bind(fd, (struct sockaddr*)&local_addr, sizeof(local_addr)) == SOCKET_ERROR) {
         closesocket(fd);
-        return -1;
+        return pd_errno();
     }
     // load ConnectEx function only once
     if (!pd__connectex) {
@@ -416,7 +419,7 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
 
         if (loaded == SOCKET_ERROR) {
             closesocket(fd);
-            return -1;
+            return pd_errno();
         }
     }
 
@@ -424,13 +427,13 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
     // not enough memory:
     if (!connect_ev) {
         closesocket(fd);
-        return -1;
+        return PD_ENOMEM;
     }
 
     if (CreateIoCompletionPort((HANDLE)fd, stream->ctx->poll_fd, 0, 0) == NULL) {
         free(connect_ev);
         closesocket(fd);
-        return -1;
+        return pd_errno();
     }
 
     pd__event_init(connect_ev);
@@ -439,11 +442,12 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
     int status = pd__connectex(fd, (struct sockaddr*)&address, sizeof(struct sockaddr_in),
             NULL, 0, NULL, &connect_ev->overlapped);
 
-    if (status == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
+    DWORD err;
+    if (status == SOCKET_ERROR && (err = WSAGetLastError()) != WSA_IO_PENDING) {
         free(connect_ev);
         closesocket(fd);
         CloseHandle((HANDLE)fd);
-        return -1;
+        return pd_errmap(err);
     }
 
     return 0;
@@ -468,7 +472,7 @@ int pd_tcp_keepalive(pd_tcp_t *stream, int enable, int delay) {
                    SO_KEEPALIVE,
                    (const char*) &enable,
                    sizeof(enable)) < 0) {
-        return -1;
+        return pd_errno();
     }
 
     if (!enable)
@@ -479,7 +483,7 @@ int pd_tcp_keepalive(pd_tcp_t *stream, int enable, int delay) {
                    TCP_KEEPALIVE,
                    (const char*) &delay,
                    sizeof (delay)) < 0) {
-        return -1;
+        return pd_errno();
     }
 
     return 0;
@@ -492,7 +496,7 @@ int pd_tcp_nodelay(pd_tcp_t *stream, int enable) {
                    TCP_NODELAY,
                    (const char *) &enable,
                    sizeof(enable)) < 0) {
-        return -1;
+        return pd_errno();
     }
 
     return 0;
