@@ -1,160 +1,170 @@
 import { writeFileSync } from "fs";
 
 const errcodes = {
-  EPERM: 1, // Operation not permitted
-  ENOENT: 2, // No such file or directory
-  ESRCH: 3, // No such process
-  EINTR: 4, // Interrupted system call
-  EIO: 5, // I/O error
-  ENXIO: 6, // No such device or address
-  E2BIG: 7, // Argument list too long
-  ENOEXEC: 8, // Exec format error
-  EBADF: 9, // Bad file number
-  ECHILD: 10, // No child processes
-  EAGAIN: 11, // Try again
-  ENOMEM: 12, // Out of memory
-  EACCES: 13, // Permission denied
-  EFAULT: 14, // Bad address
-  ENOTBLK: 15, // Block device required
-  EBUSY: 16, // Device or resource busy
-  EEXIST: 17, // File exists
-  EXDEV: 18, // Cross-device link
-  ENODEV: 19, // No such device
-  ENOTDIR: 20, // Not a directory
-  EISDIR: 21, // Is a directory
-  EINVAL: 22, // Invalid argument
-  ENFILE: 23, // File table overflow
-  EMFILE: 24, // Too many open files
-  ENOTTY: 25, // Not a typewriter
-  ETXTBSY: 26, // Text file busy
-  EFBIG: 27, // File too large
-  ENOSPC: 28, // No space left on device
-  ESPIPE: 29, // Illegal seek
-  EROFS: 30, // Read-only file system
-  EMLINK: 31, // Too many links
-  EPIPE: 32, // Broken pipe
-  EDOM: 33, // Math argument out of domain of func
-  ERANGE: 34, // Math result not representable
-  EDEADLK: 35, // Resource deadlock would occur
-  ENAMETOOLONG: 36, // File name too long
-  ENOLCK: 37, // No record locks available
-  ENOSYS: 38, // Function not implemented
-  ENOTEMPTY: 39, // Directory not empty
-  ELOOP: 40, // Too many symbolic links encountered
-  EWOULDBLOCK: 11, // Operation would block (same as EAGAIN)
-  ENOMSG: 42, // No message of desired type
-  EIDRM: 43, // Identifier removed
-  ECHRNG: 44, // Channel number out of range
-  EL2NSYNC: 45, // Level 2 not synchronized
-  EL3HLT: 46, // Level 3 halted
-  EL3RST: 47, // Level 3 reset
-  ELNRNG: 48, // Link number out of range
-  EUNATCH: 49, // Protocol driver not attached
-  ENOCSI: 50, // No CSI structure available
-  EL2HLT: 51, // Level 2 halted
-  EBADE: 52, // Invalid exchange
-  EBADR: 53, // Invalid request descriptor
-  EXFULL: 54, // Exchange full
-  ENOANO: 55, // No anode
-  EBADRQC: 56, // Invalid request code
-  EBADSLT: 57, // Invalid slot
-  EDEADLOCK: 35, // Resource deadlock would occur (same as EDEADLK)
-  EBFONT: 59, // Bad font file format
-  ENOSTR: 60, // Device not a stream
-  ENODATA: 61, // No data available
-  ETIME: 62, // Timer expired
-  ENOSR: 63, // Out of streams resources
-  ENONET: 64, // Machine is not on the network
-  ENOPKG: 65, // Package not installed
-  EREMOTE: 66, // Object is remote
-  ENOLINK: 67, // Link has been severed
-  EADV: 68, // Advertise error
-  ESRMNT: 69, // Srmount error
-  ECOMM: 70, // Communication error on send
-  EPROTO: 71, // Protocol error
-  EMULTIHOP: 72, // Multihop attempted
-  EDOTDOT: 73, // RFS specific error
-  EBADMSG: 74, // Not a data message
-  EOVERFLOW: 75, // Value too large for defined data type
-  ENOTUNIQ: 76, // Name not unique on network
-  EBADFD: 77, // File descriptor in bad state
-  EREMCHG: 78, // Remote address changed
-  ELIBACC: 79, // Can not access a needed shared library
-  ELIBBAD: 80, // Accessing a corrupted shared library
-  ELIBSCN: 81, // .lib section in a.out corrupted
-  ELIBMAX: 82, // Attempting to link in too many shared libraries
-  ELIBEXEC: 83, // Cannot exec a shared library directly
-  EILSEQ: 84, // Illegal byte sequence
-  ERESTART: 85, // Interrupted system call should be restarted
-  ESTRPIPE: 86, // Streams pipe error
-  EUSERS: 87, // Too many users
-  ENOTSOCK: 88, // Socket operation on non-socket
-  EDESTADDRREQ: 89, // Destination address required
-  EMSGSIZE: 90, // Message too long
-  EPROTOTYPE: 91, // Protocol wrong type for socket
-  ENOPROTOOPT: 92, // Protocol not available
-  EPROTONOSUPPORT: 93, // Protocol not supported
-  ESOCKTNOSUPPORT: 94, // Socket type not supported
-  EOPNOTSUPP: 95, // Operation not supported on transport endpoint
-  ENOTSUP: 95,
-  EPFNOSUPPORT: 96, // Protocol family not supported
-  EAFNOSUPPORT: 97, // Address family not supported by protocol
-  EADDRINUSE: 98, // Address already in use
-  EADDRNOTAVAIL: 99, // Cannot assign requested address
-  ENETDOWN: 100, // Network is down
-  ENETUNREACH: 101, // Network is unreachable
-  ENETRESET: 102, // Network dropped connection because of reset
-  ECONNABORTED: 103, // Software caused connection abort
-  ECONNRESET: 104, // Connection reset by peer
-  ENOBUFS: 105, // No buffer space available
-  EISCONN: 106, // Transport endpoint is already connected
-  ENOTCONN: 107, // Transport endpoint is not connected
-  ESHUTDOWN: 108, // Cannot send after transport endpoint shutdown
-  ETOOMANYREFS: 109, // Too many references: cannot splice
-  ETIMEDOUT: 110, // Connection timed out
-  ECONNREFUSED: 111, // Connection refused
-  EHOSTDOWN: 112, // Host is down
-  EHOSTUNREACH: 113, // No route to host
-  EALREADY: 114, // Operation already in progress
-  EINPROGRESS: 115, // Operation now in progress
-  ESTALE: 116, // Stale file handle
-  EUCLEAN: 117, // Structure needs cleaning
-  ENOTNAM: 118, // Not a XENIX named type file
-  ENAVAIL: 119, // No XENIX semaphores available
-  EISNAM: 120, // Is a named type file
-  EREMOTEIO: 121, // Remote I/O error
-  EDQUOT: 122, // Quota exceeded
-  ENOMEDIUM: 123, // No medium found
-  EMEDIUMTYPE: 124, // Wrong medium type
-  ECANCELED: 125, // Operation Canceled
-  ENOKEY: 126, // Required key not available
-  EKEYEXPIRED: 127, // Key has expired
-  EKEYREVOKED: 128, // Key has been revoked
-  EKEYREJECTED: 129, // Key was rejected by service
-  EOWNERDEAD: 130, // Owner died
-  ENOTRECOVERABLE: 131, // State not recoverable
-  ERFKILL: 132, // Operation not possible due to RF-kill
-  EHWPOISON: 133, // Memory page has hardware error
+  EPERM: { code: 1, message: "Operation not permitted" },
+  ENOENT: { code: 2, message: "No such file or directory" },
+  ESRCH: { code: 3, message: "No such process" },
+  EINTR: { code: 4, message: "Interrupted system call" },
+  EIO: { code: 5, message: "I/O error" },
+  ENXIO: { code: 6, message: "No such device or address" },
+  E2BIG: { code: 7, message: "Argument list too long" },
+  ENOEXEC: { code: 8, message: "Exec format error" },
+  EBADF: { code: 9, message: "Bad file number" },
+  ECHILD: { code: 10, message: "No child processes" },
+  EAGAIN: { code: 11, message: "Try again" },
+  ENOMEM: { code: 12, message: "Out of memory" },
+  EACCES: { code: 13, message: "Permission denied" },
+  EFAULT: { code: 14, message: "Bad address" },
+  ENOTBLK: { code: 15, message: "Block device required" },
+  EBUSY: { code: 16, message: "Device or resource busy" },
+  EEXIST: { code: 17, message: "File exists" },
+  EXDEV: { code: 18, message: "Cross-device link" },
+  ENODEV: { code: 19, message: "No such device" },
+  ENOTDIR: { code: 20, message: "Not a directory" },
+  EISDIR: { code: 21, message: "Is a directory" },
+  EINVAL: { code: 22, message: "Invalid argument" },
+  ENFILE: { code: 23, message: "File table overflow" },
+  EMFILE: { code: 24, message: "Too many open files" },
+  ENOTTY: { code: 25, message: "Not a typewriter" },
+  ETXTBSY: { code: 26, message: "Text file busy" },
+  EFBIG: { code: 27, message: "File too large" },
+  ENOSPC: { code: 28, message: "No space left on device" },
+  ESPIPE: { code: 29, message: "Illegal seek" },
+  EROFS: { code: 30, message: "Read-only file system" },
+  EMLINK: { code: 31, message: "Too many links" },
+  EPIPE: { code: 32, message: "Broken pipe" },
+  EDOM: { code: 33, message: "Math argument out of domain of func" },
+  ERANGE: { code: 34, message: "Math result not representable" },
+  EDEADLK: { code: 35, message: "Resource deadlock would occur" },
+  ENAMETOOLONG: { code: 36, message: "File name too long" },
+  ENOLCK: { code: 37, message: "No record locks available" },
+  ENOSYS: { code: 38, message: "Function not implemented" },
+  ENOTEMPTY: { code: 39, message: "Directory not empty" },
+  ELOOP: { code: 40, message: "Too many symbolic links encountered" },
+  EWOULDBLOCK: { code: 11, message: "Operation would block" },
+  ENOMSG: { code: 42, message: "No message of desired type" },
+  EIDRM: { code: 43, message: "Identifier removed" },
+  ECHRNG: { code: 44, message: "Channel number out of range" },
+  EL2NSYNC: { code: 45, message: "Level 2 not synchronized" },
+  EL3HLT: { code: 46, message: "Level 3 halted" },
+  EL3RST: { code: 47, message: "Level 3 reset" },
+  ELNRNG: { code: 48, message: "Link number out of range" },
+  EUNATCH: { code: 49, message: "Protocol driver not attached" },
+  ENOCSI: { code: 50, message: "No CSI structure available" },
+  EL2HLT: { code: 51, message: "Level 2 halted" },
+  EBADE: { code: 52, message: "Invalid exchange" },
+  EBADR: { code: 53, message: "Invalid request descriptor" },
+  EXFULL: { code: 54, message: "Exchange full" },
+  ENOANO: { code: 55, message: "No anode" },
+  EBADRQC: { code: 56, message: "Invalid request code" },
+  EBADSLT: { code: 57, message: "Invalid slot" },
+  EDEADLOCK: { code: 35, message: "Resource deadlock would occur" },
+  EBFONT: { code: 59, message: "Bad font file format" },
+  ENOSTR: { code: 60, message: "Device not a stream" },
+  ENODATA: { code: 61, message: "No data available" },
+  ETIME: { code: 62, message: "Timer expired" },
+  ENOSR: { code: 63, message: "Out of streams resources" },
+  ENONET: { code: 64, message: "Machine is not on the network" },
+  ENOPKG: { code: 65, message: "Package not installed" },
+  EREMOTE: { code: 66, message: "Object is remote" },
+  ENOLINK: { code: 67, message: "Link has been severed" },
+  EADV: { code: 68, message: "Advertise error" },
+  ESRMNT: { code: 69, message: "Srmount error" },
+  ECOMM: { code: 70, message: "Communication error on send" },
+  EPROTO: { code: 71, message: "Protocol error" },
+  EMULTIHOP: { code: 72, message: "Multihop attempted" },
+  EDOTDOT: { code: 73, message: "RFS specific error" },
+  EBADMSG: { code: 74, message: "Not a data message" },
+  EOVERFLOW: { code: 75, message: "Value too large for defined data type" },
+  ENOTUNIQ: { code: 76, message: "Name not unique on network" },
+  EBADFD: { code: 77, message: "File descriptor in bad state" },
+  EREMCHG: { code: 78, message: "Remote address changed" },
+  ELIBACC: { code: 79, message: "Can not access a needed shared library" },
+  ELIBBAD: { code: 80, message: "Accessing a corrupted shared library" },
+  ELIBSCN: { code: 81, message: ".lib section in a.out corrupted" },
+  ELIBMAX: { code: 82, message: "Attempting to link in too many shared libraries" },
+  ELIBEXEC: { code: 83, message: "Cannot exec a shared library directly" },
+  EILSEQ: { code: 84, message: "Illegal byte sequence" },
+  ERESTART: { code: 85, message: "Interrupted system call should be restarted" },
+  ESTRPIPE: { code: 86, message: "Streams pipe error" },
+  EUSERS: { code: 87, message: "Too many users" },
+  ENOTSOCK: { code: 88, message: "Socket operation on non-socket" },
+  EDESTADDRREQ: { code: 89, message: "Destination address required" },
+  EMSGSIZE: { code: 90, message: "Message too long" },
+  EPROTOTYPE: { code: 91, message: "Protocol wrong type for socket" },
+  ENOPROTOOPT: { code: 92, message: "Protocol not available" },
+  EPROTONOSUPPORT: { code: 93, message: "Protocol not supported" },
+  ESOCKTNOSUPPORT: { code: 94, message: "Socket type not supported" },
+  EOPNOTSUPP: { code: 95, message: "Operation not supported on transport endpoint" },
+  ENOTSUP: { code: 95, message: "Operation not supported on transport endpoint" },
+  EPFNOSUPPORT: { code: 96, message: "Protocol family not supported" },
+  EAFNOSUPPORT: { code: 97, message: "Address family not supported by protocol" },
+  EADDRINUSE: { code: 98, message: "Address already in use" },
+  EADDRNOTAVAIL: { code: 99, message: "Cannot assign requested address" },
+  ENETDOWN: { code: 100, message: "Network is down" },
+  ENETUNREACH: { code: 101, message: "Network is unreachable" },
+  ENETRESET: { code: 102, message: "Network dropped connection because of reset" },
+  ECONNABORTED: { code: 103, message: "Software caused connection abort" },
+  ECONNRESET: { code: 104, message: "Connection reset by peer" },
+  ENOBUFS: { code: 105, message: "No buffer space available" },
+  EISCONN: { code: 106, message: "Transport endpoint is already connected" },
+  ENOTCONN: { code: 107, message: "Transport endpoint is not connected" },
+  ESHUTDOWN: { code: 108, message: "Cannot send after transport endpoint shutdown" },
+  ETOOMANYREFS: { code: 109, message: "Too many references: cannot splice" },
+  ETIMEDOUT: { code: 110, message: "Connection timed out" },
+  ECONNREFUSED: { code: 111, message: "Connection refused" },
+  EHOSTDOWN: { code: 112, message: "Host is down" },
+  EHOSTUNREACH: { code: 113, message: "No route to host" },
+  EALREADY: { code: 114, message: "Operation already in progress" },
+  EINPROGRESS: { code: 115, message: "Operation now in progress" },
+  ESTALE: { code: 116, message: "Stale file handle" },
+  EUCLEAN: { code: 117, message: "Structure needs cleaning" },
+  ENOTNAM: { code: 118, message: "Not a XENIX named type file" },
+  ENAVAIL: { code: 119, message: "No XENIX semaphores available" },
+  EISNAM: { code: 120, message: "Is a named type file" },
+  EREMOTEIO: { code: 121, message: "Remote I/O error" },
+  EDQUOT: { code: 122, message: "Quota exceeded" },
+  ENOMEDIUM: { code: 123, message: "No medium found" },
+  EMEDIUMTYPE: { code: 124, message: "Wrong medium type" },
+  ECANCELED: { code: 125, message: "Operation Canceled" },
+  ENOKEY: { code: 126, message: "Required key not available" },
+  EKEYEXPIRED: { code: 127, message: "Key has expired" },
+  EKEYREVOKED: { code: 128, message: "Key has been revoked" },
+  EKEYREJECTED: { code: 129, message: "Key was rejected by service" },
+  EOWNERDEAD: { code: 130, message: "Owner died" },
+  ENOTRECOVERABLE: { code: 131, message: "State not recoverable" },
+  ERFKILL: { code: 132, message: "Operation not possible due to RF-kill" },
+  EHWPOISON: { code: 133, message: "Memory page has hardware error" },
 };
 
 const pandioExtension = {
-  PD_OK: -7000,
-  PD_UNKNOWN: -7001,
-  PD_EOF: -7002,
+  PD_OK: { code: 0, message: "Success" },
+  PD_UNKNOWN: { code: -7000, message: "Unknown error" },
+  PD_EOF: { code: -7002, message: "End of the stream" },
 };
 
 let file = "/* Auto generated file */\n#pragma once\n#include <errno.h>\n";
 
 file += "\n/* PANDIO custom errors: */\n";
-for (const [code, value] of Object.entries(pandioExtension)) {
-  file += `#define ${code} (${value})\n`;
+for (const [name, { code }] of Object.entries(pandioExtension)) {
+  file += `#define ${name} (${code})\n`;
 }
 
 file += "\n/* Unix system error codes: */";
 
-for (const [code, value] of Object.entries(errcodes)) {
-  file += `\n#ifdef ${code}\n#define PD_${code} (-${code})\n#else\n#define PD_${code} (-${value})\n#endif\n`;
+for (const [name, { code }] of Object.entries(errcodes)) {
+  file += `\n#ifdef ${name}\n#define PD_${name} (-${name})\n#else\n#define PD_${name} (-${code})\n#endif\n`;
 }
 
-// run this script from the root of the project
+file += "\n\n#define PD_ERR_STR_MAPPING (X)       \\\n";
+
+for (const [name, { message }] of Object.entries(errcodes)) {
+  file += `   X(PD_${name}, "${message}")       \\\n`;
+}
+
+const maxIndex = Object.entries(pandioExtension).length - 1;
+Object.entries(pandioExtension).forEach(([name, { message }], index) => {
+  file += `   X(PD_${name}, "${message}")${ index === maxIndex ? "" : "       \\" }\n`;
+});
+
 writeFileSync("./include/pandio/err.h", file, { encoding: "utf8" });

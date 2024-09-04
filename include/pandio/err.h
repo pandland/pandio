@@ -3,8 +3,8 @@
 #include <errno.h>
 
 /* PANDIO custom errors: */
-#define PD_OK (-7000)
-#define PD_UNKNOWN (-7001)
+#define PD_OK (0)
+#define PD_UNKNOWN (-7000)
 #define PD_EOF (-7002)
 
 /* Unix system error codes: */
@@ -811,3 +811,143 @@
 #else
 #define PD_EHWPOISON (-133)
 #endif
+
+
+#define PD_ERR_STR_MAPPING (X)       \
+   X(PD_EPERM, "Operation not permitted")       \
+   X(PD_ENOENT, "No such file or directory")       \
+   X(PD_ESRCH, "No such process")       \
+   X(PD_EINTR, "Interrupted system call")       \
+   X(PD_EIO, "I/O error")       \
+   X(PD_ENXIO, "No such device or address")       \
+   X(PD_E2BIG, "Argument list too long")       \
+   X(PD_ENOEXEC, "Exec format error")       \
+   X(PD_EBADF, "Bad file number")       \
+   X(PD_ECHILD, "No child processes")       \
+   X(PD_EAGAIN, "Try again")       \
+   X(PD_ENOMEM, "Out of memory")       \
+   X(PD_EACCES, "Permission denied")       \
+   X(PD_EFAULT, "Bad address")       \
+   X(PD_ENOTBLK, "Block device required")       \
+   X(PD_EBUSY, "Device or resource busy")       \
+   X(PD_EEXIST, "File exists")       \
+   X(PD_EXDEV, "Cross-device link")       \
+   X(PD_ENODEV, "No such device")       \
+   X(PD_ENOTDIR, "Not a directory")       \
+   X(PD_EISDIR, "Is a directory")       \
+   X(PD_EINVAL, "Invalid argument")       \
+   X(PD_ENFILE, "File table overflow")       \
+   X(PD_EMFILE, "Too many open files")       \
+   X(PD_ENOTTY, "Not a typewriter")       \
+   X(PD_ETXTBSY, "Text file busy")       \
+   X(PD_EFBIG, "File too large")       \
+   X(PD_ENOSPC, "No space left on device")       \
+   X(PD_ESPIPE, "Illegal seek")       \
+   X(PD_EROFS, "Read-only file system")       \
+   X(PD_EMLINK, "Too many links")       \
+   X(PD_EPIPE, "Broken pipe")       \
+   X(PD_EDOM, "Math argument out of domain of func")       \
+   X(PD_ERANGE, "Math result not representable")       \
+   X(PD_EDEADLK, "Resource deadlock would occur")       \
+   X(PD_ENAMETOOLONG, "File name too long")       \
+   X(PD_ENOLCK, "No record locks available")       \
+   X(PD_ENOSYS, "Function not implemented")       \
+   X(PD_ENOTEMPTY, "Directory not empty")       \
+   X(PD_ELOOP, "Too many symbolic links encountered")       \
+   X(PD_EWOULDBLOCK, "Operation would block")       \
+   X(PD_ENOMSG, "No message of desired type")       \
+   X(PD_EIDRM, "Identifier removed")       \
+   X(PD_ECHRNG, "Channel number out of range")       \
+   X(PD_EL2NSYNC, "Level 2 not synchronized")       \
+   X(PD_EL3HLT, "Level 3 halted")       \
+   X(PD_EL3RST, "Level 3 reset")       \
+   X(PD_ELNRNG, "Link number out of range")       \
+   X(PD_EUNATCH, "Protocol driver not attached")       \
+   X(PD_ENOCSI, "No CSI structure available")       \
+   X(PD_EL2HLT, "Level 2 halted")       \
+   X(PD_EBADE, "Invalid exchange")       \
+   X(PD_EBADR, "Invalid request descriptor")       \
+   X(PD_EXFULL, "Exchange full")       \
+   X(PD_ENOANO, "No anode")       \
+   X(PD_EBADRQC, "Invalid request code")       \
+   X(PD_EBADSLT, "Invalid slot")       \
+   X(PD_EDEADLOCK, "Resource deadlock would occur")       \
+   X(PD_EBFONT, "Bad font file format")       \
+   X(PD_ENOSTR, "Device not a stream")       \
+   X(PD_ENODATA, "No data available")       \
+   X(PD_ETIME, "Timer expired")       \
+   X(PD_ENOSR, "Out of streams resources")       \
+   X(PD_ENONET, "Machine is not on the network")       \
+   X(PD_ENOPKG, "Package not installed")       \
+   X(PD_EREMOTE, "Object is remote")       \
+   X(PD_ENOLINK, "Link has been severed")       \
+   X(PD_EADV, "Advertise error")       \
+   X(PD_ESRMNT, "Srmount error")       \
+   X(PD_ECOMM, "Communication error on send")       \
+   X(PD_EPROTO, "Protocol error")       \
+   X(PD_EMULTIHOP, "Multihop attempted")       \
+   X(PD_EDOTDOT, "RFS specific error")       \
+   X(PD_EBADMSG, "Not a data message")       \
+   X(PD_EOVERFLOW, "Value too large for defined data type")       \
+   X(PD_ENOTUNIQ, "Name not unique on network")       \
+   X(PD_EBADFD, "File descriptor in bad state")       \
+   X(PD_EREMCHG, "Remote address changed")       \
+   X(PD_ELIBACC, "Can not access a needed shared library")       \
+   X(PD_ELIBBAD, "Accessing a corrupted shared library")       \
+   X(PD_ELIBSCN, ".lib section in a.out corrupted")       \
+   X(PD_ELIBMAX, "Attempting to link in too many shared libraries")       \
+   X(PD_ELIBEXEC, "Cannot exec a shared library directly")       \
+   X(PD_EILSEQ, "Illegal byte sequence")       \
+   X(PD_ERESTART, "Interrupted system call should be restarted")       \
+   X(PD_ESTRPIPE, "Streams pipe error")       \
+   X(PD_EUSERS, "Too many users")       \
+   X(PD_ENOTSOCK, "Socket operation on non-socket")       \
+   X(PD_EDESTADDRREQ, "Destination address required")       \
+   X(PD_EMSGSIZE, "Message too long")       \
+   X(PD_EPROTOTYPE, "Protocol wrong type for socket")       \
+   X(PD_ENOPROTOOPT, "Protocol not available")       \
+   X(PD_EPROTONOSUPPORT, "Protocol not supported")       \
+   X(PD_ESOCKTNOSUPPORT, "Socket type not supported")       \
+   X(PD_EOPNOTSUPP, "Operation not supported on transport endpoint")       \
+   X(PD_ENOTSUP, "Operation not supported on transport endpoint")       \
+   X(PD_EPFNOSUPPORT, "Protocol family not supported")       \
+   X(PD_EAFNOSUPPORT, "Address family not supported by protocol")       \
+   X(PD_EADDRINUSE, "Address already in use")       \
+   X(PD_EADDRNOTAVAIL, "Cannot assign requested address")       \
+   X(PD_ENETDOWN, "Network is down")       \
+   X(PD_ENETUNREACH, "Network is unreachable")       \
+   X(PD_ENETRESET, "Network dropped connection because of reset")       \
+   X(PD_ECONNABORTED, "Software caused connection abort")       \
+   X(PD_ECONNRESET, "Connection reset by peer")       \
+   X(PD_ENOBUFS, "No buffer space available")       \
+   X(PD_EISCONN, "Transport endpoint is already connected")       \
+   X(PD_ENOTCONN, "Transport endpoint is not connected")       \
+   X(PD_ESHUTDOWN, "Cannot send after transport endpoint shutdown")       \
+   X(PD_ETOOMANYREFS, "Too many references: cannot splice")       \
+   X(PD_ETIMEDOUT, "Connection timed out")       \
+   X(PD_ECONNREFUSED, "Connection refused")       \
+   X(PD_EHOSTDOWN, "Host is down")       \
+   X(PD_EHOSTUNREACH, "No route to host")       \
+   X(PD_EALREADY, "Operation already in progress")       \
+   X(PD_EINPROGRESS, "Operation now in progress")       \
+   X(PD_ESTALE, "Stale file handle")       \
+   X(PD_EUCLEAN, "Structure needs cleaning")       \
+   X(PD_ENOTNAM, "Not a XENIX named type file")       \
+   X(PD_ENAVAIL, "No XENIX semaphores available")       \
+   X(PD_EISNAM, "Is a named type file")       \
+   X(PD_EREMOTEIO, "Remote I/O error")       \
+   X(PD_EDQUOT, "Quota exceeded")       \
+   X(PD_ENOMEDIUM, "No medium found")       \
+   X(PD_EMEDIUMTYPE, "Wrong medium type")       \
+   X(PD_ECANCELED, "Operation Canceled")       \
+   X(PD_ENOKEY, "Required key not available")       \
+   X(PD_EKEYEXPIRED, "Key has expired")       \
+   X(PD_EKEYREVOKED, "Key has been revoked")       \
+   X(PD_EKEYREJECTED, "Key was rejected by service")       \
+   X(PD_EOWNERDEAD, "Owner died")       \
+   X(PD_ENOTRECOVERABLE, "State not recoverable")       \
+   X(PD_ERFKILL, "Operation not possible due to RF-kill")       \
+   X(PD_EHWPOISON, "Memory page has hardware error")       \
+   X(PD_PD_OK, "Success")       \
+   X(PD_PD_UNKNOWN, "Unknown error")       \
+   X(PD_PD_EOF, "End of the stream")
