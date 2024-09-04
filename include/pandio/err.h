@@ -11,809 +11,809 @@
 #ifdef EPERM
 #define PD_EPERM (-EPERM)
 #else
-#define PD_EPERM (-1)
+#define PD_EPERM (-3001)
 #endif
 
 #ifdef ENOENT
 #define PD_ENOENT (-ENOENT)
 #else
-#define PD_ENOENT (-2)
+#define PD_ENOENT (-3002)
 #endif
 
 #ifdef ESRCH
 #define PD_ESRCH (-ESRCH)
 #else
-#define PD_ESRCH (-3)
+#define PD_ESRCH (-3003)
 #endif
 
 #ifdef EINTR
 #define PD_EINTR (-EINTR)
 #else
-#define PD_EINTR (-4)
+#define PD_EINTR (-3004)
 #endif
 
 #ifdef EIO
 #define PD_EIO (-EIO)
 #else
-#define PD_EIO (-5)
+#define PD_EIO (-3005)
 #endif
 
 #ifdef ENXIO
 #define PD_ENXIO (-ENXIO)
 #else
-#define PD_ENXIO (-6)
+#define PD_ENXIO (-3006)
 #endif
 
 #ifdef E2BIG
 #define PD_E2BIG (-E2BIG)
 #else
-#define PD_E2BIG (-7)
+#define PD_E2BIG (-3007)
 #endif
 
 #ifdef ENOEXEC
 #define PD_ENOEXEC (-ENOEXEC)
 #else
-#define PD_ENOEXEC (-8)
+#define PD_ENOEXEC (-3008)
 #endif
 
 #ifdef EBADF
 #define PD_EBADF (-EBADF)
 #else
-#define PD_EBADF (-9)
+#define PD_EBADF (-3009)
 #endif
 
 #ifdef ECHILD
 #define PD_ECHILD (-ECHILD)
 #else
-#define PD_ECHILD (-10)
+#define PD_ECHILD (-3010)
 #endif
 
 #ifdef EAGAIN
 #define PD_EAGAIN (-EAGAIN)
 #else
-#define PD_EAGAIN (-11)
+#define PD_EAGAIN (-3011)
 #endif
 
 #ifdef ENOMEM
 #define PD_ENOMEM (-ENOMEM)
 #else
-#define PD_ENOMEM (-12)
+#define PD_ENOMEM (-3012)
 #endif
 
 #ifdef EACCES
 #define PD_EACCES (-EACCES)
 #else
-#define PD_EACCES (-13)
+#define PD_EACCES (-3013)
 #endif
 
 #ifdef EFAULT
 #define PD_EFAULT (-EFAULT)
 #else
-#define PD_EFAULT (-14)
+#define PD_EFAULT (-3014)
 #endif
 
 #ifdef ENOTBLK
 #define PD_ENOTBLK (-ENOTBLK)
 #else
-#define PD_ENOTBLK (-15)
+#define PD_ENOTBLK (-3015)
 #endif
 
 #ifdef EBUSY
 #define PD_EBUSY (-EBUSY)
 #else
-#define PD_EBUSY (-16)
+#define PD_EBUSY (-3016)
 #endif
 
 #ifdef EEXIST
 #define PD_EEXIST (-EEXIST)
 #else
-#define PD_EEXIST (-17)
+#define PD_EEXIST (-3017)
 #endif
 
 #ifdef EXDEV
 #define PD_EXDEV (-EXDEV)
 #else
-#define PD_EXDEV (-18)
+#define PD_EXDEV (-3018)
 #endif
 
 #ifdef ENODEV
 #define PD_ENODEV (-ENODEV)
 #else
-#define PD_ENODEV (-19)
+#define PD_ENODEV (-3019)
 #endif
 
 #ifdef ENOTDIR
 #define PD_ENOTDIR (-ENOTDIR)
 #else
-#define PD_ENOTDIR (-20)
+#define PD_ENOTDIR (-3020)
 #endif
 
 #ifdef EISDIR
 #define PD_EISDIR (-EISDIR)
 #else
-#define PD_EISDIR (-21)
+#define PD_EISDIR (-3021)
 #endif
 
 #ifdef EINVAL
 #define PD_EINVAL (-EINVAL)
 #else
-#define PD_EINVAL (-22)
+#define PD_EINVAL (-3022)
 #endif
 
 #ifdef ENFILE
 #define PD_ENFILE (-ENFILE)
 #else
-#define PD_ENFILE (-23)
+#define PD_ENFILE (-3023)
 #endif
 
 #ifdef EMFILE
 #define PD_EMFILE (-EMFILE)
 #else
-#define PD_EMFILE (-24)
+#define PD_EMFILE (-3024)
 #endif
 
 #ifdef ENOTTY
 #define PD_ENOTTY (-ENOTTY)
 #else
-#define PD_ENOTTY (-25)
+#define PD_ENOTTY (-3025)
 #endif
 
 #ifdef ETXTBSY
 #define PD_ETXTBSY (-ETXTBSY)
 #else
-#define PD_ETXTBSY (-26)
+#define PD_ETXTBSY (-3026)
 #endif
 
 #ifdef EFBIG
 #define PD_EFBIG (-EFBIG)
 #else
-#define PD_EFBIG (-27)
+#define PD_EFBIG (-3027)
 #endif
 
 #ifdef ENOSPC
 #define PD_ENOSPC (-ENOSPC)
 #else
-#define PD_ENOSPC (-28)
+#define PD_ENOSPC (-3028)
 #endif
 
 #ifdef ESPIPE
 #define PD_ESPIPE (-ESPIPE)
 #else
-#define PD_ESPIPE (-29)
+#define PD_ESPIPE (-3029)
 #endif
 
 #ifdef EROFS
 #define PD_EROFS (-EROFS)
 #else
-#define PD_EROFS (-30)
+#define PD_EROFS (-3030)
 #endif
 
 #ifdef EMLINK
 #define PD_EMLINK (-EMLINK)
 #else
-#define PD_EMLINK (-31)
+#define PD_EMLINK (-3031)
 #endif
 
 #ifdef EPIPE
 #define PD_EPIPE (-EPIPE)
 #else
-#define PD_EPIPE (-32)
+#define PD_EPIPE (-3032)
 #endif
 
 #ifdef EDOM
 #define PD_EDOM (-EDOM)
 #else
-#define PD_EDOM (-33)
+#define PD_EDOM (-3033)
 #endif
 
 #ifdef ERANGE
 #define PD_ERANGE (-ERANGE)
 #else
-#define PD_ERANGE (-34)
+#define PD_ERANGE (-3034)
 #endif
 
 #ifdef EDEADLK
 #define PD_EDEADLK (-EDEADLK)
 #else
-#define PD_EDEADLK (-35)
+#define PD_EDEADLK (-3035)
 #endif
 
 #ifdef ENAMETOOLONG
 #define PD_ENAMETOOLONG (-ENAMETOOLONG)
 #else
-#define PD_ENAMETOOLONG (-36)
+#define PD_ENAMETOOLONG (-3036)
 #endif
 
 #ifdef ENOLCK
 #define PD_ENOLCK (-ENOLCK)
 #else
-#define PD_ENOLCK (-37)
+#define PD_ENOLCK (-3037)
 #endif
 
 #ifdef ENOSYS
 #define PD_ENOSYS (-ENOSYS)
 #else
-#define PD_ENOSYS (-38)
+#define PD_ENOSYS (-3038)
 #endif
 
 #ifdef ENOTEMPTY
 #define PD_ENOTEMPTY (-ENOTEMPTY)
 #else
-#define PD_ENOTEMPTY (-39)
+#define PD_ENOTEMPTY (-3039)
 #endif
 
 #ifdef ELOOP
 #define PD_ELOOP (-ELOOP)
 #else
-#define PD_ELOOP (-40)
+#define PD_ELOOP (-3040)
 #endif
 
 #ifdef EWOULDBLOCK
 #define PD_EWOULDBLOCK (-EWOULDBLOCK)
 #else
-#define PD_EWOULDBLOCK (-11)
+#define PD_EWOULDBLOCK (-3011)
 #endif
 
 #ifdef ENOMSG
 #define PD_ENOMSG (-ENOMSG)
 #else
-#define PD_ENOMSG (-42)
+#define PD_ENOMSG (-3042)
 #endif
 
 #ifdef EIDRM
 #define PD_EIDRM (-EIDRM)
 #else
-#define PD_EIDRM (-43)
+#define PD_EIDRM (-3043)
 #endif
 
 #ifdef ECHRNG
 #define PD_ECHRNG (-ECHRNG)
 #else
-#define PD_ECHRNG (-44)
+#define PD_ECHRNG (-3044)
 #endif
 
 #ifdef EL2NSYNC
 #define PD_EL2NSYNC (-EL2NSYNC)
 #else
-#define PD_EL2NSYNC (-45)
+#define PD_EL2NSYNC (-3045)
 #endif
 
 #ifdef EL3HLT
 #define PD_EL3HLT (-EL3HLT)
 #else
-#define PD_EL3HLT (-46)
+#define PD_EL3HLT (-3046)
 #endif
 
 #ifdef EL3RST
 #define PD_EL3RST (-EL3RST)
 #else
-#define PD_EL3RST (-47)
+#define PD_EL3RST (-3047)
 #endif
 
 #ifdef ELNRNG
 #define PD_ELNRNG (-ELNRNG)
 #else
-#define PD_ELNRNG (-48)
+#define PD_ELNRNG (-3048)
 #endif
 
 #ifdef EUNATCH
 #define PD_EUNATCH (-EUNATCH)
 #else
-#define PD_EUNATCH (-49)
+#define PD_EUNATCH (-3049)
 #endif
 
 #ifdef ENOCSI
 #define PD_ENOCSI (-ENOCSI)
 #else
-#define PD_ENOCSI (-50)
+#define PD_ENOCSI (-3050)
 #endif
 
 #ifdef EL2HLT
 #define PD_EL2HLT (-EL2HLT)
 #else
-#define PD_EL2HLT (-51)
+#define PD_EL2HLT (-3051)
 #endif
 
 #ifdef EBADE
 #define PD_EBADE (-EBADE)
 #else
-#define PD_EBADE (-52)
+#define PD_EBADE (-3052)
 #endif
 
 #ifdef EBADR
 #define PD_EBADR (-EBADR)
 #else
-#define PD_EBADR (-53)
+#define PD_EBADR (-3053)
 #endif
 
 #ifdef EXFULL
 #define PD_EXFULL (-EXFULL)
 #else
-#define PD_EXFULL (-54)
+#define PD_EXFULL (-3054)
 #endif
 
 #ifdef ENOANO
 #define PD_ENOANO (-ENOANO)
 #else
-#define PD_ENOANO (-55)
+#define PD_ENOANO (-3055)
 #endif
 
 #ifdef EBADRQC
 #define PD_EBADRQC (-EBADRQC)
 #else
-#define PD_EBADRQC (-56)
+#define PD_EBADRQC (-3056)
 #endif
 
 #ifdef EBADSLT
 #define PD_EBADSLT (-EBADSLT)
 #else
-#define PD_EBADSLT (-57)
+#define PD_EBADSLT (-3057)
 #endif
 
 #ifdef EDEADLOCK
 #define PD_EDEADLOCK (-EDEADLOCK)
 #else
-#define PD_EDEADLOCK (-35)
+#define PD_EDEADLOCK (-3035)
 #endif
 
 #ifdef EBFONT
 #define PD_EBFONT (-EBFONT)
 #else
-#define PD_EBFONT (-59)
+#define PD_EBFONT (-3059)
 #endif
 
 #ifdef ENOSTR
 #define PD_ENOSTR (-ENOSTR)
 #else
-#define PD_ENOSTR (-60)
+#define PD_ENOSTR (-3060)
 #endif
 
 #ifdef ENODATA
 #define PD_ENODATA (-ENODATA)
 #else
-#define PD_ENODATA (-61)
+#define PD_ENODATA (-3061)
 #endif
 
 #ifdef ETIME
 #define PD_ETIME (-ETIME)
 #else
-#define PD_ETIME (-62)
+#define PD_ETIME (-3062)
 #endif
 
 #ifdef ENOSR
 #define PD_ENOSR (-ENOSR)
 #else
-#define PD_ENOSR (-63)
+#define PD_ENOSR (-3063)
 #endif
 
 #ifdef ENONET
 #define PD_ENONET (-ENONET)
 #else
-#define PD_ENONET (-64)
+#define PD_ENONET (-3064)
 #endif
 
 #ifdef ENOPKG
 #define PD_ENOPKG (-ENOPKG)
 #else
-#define PD_ENOPKG (-65)
+#define PD_ENOPKG (-3065)
 #endif
 
 #ifdef EREMOTE
 #define PD_EREMOTE (-EREMOTE)
 #else
-#define PD_EREMOTE (-66)
+#define PD_EREMOTE (-3066)
 #endif
 
 #ifdef ENOLINK
 #define PD_ENOLINK (-ENOLINK)
 #else
-#define PD_ENOLINK (-67)
+#define PD_ENOLINK (-3067)
 #endif
 
 #ifdef EADV
 #define PD_EADV (-EADV)
 #else
-#define PD_EADV (-68)
+#define PD_EADV (-3068)
 #endif
 
 #ifdef ESRMNT
 #define PD_ESRMNT (-ESRMNT)
 #else
-#define PD_ESRMNT (-69)
+#define PD_ESRMNT (-3069)
 #endif
 
 #ifdef ECOMM
 #define PD_ECOMM (-ECOMM)
 #else
-#define PD_ECOMM (-70)
+#define PD_ECOMM (-3070)
 #endif
 
 #ifdef EPROTO
 #define PD_EPROTO (-EPROTO)
 #else
-#define PD_EPROTO (-71)
+#define PD_EPROTO (-3071)
 #endif
 
 #ifdef EMULTIHOP
 #define PD_EMULTIHOP (-EMULTIHOP)
 #else
-#define PD_EMULTIHOP (-72)
+#define PD_EMULTIHOP (-3072)
 #endif
 
 #ifdef EDOTDOT
 #define PD_EDOTDOT (-EDOTDOT)
 #else
-#define PD_EDOTDOT (-73)
+#define PD_EDOTDOT (-3073)
 #endif
 
 #ifdef EBADMSG
 #define PD_EBADMSG (-EBADMSG)
 #else
-#define PD_EBADMSG (-74)
+#define PD_EBADMSG (-3074)
 #endif
 
 #ifdef EOVERFLOW
 #define PD_EOVERFLOW (-EOVERFLOW)
 #else
-#define PD_EOVERFLOW (-75)
+#define PD_EOVERFLOW (-3075)
 #endif
 
 #ifdef ENOTUNIQ
 #define PD_ENOTUNIQ (-ENOTUNIQ)
 #else
-#define PD_ENOTUNIQ (-76)
+#define PD_ENOTUNIQ (-3076)
 #endif
 
 #ifdef EBADFD
 #define PD_EBADFD (-EBADFD)
 #else
-#define PD_EBADFD (-77)
+#define PD_EBADFD (-3077)
 #endif
 
 #ifdef EREMCHG
 #define PD_EREMCHG (-EREMCHG)
 #else
-#define PD_EREMCHG (-78)
+#define PD_EREMCHG (-3078)
 #endif
 
 #ifdef ELIBACC
 #define PD_ELIBACC (-ELIBACC)
 #else
-#define PD_ELIBACC (-79)
+#define PD_ELIBACC (-3079)
 #endif
 
 #ifdef ELIBBAD
 #define PD_ELIBBAD (-ELIBBAD)
 #else
-#define PD_ELIBBAD (-80)
+#define PD_ELIBBAD (-3080)
 #endif
 
 #ifdef ELIBSCN
 #define PD_ELIBSCN (-ELIBSCN)
 #else
-#define PD_ELIBSCN (-81)
+#define PD_ELIBSCN (-3081)
 #endif
 
 #ifdef ELIBMAX
 #define PD_ELIBMAX (-ELIBMAX)
 #else
-#define PD_ELIBMAX (-82)
+#define PD_ELIBMAX (-3082)
 #endif
 
 #ifdef ELIBEXEC
 #define PD_ELIBEXEC (-ELIBEXEC)
 #else
-#define PD_ELIBEXEC (-83)
+#define PD_ELIBEXEC (-3083)
 #endif
 
 #ifdef EILSEQ
 #define PD_EILSEQ (-EILSEQ)
 #else
-#define PD_EILSEQ (-84)
+#define PD_EILSEQ (-3084)
 #endif
 
 #ifdef ERESTART
 #define PD_ERESTART (-ERESTART)
 #else
-#define PD_ERESTART (-85)
+#define PD_ERESTART (-3085)
 #endif
 
 #ifdef ESTRPIPE
 #define PD_ESTRPIPE (-ESTRPIPE)
 #else
-#define PD_ESTRPIPE (-86)
+#define PD_ESTRPIPE (-3086)
 #endif
 
 #ifdef EUSERS
 #define PD_EUSERS (-EUSERS)
 #else
-#define PD_EUSERS (-87)
+#define PD_EUSERS (-3087)
 #endif
 
 #ifdef ENOTSOCK
 #define PD_ENOTSOCK (-ENOTSOCK)
 #else
-#define PD_ENOTSOCK (-88)
+#define PD_ENOTSOCK (-3088)
 #endif
 
 #ifdef EDESTADDRREQ
 #define PD_EDESTADDRREQ (-EDESTADDRREQ)
 #else
-#define PD_EDESTADDRREQ (-89)
+#define PD_EDESTADDRREQ (-3089)
 #endif
 
 #ifdef EMSGSIZE
 #define PD_EMSGSIZE (-EMSGSIZE)
 #else
-#define PD_EMSGSIZE (-90)
+#define PD_EMSGSIZE (-3090)
 #endif
 
 #ifdef EPROTOTYPE
 #define PD_EPROTOTYPE (-EPROTOTYPE)
 #else
-#define PD_EPROTOTYPE (-91)
+#define PD_EPROTOTYPE (-3091)
 #endif
 
 #ifdef ENOPROTOOPT
 #define PD_ENOPROTOOPT (-ENOPROTOOPT)
 #else
-#define PD_ENOPROTOOPT (-92)
+#define PD_ENOPROTOOPT (-3092)
 #endif
 
 #ifdef EPROTONOSUPPORT
 #define PD_EPROTONOSUPPORT (-EPROTONOSUPPORT)
 #else
-#define PD_EPROTONOSUPPORT (-93)
+#define PD_EPROTONOSUPPORT (-3093)
 #endif
 
 #ifdef ESOCKTNOSUPPORT
 #define PD_ESOCKTNOSUPPORT (-ESOCKTNOSUPPORT)
 #else
-#define PD_ESOCKTNOSUPPORT (-94)
+#define PD_ESOCKTNOSUPPORT (-3094)
 #endif
 
 #ifdef EOPNOTSUPP
 #define PD_EOPNOTSUPP (-EOPNOTSUPP)
 #else
-#define PD_EOPNOTSUPP (-95)
+#define PD_EOPNOTSUPP (-3095)
 #endif
 
 #ifdef ENOTSUP
 #define PD_ENOTSUP (-ENOTSUP)
 #else
-#define PD_ENOTSUP (-95)
+#define PD_ENOTSUP (-3095)
 #endif
 
 #ifdef EPFNOSUPPORT
 #define PD_EPFNOSUPPORT (-EPFNOSUPPORT)
 #else
-#define PD_EPFNOSUPPORT (-96)
+#define PD_EPFNOSUPPORT (-3096)
 #endif
 
 #ifdef EAFNOSUPPORT
 #define PD_EAFNOSUPPORT (-EAFNOSUPPORT)
 #else
-#define PD_EAFNOSUPPORT (-97)
+#define PD_EAFNOSUPPORT (-3097)
 #endif
 
 #ifdef EADDRINUSE
 #define PD_EADDRINUSE (-EADDRINUSE)
 #else
-#define PD_EADDRINUSE (-98)
+#define PD_EADDRINUSE (-3098)
 #endif
 
 #ifdef EADDRNOTAVAIL
 #define PD_EADDRNOTAVAIL (-EADDRNOTAVAIL)
 #else
-#define PD_EADDRNOTAVAIL (-99)
+#define PD_EADDRNOTAVAIL (-3099)
 #endif
 
 #ifdef ENETDOWN
 #define PD_ENETDOWN (-ENETDOWN)
 #else
-#define PD_ENETDOWN (-100)
+#define PD_ENETDOWN (-3100)
 #endif
 
 #ifdef ENETUNREACH
 #define PD_ENETUNREACH (-ENETUNREACH)
 #else
-#define PD_ENETUNREACH (-101)
+#define PD_ENETUNREACH (-3101)
 #endif
 
 #ifdef ENETRESET
 #define PD_ENETRESET (-ENETRESET)
 #else
-#define PD_ENETRESET (-102)
+#define PD_ENETRESET (-3102)
 #endif
 
 #ifdef ECONNABORTED
 #define PD_ECONNABORTED (-ECONNABORTED)
 #else
-#define PD_ECONNABORTED (-103)
+#define PD_ECONNABORTED (-3103)
 #endif
 
 #ifdef ECONNRESET
 #define PD_ECONNRESET (-ECONNRESET)
 #else
-#define PD_ECONNRESET (-104)
+#define PD_ECONNRESET (-3104)
 #endif
 
 #ifdef ENOBUFS
 #define PD_ENOBUFS (-ENOBUFS)
 #else
-#define PD_ENOBUFS (-105)
+#define PD_ENOBUFS (-3105)
 #endif
 
 #ifdef EISCONN
 #define PD_EISCONN (-EISCONN)
 #else
-#define PD_EISCONN (-106)
+#define PD_EISCONN (-3106)
 #endif
 
 #ifdef ENOTCONN
 #define PD_ENOTCONN (-ENOTCONN)
 #else
-#define PD_ENOTCONN (-107)
+#define PD_ENOTCONN (-3107)
 #endif
 
 #ifdef ESHUTDOWN
 #define PD_ESHUTDOWN (-ESHUTDOWN)
 #else
-#define PD_ESHUTDOWN (-108)
+#define PD_ESHUTDOWN (-3108)
 #endif
 
 #ifdef ETOOMANYREFS
 #define PD_ETOOMANYREFS (-ETOOMANYREFS)
 #else
-#define PD_ETOOMANYREFS (-109)
+#define PD_ETOOMANYREFS (-3109)
 #endif
 
 #ifdef ETIMEDOUT
 #define PD_ETIMEDOUT (-ETIMEDOUT)
 #else
-#define PD_ETIMEDOUT (-110)
+#define PD_ETIMEDOUT (-3110)
 #endif
 
 #ifdef ECONNREFUSED
 #define PD_ECONNREFUSED (-ECONNREFUSED)
 #else
-#define PD_ECONNREFUSED (-111)
+#define PD_ECONNREFUSED (-3111)
 #endif
 
 #ifdef EHOSTDOWN
 #define PD_EHOSTDOWN (-EHOSTDOWN)
 #else
-#define PD_EHOSTDOWN (-112)
+#define PD_EHOSTDOWN (-3112)
 #endif
 
 #ifdef EHOSTUNREACH
 #define PD_EHOSTUNREACH (-EHOSTUNREACH)
 #else
-#define PD_EHOSTUNREACH (-113)
+#define PD_EHOSTUNREACH (-3113)
 #endif
 
 #ifdef EALREADY
 #define PD_EALREADY (-EALREADY)
 #else
-#define PD_EALREADY (-114)
+#define PD_EALREADY (-3114)
 #endif
 
 #ifdef EINPROGRESS
 #define PD_EINPROGRESS (-EINPROGRESS)
 #else
-#define PD_EINPROGRESS (-115)
+#define PD_EINPROGRESS (-3115)
 #endif
 
 #ifdef ESTALE
 #define PD_ESTALE (-ESTALE)
 #else
-#define PD_ESTALE (-116)
+#define PD_ESTALE (-3116)
 #endif
 
 #ifdef EUCLEAN
 #define PD_EUCLEAN (-EUCLEAN)
 #else
-#define PD_EUCLEAN (-117)
+#define PD_EUCLEAN (-3117)
 #endif
 
 #ifdef ENOTNAM
 #define PD_ENOTNAM (-ENOTNAM)
 #else
-#define PD_ENOTNAM (-118)
+#define PD_ENOTNAM (-3118)
 #endif
 
 #ifdef ENAVAIL
 #define PD_ENAVAIL (-ENAVAIL)
 #else
-#define PD_ENAVAIL (-119)
+#define PD_ENAVAIL (-3119)
 #endif
 
 #ifdef EISNAM
 #define PD_EISNAM (-EISNAM)
 #else
-#define PD_EISNAM (-120)
+#define PD_EISNAM (-3120)
 #endif
 
 #ifdef EREMOTEIO
 #define PD_EREMOTEIO (-EREMOTEIO)
 #else
-#define PD_EREMOTEIO (-121)
+#define PD_EREMOTEIO (-3121)
 #endif
 
 #ifdef EDQUOT
 #define PD_EDQUOT (-EDQUOT)
 #else
-#define PD_EDQUOT (-122)
+#define PD_EDQUOT (-3122)
 #endif
 
 #ifdef ENOMEDIUM
 #define PD_ENOMEDIUM (-ENOMEDIUM)
 #else
-#define PD_ENOMEDIUM (-123)
+#define PD_ENOMEDIUM (-3123)
 #endif
 
 #ifdef EMEDIUMTYPE
 #define PD_EMEDIUMTYPE (-EMEDIUMTYPE)
 #else
-#define PD_EMEDIUMTYPE (-124)
+#define PD_EMEDIUMTYPE (-3124)
 #endif
 
 #ifdef ECANCELED
 #define PD_ECANCELED (-ECANCELED)
 #else
-#define PD_ECANCELED (-125)
+#define PD_ECANCELED (-3125)
 #endif
 
 #ifdef ENOKEY
 #define PD_ENOKEY (-ENOKEY)
 #else
-#define PD_ENOKEY (-126)
+#define PD_ENOKEY (-3126)
 #endif
 
 #ifdef EKEYEXPIRED
 #define PD_EKEYEXPIRED (-EKEYEXPIRED)
 #else
-#define PD_EKEYEXPIRED (-127)
+#define PD_EKEYEXPIRED (-3127)
 #endif
 
 #ifdef EKEYREVOKED
 #define PD_EKEYREVOKED (-EKEYREVOKED)
 #else
-#define PD_EKEYREVOKED (-128)
+#define PD_EKEYREVOKED (-3128)
 #endif
 
 #ifdef EKEYREJECTED
 #define PD_EKEYREJECTED (-EKEYREJECTED)
 #else
-#define PD_EKEYREJECTED (-129)
+#define PD_EKEYREJECTED (-3129)
 #endif
 
 #ifdef EOWNERDEAD
 #define PD_EOWNERDEAD (-EOWNERDEAD)
 #else
-#define PD_EOWNERDEAD (-130)
+#define PD_EOWNERDEAD (-3130)
 #endif
 
 #ifdef ENOTRECOVERABLE
 #define PD_ENOTRECOVERABLE (-ENOTRECOVERABLE)
 #else
-#define PD_ENOTRECOVERABLE (-131)
+#define PD_ENOTRECOVERABLE (-3131)
 #endif
 
 #ifdef ERFKILL
 #define PD_ERFKILL (-ERFKILL)
 #else
-#define PD_ERFKILL (-132)
+#define PD_ERFKILL (-3132)
 #endif
 
 #ifdef EHWPOISON
 #define PD_EHWPOISON (-EHWPOISON)
 #else
-#define PD_EHWPOISON (-133)
+#define PD_EHWPOISON (-3133)
 #endif
 
 
-#define PD_ERR_STR_MAPPING (X)       \
+#define PD_ERR_STR_MAPPING(X)       \
    X(PD_EPERM, "Operation not permitted")       \
    X(PD_ENOENT, "No such file or directory")       \
    X(PD_ESRCH, "No such process")       \
@@ -854,7 +854,6 @@
    X(PD_ENOSYS, "Function not implemented")       \
    X(PD_ENOTEMPTY, "Directory not empty")       \
    X(PD_ELOOP, "Too many symbolic links encountered")       \
-   X(PD_EWOULDBLOCK, "Operation would block")       \
    X(PD_ENOMSG, "No message of desired type")       \
    X(PD_EIDRM, "Identifier removed")       \
    X(PD_ECHRNG, "Channel number out of range")       \
@@ -871,7 +870,6 @@
    X(PD_ENOANO, "No anode")       \
    X(PD_EBADRQC, "Invalid request code")       \
    X(PD_EBADSLT, "Invalid slot")       \
-   X(PD_EDEADLOCK, "Resource deadlock would occur")       \
    X(PD_EBFONT, "Bad font file format")       \
    X(PD_ENOSTR, "Device not a stream")       \
    X(PD_ENODATA, "No data available")       \
@@ -909,7 +907,6 @@
    X(PD_EPROTONOSUPPORT, "Protocol not supported")       \
    X(PD_ESOCKTNOSUPPORT, "Socket type not supported")       \
    X(PD_EOPNOTSUPP, "Operation not supported on transport endpoint")       \
-   X(PD_ENOTSUP, "Operation not supported on transport endpoint")       \
    X(PD_EPFNOSUPPORT, "Protocol family not supported")       \
    X(PD_EAFNOSUPPORT, "Address family not supported by protocol")       \
    X(PD_EADDRINUSE, "Address already in use")       \
@@ -948,6 +945,6 @@
    X(PD_ENOTRECOVERABLE, "State not recoverable")       \
    X(PD_ERFKILL, "Operation not possible due to RF-kill")       \
    X(PD_EHWPOISON, "Memory page has hardware error")       \
-   X(PD_PD_OK, "Success")       \
-   X(PD_PD_UNKNOWN, "Unknown error")       \
-   X(PD_PD_EOF, "End of the stream")
+   X(PD_OK, "Success")       \
+   X(PD_UNKNOWN, "Unknown error")       \
+   X(PD_EOF, "End of the stream")

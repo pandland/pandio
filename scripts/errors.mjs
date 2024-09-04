@@ -152,19 +152,27 @@ for (const [name, { code }] of Object.entries(pandioExtension)) {
 
 file += "\n/* Unix system error codes: */";
 
+const FALLBACK_BASE = 3000;
+
 for (const [name, { code }] of Object.entries(errcodes)) {
-  file += `\n#ifdef ${name}\n#define PD_${name} (-${name})\n#else\n#define PD_${name} (-${code})\n#endif\n`;
+  file += `\n#ifdef ${name}\n#define PD_${name} (-${name})\n#else\n#define PD_${name} (-${FALLBACK_BASE + code})\n#endif\n`;
 }
 
-file += "\n\n#define PD_ERR_STR_MAPPING (X)       \\\n";
+file += "\n\n#define PD_ERR_STR_MAPPING(X)       \\\n";
 
-for (const [name, { message }] of Object.entries(errcodes)) {
+let lastValue;
+for (const [name, { message, code }] of Object.entries(errcodes)) {
+  // deduplication
+  if (lastValue && code <= lastValue)
+    continue;
+
   file += `   X(PD_${name}, "${message}")       \\\n`;
+  lastValue = code;
 }
 
 const maxIndex = Object.entries(pandioExtension).length - 1;
 Object.entries(pandioExtension).forEach(([name, { message }], index) => {
-  file += `   X(PD_${name}, "${message}")${ index === maxIndex ? "" : "       \\" }\n`;
+  file += `   X(${name}, "${message}")${ index === maxIndex ? "" : "       \\" }\n`;
 });
 
 writeFileSync("./include/pandio/err.h", file, { encoding: "utf8" });

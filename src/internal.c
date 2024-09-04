@@ -14,6 +14,20 @@ void pd__tcp_pending_close(pd_io_t *ctx) {
     }
 }
 
+const char* pd_errstr(int errcode) {
+    switch (errcode) {
+#define X(pd_err, msg) \
+        case(pd_err):   \
+            return msg;
+            PD_ERR_STR_MAPPING(X)
+#undef X
+        default:
+            return "Unknown error";
+    }
+
+    return "Unknown error";
+}
+
 
 #ifdef _WIN32
 

@@ -22,7 +22,8 @@ void handle_read(pd_tcp_t *stream, char *buf, size_t len) {
 void handle_connect(pd_tcp_t *stream, int status) {
     if (status < 0) {
         pd_tcp_close(stream);
-        printf("Connect failed with err code: %d.\n", status);
+        printf("Error code: %d.\n", status);
+        printf("Message: %s\n", pd_errstr(status));
         return;
     }
 
