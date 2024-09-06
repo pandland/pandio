@@ -138,16 +138,16 @@ const errcodes = {
 };
 
 const pandioExtension = {
-  PD_OK: { code: 0, message: "Success" },
-  PD_UNKNOWN: { code: -7000, message: "Unknown error" },
-  PD_EOF: { code: -7002, message: "End of the stream" },
+  OK: { code: 0, message: "Success" },
+  UNKNOWN: { code: -7000, message: "Unknown error" },
+  EOF: { code: -7002, message: "End of the stream" },
 };
 
 let file = "/* Auto generated file */\n#pragma once\n#include <errno.h>\n";
 
 file += "\n/* PANDIO custom errors: */\n";
 for (const [name, { code }] of Object.entries(pandioExtension)) {
-  file += `#define ${name} (${code})\n`;
+  file += `#define PD_${name} (${code})\n`;
 }
 
 file += "\n/* Unix system error codes: */";
@@ -175,7 +175,8 @@ for (const [name, { message, code }] of Object.entries(errcodes)) {
 
 const maxIndex = Object.entries(pandioExtension).length - 1;
 Object.entries(pandioExtension).forEach(([name, { message }], index) => {
-  file += `   X(${name}, "${message}")${ index === maxIndex ? "" : "       \\" }\n`;
+  file += `   X(PD_${name}, "${message}")${ index === maxIndex ? "" : "       \\" }\n`;
+  nameMapping += `   X(PD_${name}, "${name}")${ index === maxIndex ? "" : "       \\" }\n`;
 });
 
 file += nameMapping;

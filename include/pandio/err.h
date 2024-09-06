@@ -1082,3 +1082,6 @@
    X(PD_ENOTRECOVERABLE, "ENOTRECOVERABLE")       \
    X(PD_ERFKILL, "ERFKILL")       \
    X(PD_EHWPOISON, "EHWPOISON")       \
+   X(PD_OK, "OK")       \
+   X(PD_UNKNOWN, "UNKNOWN")       \
+   X(PD_EOF, "EOF")
