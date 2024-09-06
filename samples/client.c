@@ -23,6 +23,7 @@ void handle_connect(pd_tcp_t *stream, int status) {
     if (status < 0) {
         pd_tcp_close(stream);
         printf("Error code: %d.\n", status);
+        printf("Name: %s\n", pd_errname(status));
         printf("Message: %s\n", pd_errstr(status));
         return;
     }

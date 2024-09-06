@@ -118,3 +118,5 @@ int pd_errno();
 int pd_errmap(pd_errno_t);
 
 const char* pd_errstr(int);
+
+const char* pd_errname(int errcode);

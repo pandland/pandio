@@ -24,8 +24,18 @@ const char* pd_errstr(int errcode) {
         default:
             return "Unknown error";
     }
+}
 
-    return "Unknown error";
+const char* pd_errname(int errcode) {
+    switch (errcode) {
+#define X(pd_err, msg) \
+        case(pd_err):   \
+            return msg;
+        PD_ERR_NAME_MAPPING(X)
+#undef X
+        default:
+            return "UNKNOWN";
+    }
 }
 
 

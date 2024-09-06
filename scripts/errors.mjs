@@ -160,6 +160,8 @@ for (const [name, { code }] of Object.entries(errcodes)) {
 
 file += "\n\n#define PD_ERR_STR_MAPPING(X)       \\\n";
 
+let nameMapping = "\n\n#define PD_ERR_NAME_MAPPING(X)   \\\n";
+
 let lastValue;
 for (const [name, { message, code }] of Object.entries(errcodes)) {
   // deduplication
@@ -167,6 +169,7 @@ for (const [name, { message, code }] of Object.entries(errcodes)) {
     continue;
 
   file += `   X(PD_${name}, "${message}")       \\\n`;
+  nameMapping += `   X(PD_${name}, "${name}")       \\\n`;
   lastValue = code;
 }
 
@@ -174,5 +177,7 @@ const maxIndex = Object.entries(pandioExtension).length - 1;
 Object.entries(pandioExtension).forEach(([name, { message }], index) => {
   file += `   X(${name}, "${message}")${ index === maxIndex ? "" : "       \\" }\n`;
 });
+
+file += nameMapping;
 
 writeFileSync("./include/pandio/err.h", file, { encoding: "utf8" });
