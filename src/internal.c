@@ -14,6 +14,26 @@ void pd__tcp_pending_close(pd_io_t *ctx) {
     }
 }
 
+
+const char* pd_get_platform() {
+#if defined(_WIN32)
+    return "win32";
+#elif defined(__APPLE__) || defined(__MACH__)
+    return "darwin";
+#elif defined(__linux__)
+    return "linux";
+#elif defined(__FreeBSD__)
+    return "freebsd";
+#elif defined(__OpenBSD__)
+    return "openbsd";
+#elif defined(__unix__)
+    return "unix";
+#else
+    return "unknown";
+#endif
+}
+
+
 const char* pd_errstr(int errcode) {
     switch (errcode) {
 #define X(pd_err, msg) \
@@ -25,6 +45,7 @@ const char* pd_errstr(int errcode) {
             return "Unknown error";
     }
 }
+
 
 const char* pd_errname(int errcode) {
     switch (errcode) {

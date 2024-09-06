@@ -39,6 +39,7 @@ void handle_connect(pd_tcp_t *stream, int status) {
 }
 
 int main() {
+    printf("Platform: %s\n", pd_get_platform());
     pd_io_t *ctx = malloc(sizeof(pd_io_t));
     pd_io_init(ctx);
 
