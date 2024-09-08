@@ -15,6 +15,7 @@ typedef CRITICAL_SECTION pd_mutex_t;
 typedef CONDITION_VARIABLE pd_cond_t;
 typedef HANDLE pd_thread_t;
 typedef DWORD pd_errno_t;   // system error type
+typedef DWORD pd_pid_t;
 
 #else
 #include <pthread.h>
@@ -26,6 +27,7 @@ typedef pthread_mutex_t pd_mutex_t;
 typedef pthread_cond_t pd_cond_t;
 typedef pthread_t pd_thread_t;
 typedef int pd_errno_t;   // system error type
+typedef pid_t pd_pid_t;
 #endif
 
 void pd_sleep(unsigned);
@@ -123,3 +125,6 @@ const char* pd_errname(int errcode);
 
 /* Get platform name as string */
 const char* pd_get_platform();
+
+/* Returns the process ID of the parent of the current process */
+pd_pid_t pd_getpid();

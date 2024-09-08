@@ -11,7 +11,14 @@ void handle_write(pd_write_t *write_op, int status) {
 }
 
 void handle_read(pd_tcp_t *client, char *buf, size_t len) {
-    //printf("Received data with len: %zu\n", len);
+    if ((int)len < 0) {
+        printf("Status: %d\n", (int)len);
+        printf("Error: %s\n", pd_errname((int)len));
+        printf("Message: %s\n", pd_errstr((int)len));
+        pd_tcp_close(client);
+        return;
+    }
+
     printf("%.*s\n", (int)len, buf);
     free(buf);
     const char *response = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 5\r\n\r\nHello";
@@ -75,7 +82,7 @@ int main() {
     pd_tcp_server_init(ctx, server);
     //pd_threadpool_end();
     printf("Starting to listen...\n");
-    int status = pd_tcp_listen(server, 8000, handle_connection);
+    int status = pd_tcp_listen(server, 5000, handle_connection);
     if (status < 0) {
         printf("Listener failed.\n");
     }

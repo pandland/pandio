@@ -46,7 +46,7 @@ void pd_io_init(pd_io_t *ctx) {
 
     ctx->poll_fd = CreateIoCompletionPort(
             INVALID_HANDLE_VALUE,NULL,
-            0, 0);
+            0, 1);
 
     ctx->now = pd_now();
     queue_init(&ctx->pending_closes);

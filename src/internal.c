@@ -4,6 +4,10 @@
 #include "internal.h"
 #include <fcntl.h>
 
+#ifdef _WIN32
+#include <processthreadsapi.h>
+#endif
+
 void pd__tcp_pending_close(pd_io_t *ctx) {
     while (!queue_empty(&ctx->pending_closes)) {
         struct queue_node *next = queue_pop(&ctx->pending_closes);
@@ -30,6 +34,15 @@ const char* pd_get_platform() {
     return "unix";
 #else
     return "unknown";
+#endif
+}
+
+
+pd_pid_t pd_getpid() {
+#if defined(_WIN32)
+    return GetCurrentProcessId();
+#else
+    return getpid();
 #endif
 }
 
@@ -183,6 +196,12 @@ int pd_errmap(pd_errno_t err) {
 int pd_errno() {
     pd_errno_t sys_err = GetLastError();
     return pd_errmap(sys_err);
+}
+
+
+int pd__set_nonblocking(pd_socket_t fd) {
+    DWORD enable = 1;
+    return ioctlsocket(fd, FIONBIO, &enable);
 }
 
 #else

@@ -87,6 +87,8 @@ void pd__tcp_post_acceptex(pd_tcp_server_t *server, pd__accept_op_t *op) {
     op->event.data = op;
     DWORD ret;
 
+    // TODO: consider using SetFileCompletionNotificationModes
+
     BOOL success = server->acceptex(
             server->fd, op->socket, op->buf, 0,
             sizeof(struct sockaddr_storage) + 16, sizeof(struct sockaddr_storage) + 16,
