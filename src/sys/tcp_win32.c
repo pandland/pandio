@@ -22,6 +22,7 @@
 #include "pandio/tcp.h"
 #include "pandio/err.h"
 #include "internal.h"
+#include <stdio.h>
 
 // how many times issue AcceptEx?
 #define SIMULTANEOUS_ACCEPTS 32
@@ -78,6 +79,22 @@ void pd__tcp_accept_io(pd_event_t *event) {
 }
 
 
+void pd__tcp_accept_sync(pd_event_t *event) {
+    pd__accept_op_t *op = event->data;
+    pd_tcp_server_t *server = op->server;
+
+    setsockopt(op->socket,
+               SOL_SOCKET,
+               SO_UPDATE_ACCEPT_CONTEXT,
+               (char*)&op->socket,
+               sizeof(op->socket));
+    if (server->on_connection)
+        server->on_connection(server, op->socket, 0);
+
+    pd__tcp_post_acceptex(server, op);
+}
+
+
 void pd__tcp_post_acceptex(pd_tcp_server_t *server, pd__accept_op_t *op) {
     op->socket = socket(AF_INET, SOCK_STREAM, 0);
     op->server = server;
@@ -87,14 +104,18 @@ void pd__tcp_post_acceptex(pd_tcp_server_t *server, pd__accept_op_t *op) {
     op->event.data = op;
     DWORD ret;
 
-    // TODO: consider using SetFileCompletionNotificationModes
+    SetFileCompletionNotificationModes((HANDLE)op->socket, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
 
     BOOL success = server->acceptex(
             server->fd, op->socket, op->buf, 0,
             sizeof(struct sockaddr_storage) + 16, sizeof(struct sockaddr_storage) + 16,
             &ret, &op->event.overlapped);
 
-    if (!success && WSAGetLastError() != WSA_IO_PENDING) {
+    if (success) {
+        pd__tcp_accept_sync(&op->event);
+        return;
+    }
+    else if (WSAGetLastError() != WSA_IO_PENDING) {
         closesocket(op->socket);
     }
 }
@@ -128,6 +149,12 @@ int pd_tcp_listen(pd_tcp_server_t *server,
     }
 
     if (listen(server->fd, SOMAXCONN) < 0) {
+        closesocket(server->fd);
+        return pd_errno();
+    }
+
+    BOOL skip_iocp = SetFileCompletionNotificationModes((HANDLE)server->fd, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
+    if (!skip_iocp) {
         closesocket(server->fd);
         return pd_errno();
     }
@@ -257,6 +284,10 @@ void pd_tcp_write(pd_tcp_t *stream, pd_write_t *write_op) {
     write_op->handle = stream;
 
     int err;
+    if (status == 0) {
+        write_op->cb(write_op, PD_OK);
+        return;
+    }
     if (status == SOCKET_ERROR && (err = WSAGetLastError()) != WSA_IO_PENDING) {
         write_op->cb(write_op, pd_errmap(err));
         return;
@@ -332,7 +363,11 @@ void pd__tcp_post_recv(pd_tcp_t *stream) {
             &bytes, &flags,
             &stream->revent.overlapped, NULL);
 
-    if (status == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
+    if (status == 0) {
+        stream->on_data(stream, stream->read_buf.buf, bytes);
+        return;
+    }
+    else if (status == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING) {
         stream->on_data(stream, stream->read_buf.buf, pd_errno());
         return;
     } else {
