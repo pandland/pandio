@@ -9,7 +9,9 @@
 #ifdef _WIN32
 #include <windows.h>
 #pragma comment(lib, "ws2_32.lib")
+
 typedef HANDLE pd_fd_t;
+typedef HMODULE pd_dlib_t;
 
 typedef CRITICAL_SECTION pd_mutex_t;
 typedef CONDITION_VARIABLE pd_cond_t;
@@ -22,6 +24,7 @@ typedef DWORD pd_pid_t;
 #include <errno.h>
 
 typedef int pd_fd_t;
+typedef void* pd_dlib_t;
 
 typedef pthread_mutex_t pd_mutex_t;
 typedef pthread_cond_t pd_cond_t;
@@ -128,3 +131,13 @@ const char* pd_get_platform();
 
 /* Returns the process ID of the parent of the current process */
 pd_pid_t pd_getpid();
+
+
+pd_dlib_t pd_dlopen(const char*);
+
+void* pd_dlsym(pd_dlib_t, const char*);
+
+int pd_dlclose(pd_dlib_t);
+
+/* Get readable error */
+const char* pd_dlerror();

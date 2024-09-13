@@ -20,6 +20,7 @@ set (SRC_FILES
         src/threadpool.c
         include/pandio/threadpool.h
         include/pandio/err.h
+        src/dlib.c
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -36,6 +37,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
 
     add_library(pandio STATIC ${SRC_FILES})
     target_link_libraries(pandio PRIVATE pthread)
+    target_link_libraries(pandio PRIVATE dl)
 endif ()
 
 set(KQUEUE_SYSTEMS "Darwin;FreeBSD;OpenBSD;NetBSD;DragonFly")
@@ -54,6 +56,7 @@ if (CMAKE_SYSTEM_NAME IN_LIST KQUEUE_SYSTEMS)
 
     add_library(pandio STATIC ${SRC_FILES})
     target_link_libraries(pandio PRIVATE pthread)
+    target_link_libraries(pandio PRIVATE dl)
 endif ()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -69,6 +72,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_library(pandio STATIC ${SRC_FILES})
 endif ()
 
+add_library(hello SHARED scripts/hello.c)
 
 add_executable(sample_server
         samples/server.c
