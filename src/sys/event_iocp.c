@@ -44,6 +44,7 @@ void pd_io_init(pd_io_t *ctx) {
 
     QueryPerformanceFrequency(&pd__freq);
 
+    ctx->refs = 0;
     ctx->poll_fd = CreateIoCompletionPort(
             INVALID_HANDLE_VALUE,NULL,
             0, 1);
@@ -76,8 +77,7 @@ void pd_io_run(pd_io_t *ctx) {
     BOOL result;
     int timeout = pd_timers_next(ctx);
 
-    // TODO: break loop if there is no active handles
-    while (TRUE) {
+    while (ctx->refs > 0) {
         result = GetQueuedCompletionStatusEx(
                 ctx->poll_fd,
                 entries,

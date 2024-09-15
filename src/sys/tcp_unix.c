@@ -141,6 +141,7 @@ int pd_tcp_listen(pd_tcp_server_t *server,
 
     server->event.flags |= PD_POLLIN;
     pd__event_add(server->ctx, &server->event, lfd);
+    server->ctx->refs++;
 
     return 0;
 }
@@ -297,6 +298,7 @@ void pd_tcp_accept(pd_tcp_t *peer, pd_socket_t fd) {
     peer->event.handler = pd__tcp_client_io;
     peer->event.flags |= PD_POLLIN;
     pd__event_add(peer->ctx, &peer->event, fd);
+    peer->ctx->refs++;
 }
 
 
@@ -362,6 +364,7 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
     }
 
     pd__event_add(stream->ctx, &stream->event, fd);
+    stream->ctx->refs++;
 
     return 0;
 }

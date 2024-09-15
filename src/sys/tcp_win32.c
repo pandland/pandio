@@ -190,6 +190,7 @@ int pd_tcp_listen(pd_tcp_server_t *server,
         pd__tcp_post_acceptex(server, op);
     }
 
+    server->ctx->refs++;
     return 0;
 }
 
@@ -209,6 +210,8 @@ void pd_tcp_init(pd_io_t *ctx, pd_tcp_t *stream) {
 void pd_tcp_accept(pd_tcp_t *stream, pd_socket_t socket) {
     stream->status = PD_TCP_ACTIVE;
     stream->fd = socket;
+    stream->ctx->refs++;
+
     CreateIoCompletionPort((HANDLE)stream->fd,
                            stream->ctx->poll_fd, (ULONG_PTR)stream, 0);
     pd__tcp_post_recv(stream);
@@ -491,6 +494,8 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
         CloseHandle((HANDLE)fd);
         return pd_errmap(err);
     }
+
+    stream->ctx->refs++;
 
     return 0;
 }

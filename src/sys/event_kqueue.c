@@ -42,6 +42,7 @@ uint64_t pd_now() {
 
 
 void pd_io_init(pd_io_t *ctx) {
+    ctx->refs = 0;
     ctx->poll_fd = kqueue();
     if (ctx->poll_fd < 0)
         abort();
@@ -104,8 +105,7 @@ void pd_io_run(pd_io_t *ctx) {
     int timeout = pd_timers_next(ctx);
     pd_event_t *pev;
 
-    // TODO: break loop if there is no active handles
-    while (true) {
+    while (ctx->refs > 0) {
         struct timespec ts;
         if (timeout >= 0) {
             ts.tv_sec = timeout / 1000;

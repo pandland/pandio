@@ -62,6 +62,7 @@ struct pd_notifier_s;
 struct pd_io_s {
     pd_fd_t poll_fd;
     uint64_t now;
+    size_t refs;
     struct heap timers;
     struct queue pending_closes;
     struct queue finished_tasks;

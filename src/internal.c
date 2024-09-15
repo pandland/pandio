@@ -36,6 +36,8 @@ void pd__tcp_pending_close(pd_io_t *ctx) {
 
         if (stream->on_close)
             stream->on_close(stream);
+
+        ctx->refs--;
     }
 }
 

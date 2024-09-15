@@ -37,6 +37,7 @@ uint64_t pd_now() {
 
 void pd_io_init(pd_io_t *ctx) {
     ctx->poll_fd = epoll_create1(0);
+    ctx->refs = 0;
 
     if (ctx->poll_fd == -1) {
         abort();
@@ -108,8 +109,7 @@ void pd_io_run(pd_io_t *ctx) {
     int timeout = pd_timers_next(ctx);
     pd_event_t *pev;
 
-    // TODO: break loop if there is no active handles
-    while (true) {
+    while (ctx->refs > 0) {
         int events_count =
                 epoll_wait(ctx->poll_fd, events, MAX_EVENTS, timeout);
 

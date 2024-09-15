@@ -62,6 +62,7 @@ void pd_timer_start(pd_timer_t *timer,
     timer->active = true;
     timer->timeout = timer->ctx->now + timeout;
     timer->on_timeout = cb;
+    timer->ctx->refs++;
     heap_insert(&timer->ctx->timers, &timer->hnode);
 }
 
@@ -81,6 +82,7 @@ void pd_timer_stop(pd_timer_t *timer) {
 
     timer->active = false;
     heap_remove(&timer->ctx->timers, &timer->hnode);
+    timer->ctx->refs--;
 }
 
 
