@@ -481,6 +481,13 @@ int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_conne
         return pd_errno();
     }
 
+    BOOL skip_iocp = SetFileCompletionNotificationModes((HANDLE)stream->fd, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
+    if (!skip_iocp) {
+        free(connect_ev);
+        closesocket(fd);
+        return pd_errno();
+    }
+
     pd__event_init(connect_ev);
     connect_ev->data = stream;
     connect_ev->handler = pd__tcp_connect_io;
