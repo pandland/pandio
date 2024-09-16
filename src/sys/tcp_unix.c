@@ -460,7 +460,7 @@ int pd_tcp_keepalive(pd_tcp_t *stream, int enable, int delay) {
         return pd_errno();
 #elif TCP_KEEPALIVE
     if (setsockopt(stream->fd, IPPROTO_TCP, TCP_KEEPALIVE, &delay, sizeof (delay)) < 0)
-        return -1;
+        return pd_errno();
 #endif
 
 #ifdef TCP_KEEPCNT

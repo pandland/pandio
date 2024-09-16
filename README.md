@@ -1,10 +1,23 @@
-> ⚠️ Early stage of development. Library is still shaping and is API unstable.
+> ⚠️ Early stage of development. Library is still shaping and API is unstable.
 
 <img src="https://github.com/user-attachments/assets/cf70d4ac-9cef-4c66-8295-04946abdafd2" alt="banner" />
 
 # Pandio
 
 Simple library for non-blocking I/O operations. Developed mainly for my PandJS project (JavaScript runtime).
+
+### Build
+
+Make sure you have CMake installed.
+
+```sh
+mkdir build
+cd build
+# inside build dir
+cmake ..
+# compile with platform's default compiler
+cmake --build .
+```
 
 ### TODO:
 
@@ -19,7 +32,6 @@ Simple library for non-blocking I/O operations. Developed mainly for my PandJS p
 - [ ] Fix tests and GitHub workflows.
 - [ ] Async files operations.
 - [ ] Better error handling and error reporting to the end-user.
-
 
 ## License
 

@@ -178,7 +178,7 @@ int pd_tcp_listen(pd_tcp_server_t *server,
 
     if (CreateIoCompletionPort((HANDLE)server->fd, server->ctx->poll_fd, 0, 0) == NULL) {
         closesocket(server->fd);
-        return -1;
+        return pd_errno();
     }
 
     for (int i = 0; i < SIMULTANEOUS_ACCEPTS; ++i) {
@@ -431,7 +431,7 @@ static LPFN_CONNECTEX pd__connectex = NULL;
 int pd_tcp_connect(pd_tcp_t *stream, const char *host, int port, void (*on_connect)(pd_tcp_t*, int)) {
     pd_socket_t fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd == INVALID_SOCKET) {
-        return -1;
+        return pd_errno();
     }
 
     stream->fd = fd;
