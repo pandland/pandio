@@ -33,7 +33,7 @@ typedef int pd_errno_t;   // system error type
 typedef pid_t pd_pid_t;
 #endif
 
-int pd_random(char *, size_t);
+int pd_random(void *, size_t);
 
 void pd_sleep(unsigned);
 

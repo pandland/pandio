@@ -32,6 +32,7 @@ if (WIN32)
 
     add_library(pandio STATIC ${SRC_FILES})
     target_compile_definitions(pandio PUBLIC WIN32_LEAN_AND_MEAN)
+    target_link_libraries(pandio PRIVATE advapi32)
 
 elseif (UNIX)
     if (CMAKE_SYSTEM_NAME STREQUAL "Linux")

@@ -22,17 +22,44 @@
 #include "pandio/err.h"
 
 #ifdef WIN32
-extern BOOLEAN NTAPI RtlGenRandom(PVOID RandomBuffer, ULONG RandomBufferLength);
+#include <wincrypt.h>
 
-int pd_random(char *bytes, size_t size) {
-    if (RtlGenRandom(bytes, size)) {
+HCRYPTPROV hProv = 0;
+
+bool initialized = false;
+int pd__init_random_once() {
+    if (initialized)
         return 0;
+
+    initialized = true;
+    if (!CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
+        return -1;
     }
+
+    return 0;
+}
+
+int pd_random(void *bytes, size_t size) {
+    if (pd__init_random_once() == -1)
+        return PD_UNKNOWN;
+
+    if (size == 0)
+        return 0;
+
+    if (CryptGenRandom(hProv, size, bytes))
+        return 0;
+
     return PD_EIO;
 }
 
 #else
-int pd_random(char *bytes, size_t size) {
+#include <fcntl.h>
+#include <unistd.h>
+
+int pd_random(void *bytes, size_t size) {
+    if (size == 0)
+        return 0;
+
     int fd = open("/dev/urandom", O_RDONLY);
     if (fd == -1) {
         return pd_errno();
