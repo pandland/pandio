@@ -26,21 +26,14 @@
 
 HCRYPTPROV hProv = 0;
 
-bool initialized = false;
-int pd__init_random_once() {
-    if (initialized)
-        return 0;
-
-    initialized = true;
-    if (!CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
-        return -1;
-    }
-
-    return 0;
+pd_once_t init_control = PD_ONCE_INIT;
+void pd__init_random_once(void) {
+    // TODO: handle this error
+    CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
 }
 
 int pd_random(void *bytes, size_t size) {
-    if (pd__init_random_once() == -1)
+    if (pd_once(&init_control, pd__init_random_once) == -1)
         return PD_UNKNOWN;
 
     if (size == 0)
@@ -60,6 +53,7 @@ int pd_random(void *bytes, size_t size) {
     if (size == 0)
         return 0;
 
+    // TODO: maybe use pd_once as well to get fd only once?
     int fd = open("/dev/urandom", O_RDONLY);
     if (fd == -1) {
         return pd_errno();

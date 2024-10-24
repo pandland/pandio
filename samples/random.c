@@ -3,6 +3,13 @@
 
 #define n 16
 
+void print_bytes(unsigned char *bytes, size_t size) {
+    for (size_t i = 0; i < size; i++) {
+        printf("%02x ", bytes[i]);
+    }
+    printf("\n");
+}
+
 int main() {
     unsigned char buf[n];
     int status = pd_random(buf, 16);
@@ -12,10 +19,15 @@ int main() {
         return 1;
     }
 
-    for (size_t i = 0; i < n; i++) {
-        printf("%02x ", buf[i]);
+    print_bytes(buf, n);
+
+    unsigned char *buf2 = malloc(sizeof(unsigned char) * n);
+    if ((status = pd_random(buf2, n)) == 0) {
+        print_bytes(buf2, n);
+    } else {
+        printf("error: %s\n", pd_errstr(status));
+        return 1;
     }
-    printf("\n");
 
     return 0;
 }
