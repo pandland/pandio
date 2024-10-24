@@ -16,6 +16,7 @@ set(SRC_FILES
         src/timers.c
         src/internal.c
         src/threadpool.c
+        src/random.c
         include/pandio/threadpool.h
         include/pandio/err.h
         src/dlib.c

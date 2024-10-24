@@ -33,6 +33,8 @@ typedef int pd_errno_t;   // system error type
 typedef pid_t pd_pid_t;
 #endif
 
+int pd_random(char *, size_t);
+
 void pd_sleep(unsigned);
 
 void pd_mutex_init(pd_mutex_t*);
