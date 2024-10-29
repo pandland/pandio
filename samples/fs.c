@@ -1,15 +1,26 @@
-#include "pandio/core.h"
-#include "pandio/threadpool.h"
+#include "pandio/fs.h"
 #include <pandio.h>
 #include <stdio.h>
 
-void callback(int status, pd_fd_t fd) {
-  if (status < 0) {
-    printf("error: %s\n", pd_errstr(status));
+void on_read(pd_fs_read_t *op) {
+  if (op->status < 0) {
+    printf("error: %s\n", pd_errstr(op->status));
     return;
   }
 
-  printf("fd is: %d\n", fd); 
+  printf("%.*s\n", (int)op->size, op->buf);
+}
+
+void on_open(pd_fs_open_t *op) {
+  if (op->status < 0) {
+    printf("error: %s\n", pd_errstr(op->status));
+    return;
+  }
+  printf("fd is: %d\n", op->fd);
+
+  size_t size = 16 * 1024;
+  char *buf = malloc(size);
+  pd_fs_read(op->inner.ctx, op->fd, buf, size, on_read);
 }
 
 int main() {
@@ -18,7 +29,7 @@ int main() {
   pd_io_init(ctx);
   pd_threadpool_init(4);
 
-  pd_fs_open(ctx, ".clang-format", callback);
+  pd_fs_open(ctx, "cmake_install.cmake", on_open);
 
   pd_io_run(ctx);
   pd_threadpool_end();

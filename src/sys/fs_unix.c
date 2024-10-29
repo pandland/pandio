@@ -1,50 +1,62 @@
-#include "internal.h"
 #include "pandio/core.h"
+#include "pandio/fs.h"
 #include "pandio/threadpool.h"
+#include "string.h"
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
-struct pd__fs_open {
-  void (*cb)(int, pd_fd_t);
-  char *path;
-  pd_fd_t fd;
-  int status;
-  pd_task_t inner;
-};
+void pd__fs_open(pd_task_t *task) {
+  pd_fs_open_t *op = (pd_fs_open_t *)(task);
 
-typedef struct pd__fs_open pd__fs_open_t;
+  do {
+    op->fd = open(op->path, O_RDONLY); // TODO: make flags configurable
+  } while (op->fd < 0 && errno == EINTR);
 
-void pd__fs_open_work(pd_task_t *task) {
-  pd__fs_open_t *work = container_of(task, pd__fs_open_t, inner);
-  work->fd = open(work->path, O_RDONLY);
-  if (work->fd < 0) {
-    work->status = pd_errno(); // I think errno is "thread-local", so need to
-                               // pass errno status to main thread
-  } else {
-    work->status = 0;
+  if (op->fd < 0) {
+    op->status = pd_errno();
   }
 
-  free(work->path);
+  free(op->path);
 }
 
-void pd__fs_open_done(pd_task_t *task) {
-  pd__fs_open_t *work = container_of(task, pd__fs_open_t, inner);
-  work->cb(work->status, work->fd);
-  work->inner.ctx->refs--;
-  free(work);
+void pd_fs_open(pd_io_t *ctx, const char *path, void (*cb)(pd_fs_open_t *)) {
+  pd_fs_open_t *op = malloc(sizeof(pd_fs_open_t));
+  op->path = strdup(path);
+  op->cb = cb;
+  op->status = 0;
+  op->inner.work = pd__fs_open;
+  op->inner.done = pd__fs_open_done;
+
+  pd_task_submit(ctx, &op->inner);
 }
 
-void pd_fs_open(pd_io_t *ctx, const char *path, void (*cb)(int, pd_fd_t)) {
-  pd__fs_open_t *task = malloc(sizeof(pd__fs_open_t));
-  task->inner.work = pd__fs_open_work;
-  task->inner.done = pd__fs_open_done;
-  task->inner.udata = NULL;
-  task->cb = cb;
-  task->path = strdup(path);
-  ctx->refs++;
 
-  pd_task_submit(ctx, &task->inner);
+void pd__fs_read(pd_task_t *task) {
+  pd_fs_read_t *op = (pd_fs_read_t *)(task);
+  ssize_t nread;
+
+  do {
+    nread = read(op->fd, op->buf, op->size);
+  } while (nread < 0 && errno == EINTR);
+
+  if (nread < 0) {
+    op->status = pd_errno();
+    return;
+  }
+
+  op->size = nread;
+}
+
+void pd_fs_read(pd_io_t *ctx, pd_fd_t fd, char *buf, size_t size,
+                void (*cb)(pd_fs_read_t *)) {
+  pd_fs_read_t *op = malloc(sizeof(pd_fs_read_t));
+  op->fd = fd;
+  op->buf = buf;
+  op->size = size;
+  op->cb = cb;
+  op->status = 0;
+  op->inner.work = pd__fs_read;
+  op->inner.done = pd__fs_read_done;
+
+  pd_task_submit(ctx, &op->inner);
 }

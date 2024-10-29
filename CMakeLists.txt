@@ -20,6 +20,7 @@ set(SRC_FILES
         include/pandio/threadpool.h
         include/pandio/err.h
         src/dlib.c
+        include/pandio/fs.h
         src/sys/fs_unix.c
 )
 
