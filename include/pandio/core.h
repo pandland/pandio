@@ -159,4 +159,4 @@ int pd_dlclose(pd_dlib_t);
 /* Get readable error */
 const char* pd_dlerror();
 
-void pd_fs_open(pd_io_t *ctx, const char *path, void (*cb)(pd_fd_t));
+void pd_fs_open(pd_io_t *ctx, const char *path, void (*cb)(int, pd_fd_t));
