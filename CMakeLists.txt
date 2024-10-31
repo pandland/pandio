@@ -29,6 +29,7 @@ if (WIN32)
             src/sys/tcp_win32.c
             src/sys/notifier_win32.c
             src/sys/thread_win32.c
+            src/sys/fs_win32.c
     )
 
     add_library(pandio STATIC ${SRC_FILES})

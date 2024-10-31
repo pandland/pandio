@@ -22,17 +22,16 @@
 #pragma once
 #include "pandio/core.h"
 #include "pandio/threadpool.h"
-#include <fcntl.h> // _WIN32 emulates this header
 
 #ifdef _WIN32
 
-#define PD_FS_O_RDONLY (1 << 0)
-#define PD_FS_O_WRONLY (1 << 2)
-#define PD_FS_O_RDWR (1 << 3)
-#define PD_FS_O_CREAT (1 << 4)
-#define PD_FS_O_EXCL (1 << 5)
-#define PD_FS_O_TRUNC (1 << 6)
-#define PD_FS_O_APPEND (1 << 7)
+#define PD_FS_O_RDONLY 0x0000
+#define PD_FS_O_WRONLY 0x0001
+#define PD_FS_O_RDWR 0x0002
+#define PD_FS_O_CREAT 0x0100
+#define PD_FS_O_EXCL 0x0400
+#define PD_FS_O_TRUNC 0x0200
+#define PD_FS_O_APPEND 0x0008
 
 #else
 
