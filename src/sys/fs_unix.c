@@ -1,8 +1,27 @@
+/* Copyright (c) Michał Dziuba
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include "pandio/err.h"
 #include "pandio/fs.h"
-#include "pandio/threadpool.h"
 #include "string.h"
-#include <fcntl.h>
 #include <unistd.h>
 
 void pd__fs_work_done(pd_task_t *task) {
@@ -21,10 +40,11 @@ void pd_fs_init(pd_io_t *ctx, pd_fs_t *op) {
 void pd__fs_open_work(pd_task_t *task) {
   pd_fs_t *op = (pd_fs_t*)(task);
   char *path = op->params.open.path;
+  int oflag = op->params.open.oflag;
   int fd;
 
   do {
-    fd = open(path, O_RDONLY); // TODO: make flags configurable
+    fd = open(path, oflag);
   } while (fd < 0 && errno == EINTR);
 
   if (fd < 0) {
@@ -38,8 +58,9 @@ void pd__fs_open_work(pd_task_t *task) {
   op->params.open.path = NULL;
 }
 
-void pd_fs_open(pd_fs_t *op, const char *path, void (*cb)(pd_fs_t *)) {
+void pd_fs_open(pd_fs_t *op, const char *path, int oflag, void (*cb)(pd_fs_t *)) {
   op->params.open.path = strdup(path);
+  op->params.open.oflag = oflag;
   op->type = pd_open_op;
   op->cb = cb;
   op->task.work = pd__fs_open_work;

@@ -60,7 +60,7 @@ int main() {
 
   pd_fs_t *op = malloc(sizeof(pd_fs_t));
   pd_fs_init(ctx, op);
-  pd_fs_open(op, "Makefile", on_open);
+  pd_fs_open(op, "Makefile", PD_FS_O_RDONLY, on_open);
 
   pd_io_run(ctx);
   pd_threadpool_end();
