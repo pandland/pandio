@@ -64,7 +64,7 @@ void pd__fs_read_work(pd_task_t *task) {
     op->status = 0;
   }
 
-  op->result.nread = nread;
+  op->result.size = nread;
 }
 
 void pd_fs_read(pd_fs_t *op, pd_fd_t fd, char *buf, size_t size, void (*cb)(pd_fs_t *)) {
@@ -97,7 +97,7 @@ void pd__fs_close_work(pd_task_t *task) {
 }
 
 void pd_fs_close(pd_fs_t *op, pd_fd_t fd, void (*cb)(pd_fs_t *)) {
-  op->type = pd_read_op;
+  op->type = pd_close_op;
   op->cb = cb;
   op->params.close.fd = fd;
 

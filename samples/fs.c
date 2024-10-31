@@ -19,7 +19,7 @@ void on_read(pd_fs_t *op) {
     goto cleanup;
   }
 
-  int size = op->result.nread;
+  int size = op->result.size;
   printf("%.*s\n", size, buf);
   int fd = op->params.read.fd;
   pd_fs_init(op->ctx, op);
