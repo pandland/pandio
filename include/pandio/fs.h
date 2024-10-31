@@ -22,16 +22,17 @@
 #pragma once
 #include "pandio/core.h"
 #include "pandio/threadpool.h"
+#include <fcntl.h>
 
 #ifdef _WIN32
 
-#define PD_FS_O_RDONLY 0x0000
-#define PD_FS_O_WRONLY 0x0001
-#define PD_FS_O_RDWR 0x0002
-#define PD_FS_O_CREAT 0x0100
-#define PD_FS_O_EXCL 0x0400
-#define PD_FS_O_TRUNC 0x0200
-#define PD_FS_O_APPEND 0x0008
+#define PD_FS_O_RDONLY _O_RDONLY
+#define PD_FS_O_WRONLY _O_WRONLY
+#define PD_FS_O_RDWR _O_RDWR
+#define PD_FS_O_CREAT _O_CREAT
+#define PD_FS_O_EXCL _O_EXCL
+#define PD_FS_O_TRUNC _O_TRUNC
+#define PD_FS_O_APPEND _O_APPEND
 
 #else
 
@@ -60,11 +61,7 @@
     const char *buf;                                                           \
     size_t size;                                                               \
   })                                                                           \
-  X(close, {                                                                   \
-    pd_fd_t fd;                                                                \
-    char *buf;                                                                 \
-    size_t size;                                                               \
-  })
+  X(close, { pd_fd_t fd; })
 
 #define FS_TYPES(type, params) pd_##type##_op,
 

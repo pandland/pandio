@@ -83,3 +83,24 @@ void pd_fs_open(pd_fs_t *op, const char *path, int oflag,
 
   pd_task_submit(op->ctx, &op->task);
 }
+
+void pd__fs_close_work(pd_task_t *task) {
+  pd_fs_t *op = (pd_fs_t *)(task);
+  pd_fd_t handle = op->params.close.fd;
+
+  if (!CloseHandle(handle)) {
+    op->status = pd_errno();
+  } else {
+    op->status = 0;
+  }
+}
+
+void pd_fs_close(pd_fs_t *op, pd_fd_t handle,
+                void (*cb)(pd_fs_t *))  {
+  op->params.close.fd = handle;
+  op->type = pd_close_op;
+  op->cb = cb;
+  op->task.work = pd__fs_close_work;
+
+  pd_task_submit(op->ctx, &op->task);
+}
