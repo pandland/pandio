@@ -22,6 +22,7 @@
 #include "pandio/core.h"
 #include "pandio/err.h"
 #include "pandio/fs.h"
+#include "pandio/threadpool.h"
 
 
 void pd__fs_work_done(pd_task_t *task) {
@@ -59,9 +60,11 @@ void pd__fs_open_work(pd_task_t *task) {
   if (oflag & PD_FS_O_TRUNC)
     creation = CREATE_ALWAYS;
 
-  if (oflag & PD_FS_O_APPEND) attributes |= FILE_APPEND_DATA;
+  if (oflag & PD_FS_O_APPEND)
+    attributes |= FILE_APPEND_DATA;
 
-  pd_fd_t handle = CreateFile(path, access, 0, NULL, creation, attributes, NULL);
+  pd_fd_t handle =
+      CreateFile(path, access, 0, NULL, creation, attributes, NULL);
   if (handle == INVALID_HANDLE_VALUE) {
     op->status = pd_errno();
   } else {
@@ -73,8 +76,7 @@ void pd__fs_open_work(pd_task_t *task) {
   op->params.open.path = NULL;
 }
 
-void pd_fs_open(pd_fs_t *op, const char *path, int oflag,
-                void (*cb)(pd_fs_t *))  {
+void pd_fs_open(pd_fs_t *op, const char *path, int oflag, pd_fs_cb_t cb) {
   op->params.open.path = _strdup(path);
   op->params.open.oflag = oflag;
   op->type = pd_open_op;
@@ -95,12 +97,39 @@ void pd__fs_close_work(pd_task_t *task) {
   }
 }
 
-void pd_fs_close(pd_fs_t *op, pd_fd_t handle,
-                void (*cb)(pd_fs_t *))  {
+void pd_fs_close(pd_fs_t *op, pd_fd_t handle, pd_fs_cb_t cb) {
   op->params.close.fd = handle;
   op->type = pd_close_op;
   op->cb = cb;
   op->task.work = pd__fs_close_work;
+
+  pd_task_submit(op->ctx, &op->task);
+}
+
+void pd__fs_read_work(pd_task_t *task) {
+  pd_fs_t *op = (pd_fs_t *)(task);
+  pd_fd_t handle = op->params.read.fd;
+  char *buf = op->params.read.buf;
+  size_t size = op->params.read.size;
+
+  DWORD nread;
+  if (ReadFile(handle, buf, size, &nread, NULL)) {
+    op->status = 0;
+    op->result.size = nread;
+  } else {
+    op->status = pd_errno();
+    op->result.size = -1;
+  }
+}
+
+void pd_fs_read(pd_fs_t *op, pd_fd_t fd, char *buf, size_t size,
+                pd_fs_cb_t cb) {
+  op->type = pd_read_op;
+  op->params.write.fd = fd;
+  op->params.read.buf = buf;
+  op->params.read.size = size;
+  op->cb = cb;
+  op->task.work = pd__fs_read_work;
 
   pd_task_submit(op->ctx, &op->task);
 }
