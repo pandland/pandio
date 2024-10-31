@@ -21,7 +21,7 @@ void on_read(pd_fs_t *op) {
 
   int size = op->result.size;
   printf("%.*s\n", size, buf);
-  int fd = op->params.read.fd;
+  pd_fd_t fd = op->params.read.fd;
   pd_fs_init(op->ctx, op);
   // close(fd);  // for testing error handling inside on_close
   pd_fs_close(op, fd, on_close);
@@ -39,7 +39,7 @@ void on_open(pd_fs_t *op) {
     goto cleanup;
   }
 
-  int fd = op->result.fd;
+  pd_fd_t fd = op->result.fd;
   printf("[read] fd is: %d\n", fd);
   // close(fd);  // for testing error handling inside on_read
   pd_fs_init(op->ctx, op);
@@ -60,7 +60,7 @@ void on_write(pd_fs_t *op) {
   }
 
   printf("written: %ld\n", op->result.size);
-  int fd = op->params.read.fd;
+  pd_fd_t fd = op->params.read.fd;
   pd_fs_init(op->ctx, op);
   // close(fd);  // for testing error handling inside on_close
   pd_fs_close(op, fd, on_close);
@@ -73,7 +73,7 @@ void start_writing(pd_fs_t *op) {
     return;
   }
 
-  int fd = op->result.fd;
+  pd_fd_t fd = op->result.fd;
     printf("[write] fd is: %d\n", fd);
   const char *message = "Hello World";
   size_t size = 11;

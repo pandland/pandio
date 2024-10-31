@@ -21,7 +21,6 @@ set(SRC_FILES
         include/pandio/err.h
         src/dlib.c
         include/pandio/fs.h
-        src/sys/fs_unix.c
 )
 
 if (WIN32)
@@ -50,6 +49,7 @@ elseif (UNIX)
         src/sys/tcp_unix.c
         src/sys/notifier_unix.c
         src/sys/thread_unix.c
+        src/sys/fs_unix.c
     )
 
     set(CMAKE_THREAD_PREFER_PTHREAD TRUE)

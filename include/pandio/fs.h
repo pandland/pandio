@@ -26,13 +26,13 @@
 
 #ifdef _WIN32
 
-#define UV_FS_O_RDONLY _O_RDONLY
-#define UV_FS_O_WRONLY _O_WRONLY
-#define UV_FS_O_RDWR _O_RDWRL
-#define UV_FS_O_CREAT _O_CREAT
-#define UV_FS_O_EXCL _O_EXCL
-#define UV_FS_O_TRUNC _O_TRUNC
-#define UV_FS_O_APPEND _O_APPEND
+#define PD_FS_O_RDONLY (1 << 0)
+#define PD_FS_O_WRONLY (1 << 2)
+#define PD_FS_O_RDWR (1 << 3)
+#define PD_FS_O_CREAT (1 << 4)
+#define PD_FS_O_EXCL (1 << 5)
+#define PD_FS_O_TRUNC (1 << 6)
+#define PD_FS_O_APPEND (1 << 7)
 
 #else
 
@@ -58,7 +58,7 @@
   })                                                                           \
   X(write, {                                                                   \
     pd_fd_t fd;                                                                \
-    const char *buf;                                                                 \
+    const char *buf;                                                           \
     size_t size;                                                               \
   })                                                                           \
   X(close, {                                                                   \
@@ -75,6 +75,12 @@ typedef enum pd_fs_type pd_fs_type_t;
 
 #define FS_PARAMS(type, params) struct params type;
 
+union pd_fs_params_u {
+  FS_OPS(FS_PARAMS)
+};
+
+typedef union pd_fs_params_u pd_fs_params_t;
+
 struct pd_fs_s {
   pd_task_t task; // must be first, because later we cast from it
   pd_io_t *ctx;
@@ -82,9 +88,7 @@ struct pd_fs_s {
   void *udata; // pointer to some user's struct, (don't use it)
   void (*cb)(struct pd_fs_s *);
   int status;
-  union {
-    FS_OPS(FS_PARAMS)
-  } params;
+  pd_fs_params_t params;
   union {
     pd_fd_t fd;
     ssize_t size;

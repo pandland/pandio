@@ -2,6 +2,7 @@
 #pragma once
 
 #include "pandio/core.h"
+#include "pandio/tcp.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
