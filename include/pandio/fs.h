@@ -58,7 +58,7 @@
   })                                                                           \
   X(write, {                                                                   \
     pd_fd_t fd;                                                                \
-    char *buf;                                                                 \
+    const char *buf;                                                                 \
     size_t size;                                                               \
   })                                                                           \
   X(close, {                                                                   \
@@ -100,5 +100,7 @@ void pd_fs_init(pd_io_t *, pd_fs_t *);
 void pd_fs_open(pd_fs_t *, const char *, int, pd_fs_cb_t);
 
 void pd_fs_read(pd_fs_t *, pd_fd_t, char *, size_t, pd_fs_cb_t);
+
+void pd_fs_write(pd_fs_t *, pd_fd_t, const char *, size_t, pd_fs_cb_t);
 
 void pd_fs_close(pd_fs_t *, pd_fd_t, pd_fs_cb_t);
