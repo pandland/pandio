@@ -1,6 +1,20 @@
-#include "pandio/fs.h"
 #include <pandio.h>
 #include <stdio.h>
+
+void on_read(pd_fs_t *op) {
+  if (op->status < 0) {
+    printf("error: %s\n", pd_errstr(op->status));
+    goto cleanup;
+  }
+
+  char *buf = op->params.read.buf;
+  int size = op->result.nread;
+  printf("%.*s\n", size, buf);
+  free(buf);
+
+cleanup:
+  free(op);
+}
 
 void on_open(pd_fs_t *op) {
   if (op->status < 0) {
@@ -8,7 +22,14 @@ void on_open(pd_fs_t *op) {
     goto cleanup;
   }
 
-  printf("fd is: %d\n", op->result.fd);
+  int fd = op->result.fd;
+  printf("fd is: %d\n", fd);
+
+  pd_fs_init(op->ctx, op);
+  size_t size = 16 * 1024;
+  char *buf = malloc(size);
+  pd_fs_read(op, fd, buf, size, on_read);
+  return;
 
 cleanup:
   free(op);

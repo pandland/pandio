@@ -44,7 +44,5 @@ void pd_fs_init(pd_io_t *ctx, pd_fs_t *op);
 
 void pd_fs_open(pd_fs_t *op, const char *path, void (*cb)(pd_fs_t *));
 
-/*
 void pd_fs_read(pd_fs_t *op, pd_fd_t fd, char *buf, size_t size,
                 void (*cb)(pd_fs_t *));
-*/

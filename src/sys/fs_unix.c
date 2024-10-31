@@ -34,7 +34,8 @@ void pd__fs_open_work(pd_task_t *task) {
   }
 
   op->result.fd = fd;
-  free(path); 
+  free(path);
+  op->params.open.path = NULL;
 }
 
 void pd_fs_open(pd_fs_t *op, const char *path, void (*cb)(pd_fs_t *)) {
@@ -43,5 +44,36 @@ void pd_fs_open(pd_fs_t *op, const char *path, void (*cb)(pd_fs_t *)) {
   op->cb = cb;
   op->task.work = pd__fs_open_work;
 
+  pd_task_submit(op->ctx, &op->task);
+}
+
+void pd__fs_read_work(pd_task_t *task) {
+  pd_fs_t *op = (pd_fs_t *)(task);
+  ssize_t nread;
+  int fd = op->params.read.fd;
+  size_t n = op->params.read.size;
+
+  do {
+    nread = read(fd, op->params.read.buf, n);
+  } while (nread < 0 && errno == EINTR);
+
+  if (nread < 0) {
+    op->status = pd_errno();
+    return;
+  } else {
+    op->status = 0;
+  }
+
+  op->result.nread = nread;
+}
+
+void pd_fs_read(pd_fs_t *op, pd_fd_t fd, char *buf, size_t size, void (*cb)(pd_fs_t *)) {
+  op->type = pd_read_op;
+  op->cb = cb;
+  op->params.read.buf = buf;
+  op->params.read.size = size;
+  op->params.read.fd = fd;
+
+  op->task.work = pd__fs_read_work;
   pd_task_submit(op->ctx, &op->task);
 }
