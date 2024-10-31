@@ -77,3 +77,30 @@ void pd_fs_read(pd_fs_t *op, pd_fd_t fd, char *buf, size_t size, void (*cb)(pd_f
   op->task.work = pd__fs_read_work;
   pd_task_submit(op->ctx, &op->task);
 }
+
+
+void pd__fs_close_work(pd_task_t *task) {
+  pd_fs_t *op = (pd_fs_t *)(task);
+  int status;
+  int fd = op->params.close.fd;
+
+  do {
+    status = close(fd);
+  } while (status < 0 && errno == EINTR);
+
+  if (status < 0) {
+    op->status = pd_errno();
+    return;
+  } else {
+    op->status = 0;
+  }
+}
+
+void pd_fs_close(pd_fs_t *op, pd_fd_t fd, void (*cb)(pd_fs_t *)) {
+  op->type = pd_read_op;
+  op->cb = cb;
+  op->params.close.fd = fd;
+
+  op->task.work = pd__fs_close_work;
+  pd_task_submit(op->ctx, &op->task);
+}

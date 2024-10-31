@@ -1,30 +1,47 @@
+#include "pandio/fs.h"
 #include <pandio.h>
 #include <stdio.h>
 
-void on_read(pd_fs_t *op) {
+void on_close(pd_fs_t *op) {
   if (op->status < 0) {
-    printf("error: %s\n", pd_errstr(op->status));
+    printf("\nerror(close): %s\n", pd_errstr(op->status));
+  } else {
+    printf("\nFile %d closed.\n", op->params.close.fd);
+  }
+
+  free(op);
+}
+
+void on_read(pd_fs_t *op) {
+  char *buf = op->params.read.buf;
+  if (op->status < 0) {
+    printf("error(read): %s\n", pd_errstr(op->status));
     goto cleanup;
   }
 
-  char *buf = op->params.read.buf;
   int size = op->result.nread;
   printf("%.*s\n", size, buf);
+  int fd = op->params.read.fd;
+  pd_fs_init(op->ctx, op);
+  //close(fd);  // for testing error handling inside on_close
+  pd_fs_close(op, fd, on_close);
   free(buf);
+  return;
 
 cleanup:
+  free(buf);
   free(op);
 }
 
 void on_open(pd_fs_t *op) {
   if (op->status < 0) {
-    printf("error: %s\n", pd_errstr(op->status));
+    printf("error(open): %s\n", pd_errstr(op->status));
     goto cleanup;
   }
 
   int fd = op->result.fd;
   printf("fd is: %d\n", fd);
-
+  //close(fd);  // for testing error handling inside on_read
   pd_fs_init(op->ctx, op);
   size_t size = 16 * 1024;
   char *buf = malloc(size);
