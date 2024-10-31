@@ -23,6 +23,7 @@
 #include "pandio/err.h"
 #include "pandio/fs.h"
 #include "pandio/threadpool.h"
+#include <fileapi.h>
 
 
 void pd__fs_work_done(pd_task_t *task) {
@@ -125,11 +126,39 @@ void pd__fs_read_work(pd_task_t *task) {
 void pd_fs_read(pd_fs_t *op, pd_fd_t fd, char *buf, size_t size,
                 pd_fs_cb_t cb) {
   op->type = pd_read_op;
-  op->params.write.fd = fd;
+  op->params.read.fd = fd;
   op->params.read.buf = buf;
   op->params.read.size = size;
   op->cb = cb;
   op->task.work = pd__fs_read_work;
+
+  pd_task_submit(op->ctx, &op->task);
+}
+
+void pd__fs_write_work(pd_task_t *task) {
+  pd_fs_t *op = (pd_fs_t *)(task);
+  pd_fd_t handle = op->params.write.fd;
+  const char *buf = op->params.write.buf;
+  size_t size = op->params.write.size;
+  
+  DWORD nwritten;
+  if(WriteFile(handle, buf, size, &nwritten, NULL)) {
+    op->status = 0;
+    op->result.size = nwritten;
+  } else {
+    op->status = pd_errno();
+    op->result.size = -1;
+  }
+}
+
+void pd_fs_write(pd_fs_t *op, pd_fd_t fd, const char *buf, size_t size,
+                 pd_fs_cb_t cb) {
+  op->type = pd_write_op;
+  op->params.write.fd = fd;
+  op->params.write.buf = buf;
+  op->params.write.size = size;
+  op->cb = cb;
+  op->task.work = pd__fs_write_work;
 
   pd_task_submit(op->ctx, &op->task);
 }
