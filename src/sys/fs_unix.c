@@ -147,7 +147,7 @@ void pd__fs_stat_work(pd_task_t *task) {
 
   do {
     status = fstat(fd, &st);
-  } while (errno == EINTR);
+  } while (status < 0 && errno == EINTR);
 
   if (status < 0) {
     op->status = pd_errno();
