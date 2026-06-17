@@ -415,6 +415,11 @@ void pd_tcp_write_async(pd_tcp_t *stream, pd_write_t *write_op) {
 
     queue_init_node(&write_op->qnode);
     queue_push(&stream->writes, &write_op->qnode);
+
+    if (!(stream->event.flags & PD_POLLOUT)) {
+        stream->event.flags |= PD_POLLOUT;
+        pd__event_set(stream->ctx, &stream->event, stream->fd);
+    }
 }
 
 
