@@ -222,6 +222,7 @@ void pd__tcp_read(pd_tcp_t *stream) {
     } while (nread == -1 && errno == EINTR);
 
     if (nread == 0) {
+        stream->on_data(stream, buf, 0);
         pd_tcp_close(stream);
         return;
     }
